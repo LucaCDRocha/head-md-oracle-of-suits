@@ -98,7 +98,7 @@ function windowResized() {
 }
 
 function draw() {
-  background(20);
+  // background(20);
   // Draw sun
   fill(255, 204, 0);
   noStroke();
