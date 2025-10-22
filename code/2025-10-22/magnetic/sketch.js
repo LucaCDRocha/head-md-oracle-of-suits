@@ -1,10 +1,12 @@
 // removed persistent fingertip trail; implement magnetic grid instead
 let grid = [];
 let gridSpacing = 20; // spacing between grid points
-let influenceRadius = 200; // how far the finger influences the grid
-let maxForce = 10000; // strength of repulsion (tweak as needed)
-let damping = 0.85; // damping applied to velocity each frame
-let spring = 0.12; // spring force back to origin
+let influenceRadius = 120; // how far the finger influences the grid
+let maxForce = 2000; // peak repulsion magnitude
+let forceScale = 0.002; // scales the computed force to a stable accel
+let maxVel = 30; // clamp velocity to avoid explosions
+let damping = 0.62; // damping applied to velocity each frame
+let spring = 0.08; // spring force back to origin
 
 function setup() {
   // full window canvas
@@ -96,28 +98,37 @@ function draw() {
     if (indexPos) {
       let dx = p.x - indexPos.x;
       let dy = p.y - indexPos.y;
-      let d2 = dx * dx + dy * dy;
-      if (d2 < influenceRadius * influenceRadius && d2 > 0.001) {
-        // inverse-square style force with falloff, but clamped
-        let force = maxForce / d2;
-        // direction normalized
-        let d = sqrt(d2);
-        let nx = dx / d;
-        let ny = dy / d;
-        p.vx += nx * force;
-        p.vy += ny * force;
+      let d = sqrt(dx * dx + dy * dy);
+      if (d < influenceRadius) {
+        // direction normalized (safe divide)
+        let nx = dx / max(d, 0.0001);
+        let ny = dy / max(d, 0.0001);
+        // strength falls off linearly with distance
+        let strength = (influenceRadius - d) / influenceRadius; // 1 near finger, 0 at edge
+        // compute a capped acceleration using forceScale and maxForce
+        let accel = min(
+          maxForce * strength * forceScale,
+          maxForce * forceScale
+        );
+        p.vx += nx * accel;
+        p.vy += ny * accel;
       }
     }
 
     // spring back to original position
     let sx = (p.ox - p.x) * spring;
     let sy = (p.oy - p.y) * spring;
-    p.vx += sx;
-    p.vy += sy;
+    p.vx += sx * 0.6; // apply a portion of spring as acceleration
+    p.vy += sy * 0.6;
 
-    // apply velocity and damping
-    p.x += p.vx * (deltaTime / 16.666); // scale by frame time (approx 60fps)
-    p.y += p.vy * (deltaTime / 16.666);
+    // clamp velocity to avoid runaway
+    p.vx = constrain(p.vx, -maxVel, maxVel);
+    p.vy = constrain(p.vy, -maxVel, maxVel);
+
+    // apply velocity and damping (scale by frame time)
+    const frameScale = deltaTime / 16.666; // 1.0 at ~60fps
+    p.x += p.vx * frameScale;
+    p.y += p.vy * frameScale;
     p.vx *= damping;
     p.vy *= damping;
   }
@@ -127,6 +138,25 @@ function draw() {
   fill(30, 120, 200, 220);
   for (let p of grid) {
     circle(p.x, p.y, 6);
+    // draw lines between points
+    // horizontal
+    let rightNeighbor = grid.find(
+      (pt) => pt.ox === p.ox + gridSpacing && pt.oy === p.oy
+    );
+    if (rightNeighbor) {
+      stroke(100, 150, 250, 150);
+      line(p.x, p.y, rightNeighbor.x, rightNeighbor.y);
+      noStroke();
+    }
+    // vertical
+    let downNeighbor = grid.find(
+      (pt) => pt.ox === p.ox && pt.oy === p.oy + gridSpacing
+    );
+    if (downNeighbor) {
+      stroke(100, 150, 250, 150);
+      line(p.x, p.y, downNeighbor.x, downNeighbor.y);
+      noStroke();
+    }
   }
 } // end of draw
 
