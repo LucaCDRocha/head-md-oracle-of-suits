@@ -158,6 +158,40 @@ function draw() {
       noStroke();
     }
   }
+
+  // add a little camera return in the corner bottom
+  if (isVideoReady()) {
+    // draw a smaller video preview in the bottom-left corner
+    const margin = 12;
+    const maxW = 320;
+    const maxH = 240;
+    // try to get real video aspect, fallback to 4:3
+    const vidW = videoElement.videoWidth || videoElement.width || 640;
+    const vidH = videoElement.videoHeight || videoElement.height || 480;
+    const aspect = vidW / vidH;
+
+    // size the thumbnail relative to canvas but capped
+    let thumbW = Math.min(maxW, width * 0.22);
+    let thumbH = thumbW / aspect;
+    if (thumbH > maxH) {
+      thumbH = maxH;
+      thumbW = thumbH * aspect;
+    }
+
+    const x = margin;
+    const y = height - thumbH - margin;
+
+    push();
+    // subtle border + rounded corner
+    stroke(255, 200);
+    strokeWeight(2);
+    noFill();
+    rect(x - 4, y - 4, thumbW + 8, thumbH + 8, 8);
+
+    // draw the video scaled into the thumbnail
+    image(videoElement, x, y, thumbW, thumbH);
+    pop();
+  }
 } // end of draw
 
 // only the index finger tip landmark

@@ -1,4 +1,7 @@
-# MediaPipe Hands + P5.js Demo
-This folder contains a demo of the Google MediaPipe Hands Landmark Detection API integrated with P5.js.
+# Magnetic sketch
 
-You can download this as a folder here: [MediaPipe Hands + P5.js Demo](https://github.com/abstractmachine/head-md-oracle-of-suits/releases/latest)
+A p5.js sketch exploring magnetic fields and particle interactions.
+
+Purpose: visualize magnetic field lines and particle movements influenced by magnetic forces using a grid-based system and real-time hand tracking.
+
+![Screenshot](images/screenshot.png)
