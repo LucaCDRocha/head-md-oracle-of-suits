@@ -1,0 +1,2 @@
+- Ask people to create cards for forming a cloud of cards for showing the diversity of design that can be create
+	- Power level of each suits
