@@ -78,7 +78,8 @@ class HybridsTableSeeder extends Seeder
                     foreach ($foundIds as $f) {
                         $attach[$f['id']] = ['is_base' => $f['is_base'] ? 1 : 0];
                     }
-                    $hybrid->cards()->attach($attach);
+                    // ensure only these cards are attached (replace any existing attachments)
+                    $hybrid->cards()->sync($attach);
                     $this->command->info("Created default hybrid {$hybrid->id} ({$name}) attached to cards: " . implode(',', array_column($foundIds, 'id')));
                 } else {
                     $this->command->warn("Default hybrid {$name} could not find 3 matching cards; no attachments made.");
@@ -187,7 +188,8 @@ class HybridsTableSeeder extends Seeder
                     foreach ($foundIds as $f) {
                         $attach[$f['id']] = ['is_base' => $f['is_base'] ? 1 : 0];
                     }
-                    $hybrid->cards()->attach($attach);
+                    // ensure only these cards are attached (replace any existing attachments)
+                    $hybrid->cards()->sync($attach);
                     $this->command->info("Created special hybrid {$hybrid->id} ({$name}) attached to cards: " . implode(',', array_column($foundIds, 'id')));
                     continue;
                 }
@@ -203,7 +205,8 @@ class HybridsTableSeeder extends Seeder
                 $attach[$cid] = ['is_base' => $index === 0 ? 1 : 0];
             }
 
-            $hybrid->cards()->attach($attach);
+            // ensure only these cards are attached
+            $hybrid->cards()->sync($attach);
             $this->command->info("Created hybrid {$hybrid->id} from {$filename} attached to cards: " . implode(',', $cardIds));
         }
     }
