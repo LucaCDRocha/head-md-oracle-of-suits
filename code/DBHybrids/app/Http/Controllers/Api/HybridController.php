@@ -99,7 +99,7 @@ class HybridController extends Controller
             'img_src' => $hybrid->img_src
                 ? (preg_match('/^https?:\/\//', $hybrid->img_src)
                     ? $hybrid->img_src
-                    : asset('storage/' . ltrim($hybrid->img_src, '/'))
+                    : (str_starts_with($hybrid->img_src, 'img/') ? asset($hybrid->img_src) : asset('storage/' . ltrim($hybrid->img_src, '/')))
                 )
                 : null,
             'nb_like' => $hybrid->nb_like,

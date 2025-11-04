@@ -24,8 +24,8 @@ class DatabaseSeeder extends Seeder
         // Project seeders
         $this->call([
             GamesTableSeeder::class,
-            HybridsTableSeeder::class,
             CardsTableSeeder::class,
+            HybridsTableSeeder::class,
             BasedOnTableSeeder::class,
         ]);
     }
