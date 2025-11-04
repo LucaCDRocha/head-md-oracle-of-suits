@@ -18,3 +18,4 @@ use App\Http\Controllers\Api\HybridController;
 
 Route::get('/cards', [CardController::class, 'index']);
 Route::get('/hybrids', [HybridController::class, 'index']);
+Route::post('/hybrids', [HybridController::class, 'store']);
