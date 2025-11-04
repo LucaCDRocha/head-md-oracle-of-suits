@@ -3,6 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\CardController;
+use App\Http\Controllers\Api\HybridController;
 
 /*
 |--------------------------------------------------------------------------
@@ -16,3 +17,4 @@ use App\Http\Controllers\Api\CardController;
 */
 
 Route::get('/cards', [CardController::class, 'index']);
+Route::get('/hybrids', [HybridController::class, 'index']);
