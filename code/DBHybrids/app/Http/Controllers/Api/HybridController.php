@@ -62,7 +62,10 @@ class HybridController extends Controller
     {
         $data = $request->validate([
             'name' => 'nullable|string|max:191',
+            // img_src remains supported for external URLs or client-provided paths
             'img_src' => 'nullable|string',
+            // Allow an uploaded image file under the `img` field (increased to 10MB)
+            'img' => 'nullable|image|max:10240',
             'cards' => 'required|array|size:3',
             'cards.*' => 'required|integer|distinct',
             'base_card_id' => 'required|integer',
@@ -78,9 +81,28 @@ class HybridController extends Controller
             return response()->json(['error' => 'One or more cards not found'], 422);
         }
 
+        // Handle uploaded image (preferred) or fall back to img_src string
+        $img_src = null;
+        if ($request->hasFile('img')) {
+            // Store in public/storage/img/hybrids directory
+            $file = $request->file('img');
+            $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+            $destinationPath = public_path('storage/img/hybrids');
+
+            // Create directory if it doesn't exist
+            if (!file_exists($destinationPath)) {
+                mkdir($destinationPath, 0755, true);
+            }
+
+            $file->move($destinationPath, $filename);
+            $img_src = 'img/hybrids/' . $filename;
+        } else {
+            $img_src = $data['img_src'] ?? null;
+        }
+
         $hybrid = Hybrid::create([
             'name' => $data['name'] ?? null,
-            'img_src' => $data['img_src'] ?? null,
+            'img_src' => $img_src,
             'nb_like' => 0,
         ]);
 
