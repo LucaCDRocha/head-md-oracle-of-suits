@@ -1,0 +1,4 @@
+window.ENV = {
+  "GEMINI_API_KEY": "YOURAPIKEY",
+  "API_BASE": "YOURSITE",
+};

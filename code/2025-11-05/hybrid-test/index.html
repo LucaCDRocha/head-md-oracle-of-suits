@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+		<title>Sketch</title>
+
+		<link rel="stylesheet" type="text/css" href="style.css" />
+
+		<script src="libraries/p5.min.js"></script>
+		<script src="libraries/p5.sound.min.js"></script>
+	</head>
+
+	<body>
+		<div id="app">
+			<header>
+				<h1>Hybrid builder</h1>
+				<p>Select 3 cards, pick a base card, generate a hybrid image and upload it to the DB.</p>
+			</header>
+
+			<!-- p5 canvas holder (kept, but preview section removed) -->
+			<div id="p5-holder"></div>
+			<!-- image returned by generative API will be shown here -->
+			<img id="generated-img" alt="Generated result" style="display: none; max-width: 100%; margin-top: 10px" />
+
+			<section id="controls">
+				<div id="cards-list">Loading cards…</div>
+
+				<div id="selected-area">
+					<h3>Selected (0/3)</h3>
+					<div id="selected-cards"></div>
+					<label for="hybrid-name">Name (optional)</label>
+					<input id="hybrid-name" type="text" placeholder="My hybrid" />
+					<div>
+						<button id="generate-btn" type="button" disabled>Generate & Upload Hybrid</button>
+					</div>
+					<div id="status"></div>
+				</div>
+			</section>
+		</div>
+
+		<script src="config.js"></script>
+		<script src="sketch.js"></script>
+	</body>
+</html>
