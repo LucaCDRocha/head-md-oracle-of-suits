@@ -29,9 +29,7 @@
 
 				<div id="selected-area">
 					<h3>Selected (0/3)</h3>
-					<div id="selected-cards"></div>
-					<label for="hybrid-name">Name (optional)</label>
-					<input id="hybrid-name" type="text" placeholder="My hybrid" />
+					<div id="selected-summary"></div>
 					<div>
 						<button id="generate-btn" type="button" disabled>Generate & Upload Hybrid</button>
 					</div>
@@ -40,7 +38,14 @@
 			</section>
 		</div>
 
+		<!-- Load p5.js libraries -->
+		<script src="libraries/p5.min.js"></script>
+		<script src="libraries/p5.sound.min.js"></script>
+
+		<!-- Load config (with window.ENV for backward compatibility) -->
 		<script src="config.js"></script>
-		<script src="sketch.js"></script>
+
+		<!-- Load main sketch as ES6 module -->
+		<script type="module" src="sketch.js"></script>
 	</body>
 </html>
