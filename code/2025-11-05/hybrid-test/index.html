@@ -19,6 +19,24 @@
 				<p>Select 3 cards, pick a base card, generate a hybrid image and upload it to the DB.</p>
 			</header>
 
+			<!-- Arduino Knob Control Panel -->
+			<div id="knob-control-panel">
+				<div id="knob-status">
+					<span id="knob-indicator">🎛️ Knob Control:</span>
+					<label><input type="radio" name="active-slot" value="1" checked /> Card 1</label>
+					<label><input type="radio" name="active-slot" value="2" /> Card 2</label>
+					<label><input type="radio" name="active-slot" value="3" /> Card 3</label>
+				</div>
+			</div>
+
+			<!-- Knob Values Display (top right) -->
+			<div id="knob-values-display">
+				<div class="knob-value-item">K1: <span id="knob-1-value">0</span></div>
+				<div class="knob-value-item">K2: <span id="knob-2-value">0</span></div>
+				<div class="knob-value-item">K3: <span id="knob-3-value">0</span></div>
+				<div class="knob-value-item">K4: <span id="knob-4-value">0</span></div>
+			</div>
+
 			<!-- p5 canvas holder (kept, but preview section removed) -->
 			<div id="p5-holder"></div>
 			<!-- image returned by generative API will be shown here -->

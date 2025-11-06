@@ -29,6 +29,9 @@ export async function initSlotSelector() {
 		});
 
 		renderSlotUI();
+
+		// Initialize knob control visual indicator
+		updateKnobActiveIndicator();
 	} catch (err) {
 		console.error("Error initializing slot selector:", err);
 	}
@@ -339,11 +342,7 @@ function createYearFilter(slot) {
 
 	const select = document.createElement("select");
 	select.className = "filter-select";
-
-	const allOption = document.createElement("option");
-	allOption.value = "";
-	allOption.textContent = "All years";
-	select.appendChild(allOption);
+	select.id = `year-${slot.id}`;
 
 	const years = [...new Set(allGames.map((g) => g.year).filter((y) => y))].sort();
 	years.forEach((year) => {
@@ -381,6 +380,7 @@ function createGameFilter(slot) {
 
 	const select = document.createElement("select");
 	select.className = "filter-select";
+	select.id = `game-${slot.id}`;
 
 	const allOption = document.createElement("option");
 	allOption.value = "";
@@ -439,10 +439,11 @@ function createSuitsFilter(slot) {
 	filterGroup.className = "filter-group";
 
 	const label = document.createElement("label");
-	label.textContent = "Suit:";
+	label.textContent = "Suits:";
 
 	const select = document.createElement("select");
 	select.className = "filter-select";
+	select.id = `suits-${slot.id}`;
 
 	const allOption = document.createElement("option");
 	allOption.value = "";
@@ -486,6 +487,7 @@ function createValueFilter(slot) {
 
 	const select = document.createElement("select");
 	select.className = "filter-select";
+	select.id = `value-${slot.id}`;
 
 	const allOption = document.createElement("option");
 	allOption.value = "";
@@ -518,7 +520,32 @@ function createValueFilter(slot) {
 }
 
 /**
+ * Get all available years from games
+ */
+function getAvailableYears() {
+	// Get unique years, excluding null/empty
+	const years = [...new Set(allGames.map((g) => g.year).filter((y) => y))];
+	return years.sort((a, b) => a - b);
+}
+
+/**
+ * Get available games based on current filters
+ */
+function getAvailableGames(slot) {
+	let games = allGames;
+
+	// Filter by year if set
+	if (slot.filters.year) {
+		games = games.filter((g) => g.year == slot.filters.year);
+	}
+
+	// Return game IDs
+	return games.map((g) => g.id);
+}
+
+/**
  * Get available suits based on current filters
+ * Note: Does NOT filter by value to allow selecting any suit (e.g., Joker)
  */
 function getAvailableSuits(filters) {
 	let cards = allCards;
@@ -529,9 +556,7 @@ function getAvailableSuits(filters) {
 	if (filters.game) {
 		cards = cards.filter((c) => (c.game_id || c.game?.id) == filters.game);
 	}
-	if (filters.value) {
-		cards = cards.filter((c) => c.value == filters.value);
-	}
+	// Removed value filter to allow independent suit selection
 
 	const suits = [...new Set(cards.map((c) => c.suits).filter((s) => s))];
 	return suits.sort();
@@ -670,4 +695,168 @@ export function drawPreview(p5Instance) {
 			p5Instance.pop();
 		}
 	}
+}
+
+// ============= KNOB CONTROL SYSTEM =============
+
+let activeSlotForKnobs = 1; // Which slot is being controlled by knobs
+
+/**
+ * Set which slot should be controlled by the knobs
+ */
+export function setActiveSlotForKnobs(slotId) {
+	activeSlotForKnobs = slotId;
+	console.log(`Active slot for knobs set to: ${slotId}`);
+
+	// Update visual indicator
+	updateKnobActiveIndicator();
+}
+
+/**
+ * Get the currently active slot for knob control
+ */
+export function getActiveSlotForKnobs() {
+	return activeSlotForKnobs;
+}
+
+/**
+ * Update visual indicator showing which slot is controlled by knobs
+ */
+function updateKnobActiveIndicator() {
+	// Remove active-knob-control class from all slots
+	document.querySelectorAll(".slot-card").forEach((el) => {
+		el.classList.remove("active-knob-control");
+	});
+
+	// Add to active slot
+	const activeSlotEl = document.getElementById(`slot-${activeSlotForKnobs}`);
+	if (activeSlotEl) {
+		activeSlotEl.classList.add("active-knob-control");
+	}
+}
+
+/**
+ * Handle knob value changes from Arduino
+ * knobValues = [knob1, knob2, knob3, knob4] each 0-1023
+ * Map to: Year, Game, Suits, Value
+ */
+export function handleKnobChange(knobValues) {
+	console.log("Knob values received:", knobValues);
+
+	const slot = slots.find((s) => s.id === activeSlotForKnobs);
+	if (!slot) {
+		console.error("Active slot not found:", activeSlotForKnobs);
+		return;
+	}
+
+	console.log("Controlling slot:", slot.id);
+
+	// Get available options for each filter based on current slot state
+	const yearOptions = getAvailableYears();
+	const gameOptions = getAvailableGames(slot);
+
+	// For suits and values, we need to pass the current filters to get dynamic options
+	// This ensures that as you change game, the available suits/values update
+	const suitsOptions = getAvailableSuits(slot.filters);
+	const valueOptions = getAvailableValues(slot.filters);
+
+	console.log("Available options:", {
+		years: yearOptions.length,
+		games: gameOptions.length,
+		suits: suitsOptions.length,
+		values: valueOptions.length,
+	});
+
+	// Map each knob value (0-1023) to its respective filter length
+	// Use Math.floor to get index, and clamp to valid range
+	let yearIndex = 0;
+	let gameIndex = 0;
+	let suitsIndex = 0;
+	let valueIndex = 0;
+
+	if (yearOptions.length > 0) {
+		yearIndex = Math.floor((knobValues[0] / 1024) * yearOptions.length);
+		yearIndex = Math.min(yearIndex, yearOptions.length - 1);
+	}
+
+	if (gameOptions.length > 0) {
+		gameIndex = Math.floor((knobValues[1] / 1024) * gameOptions.length);
+		gameIndex = Math.min(gameIndex, gameOptions.length - 1);
+	}
+
+	if (suitsOptions.length > 0) {
+		suitsIndex = Math.floor((knobValues[2] / 1024) * suitsOptions.length);
+		suitsIndex = Math.min(suitsIndex, suitsOptions.length - 1);
+	}
+
+	if (valueOptions.length > 0) {
+		valueIndex = Math.floor((knobValues[3] / 1024) * valueOptions.length);
+		valueIndex = Math.min(valueIndex, valueOptions.length - 1);
+	}
+
+	console.log("Calculated indices:", { yearIndex, gameIndex, suitsIndex, valueIndex });
+
+	// Get values from options
+	const newYear = yearOptions[yearIndex] || null;
+	const newGame = gameOptions[gameIndex] || null;
+	const newSuits = suitsOptions[suitsIndex] || null;
+	const newValue = valueOptions[valueIndex] || null;
+
+	console.log("New filter values:", { newYear, newGame, newSuits, newValue });
+	console.log("Current filter values:", slot.filters);
+
+	// Check if anything changed (compare as strings to handle type differences)
+	let changed = false;
+	if (String(slot.filters.year) !== String(newYear)) {
+		console.log(`Year changed: ${slot.filters.year} -> ${newYear}`);
+		slot.filters.year = newYear;
+		changed = true;
+	}
+	if (String(slot.filters.game) !== String(newGame)) {
+		console.log(`Game changed: ${slot.filters.game} -> ${newGame}`);
+		slot.filters.game = newGame;
+		changed = true;
+	}
+	if (String(slot.filters.suits) !== String(newSuits)) {
+		console.log(`Suits changed: ${slot.filters.suits} -> ${newSuits}`);
+		slot.filters.suits = newSuits;
+		changed = true;
+	}
+	if (String(slot.filters.value) !== String(newValue)) {
+		console.log(`Value changed: ${slot.filters.value} -> ${newValue}`);
+		slot.filters.value = newValue;
+		changed = true;
+	}
+
+	if (changed) {
+		console.log("Filters changed, updating UI...");
+		// Update the UI select elements
+		updateSlotFilterUI(slot);
+
+		// Auto-select card based on new filters
+		autoSelectCardIfFiltersComplete(slot);
+
+		// Re-render the entire UI to show changes
+		renderSlotUI();
+	} else {
+		console.log("No filter changes detected");
+	}
+}
+
+/**
+ * Update the filter select elements for a slot based on current filter values
+ */
+function updateSlotFilterUI(slot) {
+	const slotEl = document.getElementById(`slot-${slot.id}`);
+	if (!slotEl) return;
+
+	const yearSelect = slotEl.querySelector("#year-" + slot.id);
+	const gameSelect = slotEl.querySelector("#game-" + slot.id);
+	const suitsSelect = slotEl.querySelector("#suits-" + slot.id);
+	const valueSelect = slotEl.querySelector("#value-" + slot.id);
+
+	if (yearSelect) yearSelect.value = slot.filters.year || "";
+	if (gameSelect) gameSelect.value = slot.filters.game || "";
+	if (suitsSelect) suitsSelect.value = slot.filters.suits || "";
+	if (valueSelect) valueSelect.value = slot.filters.value || "";
 }

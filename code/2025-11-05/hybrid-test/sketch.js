@@ -1,6 +1,14 @@
-import { initSlotSelector, getSelectedCards, getBaseCardId, drawPreview } from "./ui/slotSelector.js";
+import {
+	initSlotSelector,
+	getSelectedCards,
+	getBaseCardId,
+	drawPreview,
+	setActiveSlotForKnobs,
+	handleKnobChange,
+} from "./ui/slotSelector.js";
 import { generateImage } from "./api/geminiApi.js";
 import { uploadHybridBase64 } from "./api/hybridApi.js";
+import { setupSerial, setKnobChangeCallback } from "./Serial.js";
 
 let canvas;
 let lastGeneratedBase64 = null;
@@ -15,12 +23,24 @@ window.addEventListener("error", function (e) {
 window.setup = function () {
 	// Make p5 functions globally available for the slot selector
 	window.loadImage = loadImage;
+	window.createButton = createButton;
 
 	// small canvas used for composing the hybrid image
 	const holder = document.getElementById("p5-holder");
 	canvas = createCanvas(512, 512);
 	canvas.parent(holder);
 	background(240);
+
+	// Setup Arduino serial connection
+	setupSerial();
+
+	// Set callback for knob changes
+	setKnobChangeCallback((knobValues) => {
+		handleKnobChange(knobValues);
+	});
+
+	// Setup radio buttons for slot selection
+	setupSlotRadioButtons();
 
 	// wire UI
 	document.getElementById("generate-btn").addEventListener(
@@ -43,6 +63,17 @@ window.setup = function () {
 	// Load cards using slot selector
 	initSlotSelector();
 };
+
+// Setup radio buttons to switch active slot for knob control
+function setupSlotRadioButtons() {
+	const radios = document.querySelectorAll('input[name="active-slot"]');
+	radios.forEach((radio) => {
+		radio.addEventListener("change", (e) => {
+			const slotId = parseInt(e.target.value);
+			setActiveSlotForKnobs(slotId);
+		});
+	});
+}
 
 window.draw = function () {
 	// Use drawPreview from slot selector module
