@@ -42,6 +42,14 @@ window.setup = function () {
 	// Setup radio buttons for slot selection
 	setupSlotRadioButtons();
 
+	// Setup fullscreen image click handler
+	const generatedImg = document.getElementById("generated-img");
+	if (generatedImg) {
+		generatedImg.addEventListener("click", () => {
+			generatedImg.style.display = "none";
+		});
+	}
+
 	// wire UI
 	document.getElementById("generate-btn").addEventListener(
 		"click",

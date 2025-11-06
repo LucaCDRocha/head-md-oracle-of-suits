@@ -40,14 +40,16 @@
 			<!-- p5 canvas holder (kept, but preview section removed) -->
 			<div id="p5-holder"></div>
 			<!-- image returned by generative API will be shown here -->
-			<img id="generated-img" alt="Generated result" style="display: none; max-width: 100%; margin-top: 10px" />
+			<img id="generated-img" alt="Generated result" style="display: none" />
 
 			<section id="controls">
 				<div id="cards-list">Loading cards…</div>
 
 				<div id="selected-area">
-					<h3>Selected (0/3)</h3>
-					<div id="selected-summary"></div>
+					<div style="display:none">
+						<h3>Selected (0/3)</h3>
+						<div id="selected-summary"></div>
+					</div>
 					<div>
 						<button id="generate-btn" type="button" disabled>Generate & Upload Hybrid</button>
 					</div>

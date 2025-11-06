@@ -122,11 +122,13 @@ canvas {
 	box-shadow: none;
 	width: 33.333%;
 	max-width: 33.333vw;
+	height: 66.666vh;
 	flex-shrink: 1;
 	flex-grow: 0;
 	display: flex;
 	flex-direction: column;
 	align-items: center;
+	justify-content: space-between;
 	position: relative;
 	box-sizing: border-box;
 	overflow: hidden;
@@ -166,7 +168,7 @@ canvas {
 
 .base-selector {
 	width: 100%;
-	order: 3;
+	order: 4;
 	margin-top: 8px;
 	text-align: center;
 }
@@ -186,7 +188,8 @@ canvas {
 	grid-template-columns: repeat(4, 1fr);
 	gap: 4px;
 	width: 100%;
-	order: 2;
+	order: 3;
+	margin-top: auto;
 }
 
 .filter-group {
@@ -243,8 +246,7 @@ canvas {
 	border: none;
 	padding: 0;
 	margin-bottom: 15px;
-	min-height: 320px;
-	max-height: 320px;
+	min-height: 200px;
 	display: flex;
 	flex-direction: column;
 	align-items: center;
@@ -253,12 +255,11 @@ canvas {
 	width: 100%;
 	max-width: 100%;
 	box-sizing: border-box;
+	flex-grow: 1;
 }
 
 .slot-preview img {
-	max-width: 100%;
-	max-height: 320px;
-	width: auto;
+	width: 40%;
 	height: auto;
 	object-fit: contain;
 	border-radius: 6px;
@@ -373,19 +374,19 @@ canvas {
 	margin-top: 4px;
 }
 
-/* === SELECTED AREA (CENTERED PANEL) === */
+/* === SELECTED AREA (FLOATING BOTTOM RIGHT) === */
 #selected-area {
-	position: relative;
-	top: auto;
-	right: auto;
-	width: 100%;
-	max-width: 600px;
-	margin: 30px auto;
-	background: rgba(255, 255, 255, 0.8);
-	border-radius: 8px;
+	position: fixed;
+	bottom: 20px;
+	right: 20px;
+	width: auto;
+	max-width: 350px;
+	margin: 0;
+	background: rgba(255, 255, 255, 0.95);
+	border-radius: 12px;
 	padding: 20px;
-	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-	z-index: 10;
+	box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+	z-index: 100;
 }
 
 #selected-area h3 {
@@ -456,11 +457,15 @@ canvas {
 }
 
 #generated-img {
-	margin: 20px auto;
-	border-radius: 8px;
-	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-	max-width: 512px;
-	display: block;
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100vw;
+	height: 100vh;
+	object-fit: contain;
+	background: rgba(0, 0, 0, 0.95);
+	z-index: 9999;
+	cursor: pointer;
 }
 
 #status {

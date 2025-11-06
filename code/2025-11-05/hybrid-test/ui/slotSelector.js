@@ -93,6 +93,9 @@ function renderSlotUI() {
 	});
 
 	updateSelectedArea();
+
+	// Re-apply the knob control indicator after rendering
+	updateKnobActiveIndicator();
 }
 
 /**
