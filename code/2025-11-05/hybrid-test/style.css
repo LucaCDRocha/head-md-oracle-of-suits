@@ -259,10 +259,10 @@ canvas {
 }
 
 .slot-preview img {
-	width: 40%;
+	width: 37%;
 	height: auto;
 	object-fit: contain;
-	border-radius: 6px;
+	border-radius: 10px;
 	box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
 }
 
