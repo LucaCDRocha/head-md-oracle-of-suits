@@ -582,7 +582,24 @@ function getAvailableValues(filters) {
 	}
 
 	const values = [...new Set(cards.map((c) => c.value).filter((v) => v))];
-	return values.sort();
+
+	// Sort values: numbers first (numerically), then non-numbers (alphabetically)
+	return values.sort((a, b) => {
+		const aNum = parseInt(a);
+		const bNum = parseInt(b);
+
+		// Both are numbers
+		if (!isNaN(aNum) && !isNaN(bNum)) {
+			return aNum - bNum;
+		}
+
+		// a is number, b is not - numbers come first
+		if (!isNaN(aNum)) return -1;
+		if (!isNaN(bNum)) return 1;
+
+		// Both are non-numbers - alphabetical sort
+		return String(a).localeCompare(String(b));
+	});
 }
 
 /**
