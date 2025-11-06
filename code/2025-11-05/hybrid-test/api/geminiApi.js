@@ -56,20 +56,44 @@ export async function generateImage(selected, baseCardId, statusCallback) {
 	// build a simple prompt from selected cards
 	const baseId = baseCardId || selected[0]?.id;
 	const baseCard = selected.find((s) => s.id === baseId) || selected[0];
-	const suitName = baseCard?.equivalence_name || baseCard?.equivalence || baseCard?.suit || baseCard?.name || "spades";
+	const suitName =
+		baseCard?.french_equivalence ||
+		baseCard?.equivalence_name ||
+		baseCard?.equivalence ||
+		baseCard?.suit ||
+		baseCard?.name ||
+		"spades";
 
-	const prompt = `Create a vertical portrait playing card image blending: ${selected.map((s) => s.name).join(", ")}. 
+	const prompt = `Create a hybrid playing card image with these EXACT specifications:
 
-CRITICAL REQUIREMENTS:
-- PORTRAIT/VERTICAL orientation - card must be taller than it is wide
-- The ENTIRE image should be the card design - no white background, no padding, no borders outside the card
-- Fill the entire canvas edge-to-edge with the card artwork
-- Use classic French playing card design with corner symbols
-- Main suit symbol should be ${suitName}
-- Include corner indices (rank and suit in top-left and bottom-right corners)
-- Central artwork blending the themes of the selected cards
-- Professional playing card aesthetic with clean, crisp design
-- The card design itself should have a subtle decorative border, but the image should not have any white space around it`;
+CARD STRUCTURE (Vintage French playing card style):
+1. WHITE BORDER with ROUNDED CORNERS:
+   - Add a clean white border around the entire card
+   - The border should have gently rounded corners (like vintage playing cards)
+   - Border width approximately 5-8% of card width
+   - The main card area inside the border should also have rounded corners
+
+2. CORNER INDICES (Minimal, stacked style):
+   - Top-left corner: Display only the rank and suit symbols for "${suitName}"
+   - Stack them vertically (rank on top, suit symbol below)
+   - Bottom-right corner: Same symbols rotated 180 degrees
+   - NO TEXT - only symbols (like A with ♥, K with ♠, etc.)
+   - Use classic French playing card typography
+   - Red color for hearts/diamonds, black for spades/clubs
+   - Keep corners minimal and elegant
+
+3. CENTRAL HYBRID ARTWORK:
+   - In the remaining center space, create a HYBRID fusion artwork
+   - Blend visual elements from: ${selected.map((s) => s.name).join(", ")}
+   - The hybrid should be creative, artistic, and seamlessly merge the themes
+   - Vintage artistic style with rich colors and detailed illustration
+   - Maintain sophisticated playing card aesthetic
+
+TECHNICAL REQUIREMENTS:
+- Portrait orientation (3:4 aspect ratio)
+- Professional playing card quality with vintage aesthetic
+- Clean, crisp design with rounded corners throughout
+- White border with rounded corners is essential`;
 
 	const payload = {
 		contents: [
