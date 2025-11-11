@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+		<title>Sketch</title>
+
+		<link rel="stylesheet" type="text/css" href="style.css" />
+
+		<script src="libraries/p5.min.js"></script>
+		<script src="libraries/p5.sound.min.js"></script>
+	</head>
+
+	<body>
+		<div id="app">
+			<header>
+				<h1>Hybrid builder</h1>
+				<p>Select 3 cards, pick a base card, generate a hybrid image and upload it to the DB.</p>
+			</header>
+
+			<!-- Arduino Knob Control Panel -->
+			<div id="knob-control-panel">
+				<div id="knob-status">
+					<span id="knob-indicator">🎛️ Knob Control:</span>
+					<label><input type="radio" name="active-slot" value="1" checked /> Card 1</label>
+					<label><input type="radio" name="active-slot" value="2" /> Card 2</label>
+					<label><input type="radio" name="active-slot" value="3" /> Card 3</label>
+				</div>
+			</div>
+
+			<!-- Knob Values Display (top right) -->
+			<div id="knob-values-display">
+				<div class="knob-value-item">K1: <span id="knob-1-value">0</span></div>
+				<div class="knob-value-item">K2: <span id="knob-2-value">0</span></div>
+				<div class="knob-value-item">K3: <span id="knob-3-value">0</span></div>
+				<div class="knob-value-item">K4: <span id="knob-4-value">0</span></div>
+			</div>
+
+			<!-- p5 canvas holder (kept, but preview section removed) -->
+			<div id="p5-holder"></div>
+			<!-- image returned by generative API will be shown here -->
+			<img id="generated-img" alt="Generated result" style="display: none" />
+
+			<section id="controls">
+				<div id="cards-list">Loading cards…</div>
+
+				<div id="selected-area">
+					<div style="display:none">
+						<h3>Selected (0/3)</h3>
+						<div id="selected-summary"></div>
+					</div>
+					<div>
+						<button id="generate-btn" type="button" disabled>Generate & Upload Hybrid</button>
+					</div>
+					<div id="status"></div>
+				</div>
+			</section>
+		</div>
+
+		<!-- Load p5.js libraries -->
+		<script src="libraries/p5.min.js"></script>
+		<script src="libraries/p5.sound.min.js"></script>
+
+		<!-- Load config (with window.ENV for backward compatibility) -->
+		<script src="config.js"></script>
+
+		<!-- Load main sketch as ES6 module -->
+		<script type="module" src="sketch.js"></script>
+	</body>
+</html>
