@@ -1,11 +1,4 @@
-import {
-	initSlotSelector,
-	getSelectedCards,
-	getBaseCardId,
-	drawPreview,
-	setActiveSlotForKnobs,
-	handleKnobChange,
-} from "./ui/slotSelector.js";
+import { initSlotSelector, getSelectedCards, getBaseCardId, drawPreview, handleKnobChange } from "./ui/slotSelector.js";
 import { generateImage } from "./api/geminiApi.js";
 import { uploadHybridBase64 } from "./api/hybridApi.js";
 import { setupSerial, setKnobChangeCallback } from "./Serial.js";
@@ -39,9 +32,6 @@ window.setup = function () {
 		handleKnobChange(knobValues);
 	});
 
-	// Setup radio buttons for slot selection
-	setupSlotRadioButtons();
-
 	// Setup fullscreen image click handler
 	const generatedImg = document.getElementById("generated-img");
 	if (generatedImg) {
@@ -71,17 +61,6 @@ window.setup = function () {
 	// Load cards using slot selector
 	initSlotSelector();
 };
-
-// Setup radio buttons to switch active slot for knob control
-function setupSlotRadioButtons() {
-	const radios = document.querySelectorAll('input[name="active-slot"]');
-	radios.forEach((radio) => {
-		radio.addEventListener("change", (e) => {
-			const slotId = parseInt(e.target.value);
-			setActiveSlotForKnobs(slotId);
-		});
-	});
-}
 
 window.draw = function () {
 	// Use drawPreview from slot selector module

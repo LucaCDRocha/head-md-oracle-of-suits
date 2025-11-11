@@ -3,8 +3,10 @@ let reader;
 let connectButton;
 let buffer = "";
 
-// Store 4 knob values (0-1023 from Arduino)
-export let knobValues = [0, 0, 0, 0];
+// Store 12 knob values (0-1023 from Arduino)
+// Organized as 3 cards with 4 knobs each:
+// Card 1: knobs 0-3, Card 2: knobs 4-7, Card 3: knobs 8-11
+export let knobValues = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 
 // Callback that will be called when knob values change
 let onKnobChangeCallback = null;
@@ -65,26 +67,16 @@ async function readLoop() {
 
 function parseLine(line) {
 	const parts = line.split(/\s+/);
-	if (parts.length < 4) return;
+	if (parts.length < 12) return;
 
-	const [knob1, knob2, knob3, knob4] = parts.map(Number);
+	const newValues = parts.slice(0, 12).map(Number);
 
 	let changed = false;
-	if (!isNaN(knob1) && knobValues[0] !== knob1) {
-		knobValues[0] = knob1;
-		changed = true;
-	}
-	if (!isNaN(knob2) && knobValues[1] !== knob2) {
-		knobValues[1] = knob2;
-		changed = true;
-	}
-	if (!isNaN(knob3) && knobValues[2] !== knob3) {
-		knobValues[2] = knob3;
-		changed = true;
-	}
-	if (!isNaN(knob4) && knobValues[3] !== knob4) {
-		knobValues[3] = knob4;
-		changed = true;
+	for (let i = 0; i < 12; i++) {
+		if (!isNaN(newValues[i]) && knobValues[i] !== newValues[i]) {
+			knobValues[i] = newValues[i];
+			changed = true;
+		}
 	}
 
 	// Update display
@@ -102,13 +94,17 @@ function parseLine(line) {
 }
 
 function updateKnobDisplay() {
-	const k1 = document.getElementById("knob-1-value");
-	const k2 = document.getElementById("knob-2-value");
-	const k3 = document.getElementById("knob-3-value");
-	const k4 = document.getElementById("knob-4-value");
+	// Update display for all 12 knobs
+	for (let i = 0; i < 12; i++) {
+		const element = document.getElementById(`knob-${i + 1}-value`);
+		if (element) {
+			element.textContent = knobValues[i];
+		}
+	}
+}
 
-	if (k1) k1.textContent = knobValues[0];
-	if (k2) k2.textContent = knobValues[1];
-	if (k3) k3.textContent = knobValues[2];
-	if (k4) k4.textContent = knobValues[3];
+// Helper function to get knob values for a specific card (0, 1, or 2)
+export function getCardKnobs(cardIndex) {
+	const startIdx = cardIndex * 4;
+	return knobValues.slice(startIdx, startIdx + 4);
 }

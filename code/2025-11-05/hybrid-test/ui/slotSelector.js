@@ -29,9 +29,6 @@ export async function initSlotSelector() {
 		});
 
 		renderSlotUI();
-
-		// Initialize knob control visual indicator
-		updateKnobActiveIndicator();
 	} catch (err) {
 		console.error("Error initializing slot selector:", err);
 	}
@@ -93,9 +90,6 @@ function renderSlotUI() {
 	});
 
 	updateSelectedArea();
-
-	// Re-apply the knob control indicator after rendering
-	updateKnobActiveIndicator();
 }
 
 /**
@@ -719,56 +713,45 @@ export function drawPreview(p5Instance) {
 
 // ============= KNOB CONTROL SYSTEM =============
 
-let activeSlotForKnobs = 1; // Which slot is being controlled by knobs
-
-/**
- * Set which slot should be controlled by the knobs
- */
-export function setActiveSlotForKnobs(slotId) {
-	activeSlotForKnobs = slotId;
-	console.log(`Active slot for knobs set to: ${slotId}`);
-
-	// Update visual indicator
-	updateKnobActiveIndicator();
-}
-
-/**
- * Get the currently active slot for knob control
- */
-export function getActiveSlotForKnobs() {
-	return activeSlotForKnobs;
-}
-
-/**
- * Update visual indicator showing which slot is controlled by knobs
- */
-function updateKnobActiveIndicator() {
-	// Remove active-knob-control class from all slots
-	document.querySelectorAll(".slot-card").forEach((el) => {
-		el.classList.remove("active-knob-control");
-	});
-
-	// Add to active slot
-	const activeSlotEl = document.getElementById(`slot-${activeSlotForKnobs}`);
-	if (activeSlotEl) {
-		activeSlotEl.classList.add("active-knob-control");
-	}
-}
-
 /**
  * Handle knob value changes from Arduino
- * knobValues = [knob1, knob2, knob3, knob4] each 0-1023
- * Map to: Year, Game, Suits, Value
+ * knobValues = [k1, k2, ..., k12] each 0-1023
+ * Card 1 (knobs 0-3): Year, Game, Suits, Value
+ * Card 2 (knobs 4-7): Year, Game, Suits, Value
+ * Card 3 (knobs 8-11): Year, Game, Suits, Value
  */
 export function handleKnobChange(knobValues) {
 	console.log("Knob values received:", knobValues);
 
-	const slot = slots.find((s) => s.id === activeSlotForKnobs);
-	if (!slot) {
-		console.error("Active slot not found:", activeSlotForKnobs);
-		return;
+	// Process all 3 cards simultaneously
+	let anyChanged = false;
+
+	for (let cardIndex = 0; cardIndex < 3; cardIndex++) {
+		const slot = slots[cardIndex];
+		if (!slot) continue;
+
+		// Extract the 4 knobs for this card
+		const startIdx = cardIndex * 4;
+		const cardKnobs = knobValues.slice(startIdx, startIdx + 4);
+
+		console.log(`Processing Card ${cardIndex + 1} with knobs:`, cardKnobs);
+
+		const changed = updateSlotFromKnobs(slot, cardKnobs);
+		if (changed) anyChanged = true;
 	}
 
+	// Re-render UI once if any slot changed
+	if (anyChanged) {
+		console.log("Filters changed, updating UI...");
+		renderSlotUI();
+	}
+}
+
+/**
+ * Update a single slot based on 4 knob values
+ * Returns true if any filter changed
+ */
+function updateSlotFromKnobs(slot, knobValues) {
 	console.log("Controlling slot:", slot.id);
 
 	// Get available options for each filter based on current slot state
@@ -849,18 +832,14 @@ export function handleKnobChange(knobValues) {
 	}
 
 	if (changed) {
-		console.log("Filters changed, updating UI...");
 		// Update the UI select elements
 		updateSlotFilterUI(slot);
 
 		// Auto-select card based on new filters
 		autoSelectCardIfFiltersComplete(slot);
-
-		// Re-render the entire UI to show changes
-		renderSlotUI();
-	} else {
-		console.log("No filter changes detected");
 	}
+
+	return changed;
 }
 
 /**
