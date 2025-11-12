@@ -8,9 +8,14 @@ let buffer = "";
 // Card 1: knobs 0-3, Card 2: knobs 4-7, Card 3: knobs 8-11
 export let knobValues = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 
-// Button state (0 = HIGH/not pressed, 1 = LOW/pressed)
-let buttonState = 0;
-let lastButtonState = 0;
+// Button state (1 = HIGH/not pressed, 0 = LOW/pressed with pull-up resistor)
+let buttonState = 1; // Initialize to HIGH (not pressed)
+let lastButtonState = 1; // Initialize to HIGH to prevent false trigger on connection
+
+// Connection state to prevent false button triggers immediately after connecting
+let isConnected = false;
+let connectionTime = 0;
+const CONNECTION_STABILIZATION_DELAY = 2000; // Wait 2 seconds after connection before accepting button presses
 
 // Callback that will be called when knob values change
 let onKnobChangeCallback = null;
@@ -49,6 +54,12 @@ async function connectSerial() {
 
 		connectButton.attribute("disabled", "");
 		connectButton.html("Connected ✓");
+
+		// Mark as connected and set connection time
+		isConnected = true;
+		connectionTime = Date.now();
+		console.log("Arduino connected. Button inputs will be accepted after stabilization period.");
+
 		readLoop();
 	} catch (err) {
 		console.error("Serial connection failed:", err);
@@ -93,11 +104,23 @@ function parseLine(line) {
 
 	// Check for button press (transition from HIGH to LOW)
 	if (!isNaN(newButtonState)) {
+		// Check if enough time has passed since connection to accept button presses
+		const timeSinceConnection = Date.now() - connectionTime;
+		const isStabilized = timeSinceConnection > CONNECTION_STABILIZATION_DELAY;
+
 		if (newButtonState === 0 && lastButtonState === 1) {
-			// Button was just pressed (LOW state, active low button)
-			console.log("Button pressed!");
-			if (onButtonPressCallback) {
-				onButtonPressCallback();
+			// Button was just pressed (LOW state, active low button with pull-up)
+			if (isStabilized) {
+				console.log("Button pressed!");
+				if (onButtonPressCallback) {
+					onButtonPressCallback();
+				}
+			} else {
+				console.log(
+					`Button press ignored - connection stabilizing (${Math.ceil(
+						(CONNECTION_STABILIZATION_DELAY - timeSinceConnection) / 1000
+					)}s remaining)`
+				);
 			}
 		}
 		lastButtonState = newButtonState;
