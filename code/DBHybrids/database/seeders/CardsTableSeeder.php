@@ -15,27 +15,28 @@ class CardsTableSeeder extends Seeder
         $processedDecks = [];
         $unknownTokens = [];
 
-        // Global equivalences (groups) from config - used to populate french equivalents
+        // Global equivalences (groups) from config - used to populate French equivalents
+        // These map various tokens to standardized English names for French deck equivalents
         $equivalences = config('decks.equivalences', []);
-        $globalValuesFr = [];
-        $globalSuitsFr = [];
+        $globalValuesEq = [];
+        $globalSuitsEq = [];
         if (! empty($equivalences)) {
-            // values groups
+            // values groups - maps tokens to English equivalents
             $groups = $equivalences['values_groups'] ?? [];
             foreach ($groups as $g) {
                 $to = $g['to'] ?? null;
                 $tokens = $g['tokens'] ?? [];
                 foreach ($tokens as $t) {
-                    $globalValuesFr[strtoupper($t)] = $to;
+                    $globalValuesEq[strtoupper($t)] = $to;
                 }
             }
-            // suits groups
+            // suits groups - maps tokens to English equivalents
             $sg = $equivalences['suits_groups'] ?? [];
             foreach ($sg as $g) {
                 $to = $g['to'] ?? null;
                 $tokens = $g['tokens'] ?? [];
                 foreach ($tokens as $t) {
-                    $globalSuitsFr[strtoupper($t)] = $to;
+                    $globalSuitsEq[strtoupper($t)] = $to;
                 }
             }
         }
@@ -108,7 +109,8 @@ class CardsTableSeeder extends Seeder
                         'suits' => $suitFull,
                         'value' => $valueToken,
                         'img_src' => $file,
-                        'french_equivalence' => 'Joker',
+                        'french_suits' => 'Special',
+                        'french_value' => 'Joker',
                     ]);
 
                     continue;
@@ -126,7 +128,8 @@ class CardsTableSeeder extends Seeder
                         'suits' => $suitFull,
                         'value' => $valueToken,
                         'img_src' => $file,
-                        'french_equivalence' => null,
+                        'french_suits' => null,
+                        'french_value' => null,
                     ]);
 
                     continue;
@@ -183,7 +186,33 @@ class CardsTableSeeder extends Seeder
 
                     $suitFull = $suitsMap[$suitInitial] ?? null;
 
+                    // Determine French suit equivalent using global equivalences from config
+                    // The equivalences map various suit names to standardized English names
+                    $frenchSuitEq = null;
+                    $suitCandidates = [];
+                    if (! empty($suitInitial)) {
+                        $suitCandidates[] = strtoupper($suitInitial);
+                    }
+                    if (! empty($suitFull)) {
+                        $suitCandidates[] = strtoupper($suitFull);
+                        $suitCandidates[] = strtoupper(str_replace(' ', '', $suitFull));
+                    }
+
+                    // Check global equivalences first
+                    foreach ($suitCandidates as $candidate) {
+                        if (isset($globalSuitsEq[$candidate])) {
+                            $frenchSuitEq = $globalSuitsEq[$candidate];
+                            break;
+                        }
+                    }
+
+                    // If no global equivalence found, use the suit name as-is
+                    if ($frenchSuitEq === null && $suitFull !== null) {
+                        $frenchSuitEq = $suitFull;
+                    }
+
                     // Prepare French suit mapping: check preset, then per-folder suits_fr.json, then defaults
+                    // NOTE: This is kept for backwards compatibility but not actively used for french_suits
                     $suitsFrMap = [
                         'S' => 'Pique',
                         'H' => 'Coeur',
@@ -191,8 +220,8 @@ class CardsTableSeeder extends Seeder
                         'C' => 'Trefle',
                     ];
                     // merge global equivalences (lowest priority) so presets and per-folder can override
-                    if (! empty($globalSuitsFr)) {
-                        $suitsFrMap = array_merge($globalSuitsFr, $suitsFrMap);
+                    if (! empty($globalSuitsEq)) {
+                        $suitsFrMap = array_merge($globalSuitsEq, $suitsFrMap);
                     }
                     if ($matchedPreset && ! empty($matchedPreset['suits_fr']) && is_array($matchedPreset['suits_fr'])) {
                         $suitsFrMap = array_merge($suitsFrMap, $matchedPreset['suits_fr']);
@@ -298,7 +327,49 @@ class CardsTableSeeder extends Seeder
                     $name = $valueName . ($suitFull ? ' of ' . $suitFull : '');
                 }
 
-                // Determine French equivalence for this card
+                // Determine French value equivalent using global equivalences from config
+                $frenchValueEq = null;
+
+                // check for preset values_fr (legacy support)
+                if ($matchedPreset && ! empty($matchedPreset['values_fr']) && is_array($matchedPreset['values_fr'])) {
+                    $frenchValueEq = $matchedPreset['values_fr'][($valueToken ?? '')] ?? null;
+                }
+
+                // check per-folder values_fr.json (legacy support)
+                $valuesFrJsonPath = $folder . '/values_fr.json';
+                if (Storage::disk('public')->exists($valuesFrJsonPath)) {
+                    try {
+                        $contents = Storage::disk('public')->get($valuesFrJsonPath);
+                        $custom = json_decode($contents, true);
+                        if (is_array($custom)) {
+                            $customNormalized = [];
+                            foreach ($custom as $k => $v) {
+                                $customNormalized[strtoupper($k)] = $v;
+                            }
+                            if (isset($customNormalized[strtoupper($valueToken ?? '')])) {
+                                $frenchValueEq = $customNormalized[strtoupper($valueToken ?? '')];
+                            }
+                        }
+                    } catch (\Throwable $e) {
+                        // ignore malformed JSON
+                    }
+                }
+
+                // Use global equivalences from config if not found yet
+                if ($frenchValueEq === null && $valueToken !== null) {
+                    // Check global equivalences first
+                    if (isset($globalValuesEq[$valueToken])) {
+                        $frenchValueEq = $globalValuesEq[$valueToken];
+                    } elseif (is_numeric($valueToken)) {
+                        // Numeric values stay as-is
+                        $frenchValueEq = $valueToken;
+                    } elseif ($valueName !== null) {
+                        // Fall back to the resolved value name if available
+                        $frenchValueEq = $valueName;
+                    }
+                }
+
+                // Determine French equivalence for this card (legacy variable, not used anymore)
                 $valueFr = null;
                 // check for preset values_fr
                 if ($matchedPreset && ! empty($matchedPreset['values_fr']) && is_array($matchedPreset['values_fr'])) {
@@ -352,17 +423,26 @@ class CardsTableSeeder extends Seeder
                 }
 
                 $frenchEquivalence = null;
+                $frenchSuits = null;
+                $frenchValue = null;
+
                 if ($valueFr) {
-                    $frenchEquivalence = $valueFr . ($suitFr ? ' de ' . $suitFr : '');
-                } elseif ($suitFr) {
-                    // no value but suit exists (unlikely) — just show suit
-                    $frenchEquivalence = $suitFr;
+                    $frenchValue = $valueFr;
                 }
 
+                if ($suitFr) {
+                    $frenchSuits = $suitFr;
+                }
+
+                // Assign the French equivalents
+                $frenchSuits = $frenchSuitEq;
+                $frenchValue = $frenchValueEq;
+
                 // If this card belongs to a special suit (major arcana etc.),
-                // mark its equivalence as Joker but keep original suits/value.
+                // mark its equivalence as Special/Joker but keep original suits/value.
                 if (! empty($isSpecialSuit)) {
-                    $frenchEquivalence = 'Joker';
+                    $frenchSuits = 'Special';
+                    $frenchValue = 'Joker';
                 }
 
                 Card::create([
@@ -371,7 +451,8 @@ class CardsTableSeeder extends Seeder
                     'suits' => $suitFull,
                     'value' => $valueToken ?? null,
                     'img_src' => $file,
-                    'french_equivalence' => $frenchEquivalence,
+                    'french_suits' => $frenchSuits,
+                    'french_value' => $frenchValue,
                 ]);
             }
         }

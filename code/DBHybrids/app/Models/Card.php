@@ -15,7 +15,8 @@ class Card extends Model
         'suits',
         'value',
         'img_src',
-        'french_equivalence',
+        'french_suits',
+        'french_value',
     ];
 
     public function game()

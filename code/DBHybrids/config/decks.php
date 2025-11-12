@@ -121,23 +121,23 @@ return [
         'suits_groups' => [
             [
                 'to' => 'Spades',
-                'tokens' => ['S', 'Spades', 'Shields', 'Swords'],
+                'tokens' => ['Spades', 'Shields', 'Swords'],
             ],
             [
                 'to' => 'Hearts',
-                'tokens' => ['H', 'Cups', 'Hearts', 'Roses'],
+                'tokens' => ['Cups', 'Hearts', 'Roses'],
             ],
             [
                 'to' => 'Diamonds',
-                'tokens' => ['Pentacles', 'D', 'Diamonds', 'Bells', 'Coins'],
+                'tokens' => ['Pentacles', 'Diamonds', 'Bells', 'Coins'],
             ],
             [
                 'to' => 'Clubs',
-                'tokens' => ['C', 'Clubs', 'Baton', 'Wands', 'Batons'],
+                'tokens' => ['Clubs', 'Baton', 'Wands', 'Batons'],
             ],
             [
                 'to' => 'Special',
-                'tokens' => ['M', 'Major Arcana', 'Special'],
+                'tokens' => ['Major Arcana', 'Special'],
             ]
         ],
     ],

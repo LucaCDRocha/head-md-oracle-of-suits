@@ -15,7 +15,8 @@ return new class extends Migration
             $table->string('suits')->nullable();
             $table->string('value')->nullable();
             $table->string('img_src')->nullable();
-            $table->string('french_equivalence')->nullable();
+            $table->string('french_suits')->nullable();
+            $table->string('french_value')->nullable();
             $table->timestamps();
         });
     }
