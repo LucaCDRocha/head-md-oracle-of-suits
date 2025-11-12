@@ -3,6 +3,7 @@ import { generateImage } from "./api/geminiApi.js";
 import { uploadHybridBase64 } from "./api/hybridApi.js";
 import { setupSerial, setKnobChangeCallback, setButtonPressCallback } from "./Serial.js";
 import { initQRCodes, updateDownloadQR } from "./ui/qrCodes.js";
+import { DEBUG } from "./config.js";
 
 let canvas;
 let lastGeneratedBase64 = null;
@@ -46,6 +47,9 @@ window.setup = function () {
 		handleButtonPress();
 	});
 
+	// Apply DEBUG mode visibility
+	applyDebugMode();
+
 	// wire UI
 	document.getElementById("generate-btn").addEventListener(
 		"click",
@@ -67,6 +71,27 @@ window.setup = function () {
 	// Load cards using slot selector
 	initSlotSelector();
 };
+
+/**
+ * Apply DEBUG mode visibility settings
+ * - Shows/hides knob values display
+ * - Shows/hides selected area (generate button section)
+ */
+function applyDebugMode() {
+	console.log("Applying DEBUG mode:", DEBUG);
+
+	// Control knob values display
+	const knobValuesDisplay = document.getElementById("knob-values-display");
+	if (knobValuesDisplay) {
+		knobValuesDisplay.style.display = DEBUG ? "block" : "none";
+	}
+
+	// Control selected area (generate button section)
+	const selectedArea = document.getElementById("selected-area");
+	if (selectedArea) {
+		selectedArea.style.display = DEBUG ? "block" : "none";
+	}
+}
 
 window.draw = function () {
 	// Use drawPreview from slot selector module

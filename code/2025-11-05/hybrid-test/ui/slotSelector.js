@@ -1,6 +1,6 @@
 /**
  * Dynamic slot-based card selector
- * Each slot can filter by: year, game, suits, rank (value)
+ * Each slot can filter by: year range (century segments), game, suits, rank (value)
  */
 
 import { fetchCards } from "../api/cardApi.js";
@@ -216,8 +216,12 @@ function selectRandomCard(slot) {
 	const randomCard = allCards[Math.floor(Math.random() * allCards.length)];
 	const gameId = randomCard.game_id || randomCard.game?.id;
 
+	// Find the year range this card belongs to
+	const yearRanges = getYearRanges();
+	const cardYearRange = yearRanges.find((range) => isYearInRange(randomCard.game?.year, range.key));
+
 	// Set filters based on the random card
-	slot.filters.year = randomCard.game?.year || null;
+	slot.filters.yearRange = cardYearRange ? cardYearRange.key : null;
 	slot.filters.game = gameId;
 	slot.filters.suits = randomCard.suits;
 	slot.filters.value = randomCard.value;
@@ -248,7 +252,7 @@ function autoSelectCardIfFiltersComplete(slot) {
 	let matchingCards = allCards.filter((card) => {
 		const gameId = card.game_id || card.game?.id;
 
-		if (slot.filters.year && card.game?.year != slot.filters.year) return false;
+		if (slot.filters.yearRange && !isYearInRange(card.game?.year, slot.filters.yearRange)) return false;
 		if (slot.filters.game && gameId != slot.filters.game) return false;
 		if (slot.filters.suits && card.suits != slot.filters.suits) return false;
 		if (slot.filters.value && card.value != slot.filters.value) return false;
@@ -278,8 +282,8 @@ function tryMatchByFrenchEquivalence(slot, targetEquivalence) {
 	let matchingCards = allCards.filter((card) => {
 		const gameId = card.game_id || card.game?.id;
 
-		// Must match year filter if set
-		if (slot.filters.year && card.game?.year != slot.filters.year) return false;
+		// Must match year range filter if set
+		if (slot.filters.yearRange && !isYearInRange(card.game?.year, slot.filters.yearRange)) return false;
 
 		// Must match the new game
 		if (slot.filters.game && gameId != slot.filters.game) return false;
@@ -303,8 +307,8 @@ function tryMatchByFrenchEquivalence(slot, targetEquivalence) {
 			matchingCards = allCards.filter((card) => {
 				const gameId = card.game_id || card.game?.id;
 
-				// Must match year filter if set
-				if (slot.filters.year && card.game?.year != slot.filters.year) return false;
+				// Must match year range filter if set
+				if (slot.filters.yearRange && !isYearInRange(card.game?.year, slot.filters.yearRange)) return false;
 
 				// Must match the new game
 				if (slot.filters.game && gameId != slot.filters.game) return false;
@@ -346,23 +350,23 @@ function createYearFilter(slot) {
 	filterGroup.className = "filter-group";
 
 	const label = document.createElement("label");
-	label.textContent = "Year:";
+	label.textContent = "Year Range:";
 
 	const select = document.createElement("select");
 	select.className = "filter-select";
 	select.id = `year-${slot.id}`;
 
-	const years = [...new Set(allGames.map((g) => g.year).filter((y) => y))].sort();
-	years.forEach((year) => {
+	const yearRanges = getYearRanges();
+	yearRanges.forEach((range) => {
 		const option = document.createElement("option");
-		option.value = year;
-		option.textContent = year;
-		option.selected = slot.filters.year == year;
+		option.value = range.key;
+		option.textContent = range.label;
+		option.selected = slot.filters.yearRange == range.key;
 		select.appendChild(option);
 	});
 
 	select.addEventListener("change", () => {
-		slot.filters.year = select.value || null;
+		slot.filters.yearRange = select.value || null;
 		slot.filters.game = null; // Reset dependent filters
 		slot.filters.suits = null;
 		slot.filters.value = null;
@@ -395,10 +399,10 @@ function createGameFilter(slot) {
 	allOption.textContent = "All games";
 	select.appendChild(allOption);
 
-	// Filter games by year if year is selected
+	// Filter games by year range if year range is selected
 	let availableGames = allGames;
-	if (slot.filters.year) {
-		availableGames = allGames.filter((g) => g.year == slot.filters.year);
+	if (slot.filters.yearRange) {
+		availableGames = allGames.filter((g) => isYearInRange(g.year, slot.filters.yearRange));
 	}
 
 	availableGames.forEach((game) => {
@@ -453,10 +457,7 @@ function createSuitsFilter(slot) {
 	select.className = "filter-select";
 	select.id = `suits-${slot.id}`;
 
-	const allOption = document.createElement("option");
-	allOption.value = "";
-	allOption.textContent = "All suits";
-	select.appendChild(allOption);
+	// No "All suits" option - knob control requires specific selection
 
 	// Get available suits based on filters
 	const availableSuits = getAvailableSuits(slot.filters);
@@ -497,10 +498,7 @@ function createValueFilter(slot) {
 	select.className = "filter-select";
 	select.id = `value-${slot.id}`;
 
-	const allOption = document.createElement("option");
-	allOption.value = "";
-	allOption.textContent = "All ranks";
-	select.appendChild(allOption);
+	// No "All ranks" option - knob control requires specific selection
 
 	// Get available values based on filters
 	const availableValues = getAvailableValues(slot.filters);
@@ -537,14 +535,66 @@ function getAvailableYears() {
 }
 
 /**
+ * Get year ranges based on available game years
+ * Groups years into century segments (1400-1500, 1500-1600, etc.)
+ */
+function getYearRanges() {
+	const years = getAvailableYears();
+	if (years.length === 0) return [];
+
+	// Find min and max years
+	const minYear = Math.min(...years);
+	const maxYear = Math.max(...years);
+
+	// Round down min to nearest 100
+	const startCentury = Math.floor(minYear / 100) * 100;
+
+	// Round up max to next century
+	const endCentury = Math.ceil((maxYear + 1) / 100) * 100;
+
+	const ranges = [];
+	for (let start = startCentury; start < endCentury; start += 100) {
+		const end = start + 100;
+
+		// Check if there are any games in this range
+		const gamesInRange = allGames.filter((g) => g.year >= start && g.year < end);
+
+		if (gamesInRange.length > 0) {
+			ranges.push({
+				key: `${start}-${end}`,
+				label: `${start} - ${end}`,
+				start: start,
+				end: end,
+				count: gamesInRange.length,
+			});
+		}
+	}
+
+	return ranges;
+}
+
+/**
+ * Check if a year falls within a year range
+ * @param {number} year - The year to check
+ * @param {string} rangeKey - Range key like "1400-1500"
+ * @returns {boolean}
+ */
+function isYearInRange(year, rangeKey) {
+	if (!year || !rangeKey) return false;
+
+	const [start, end] = rangeKey.split("-").map(Number);
+	return year >= start && year < end;
+}
+
+/**
  * Get available games based on current filters
  */
 function getAvailableGames(slot) {
 	let games = allGames;
 
-	// Filter by year if set
-	if (slot.filters.year) {
-		games = games.filter((g) => g.year == slot.filters.year);
+	// Filter by year range if set
+	if (slot.filters.yearRange) {
+		games = games.filter((g) => isYearInRange(g.year, slot.filters.yearRange));
 	}
 
 	// Return game IDs
@@ -554,30 +604,46 @@ function getAvailableGames(slot) {
 /**
  * Get available suits based on current filters
  * Note: Does NOT filter by value to allow selecting any suit (e.g., Joker)
+ * Sorts by French suits to ensure consistent ordering across games
  */
 function getAvailableSuits(filters) {
 	let cards = allCards;
 
-	if (filters.year) {
-		cards = cards.filter((c) => c.game?.year == filters.year);
+	if (filters.yearRange) {
+		cards = cards.filter((c) => isYearInRange(c.game?.year, filters.yearRange));
 	}
 	if (filters.game) {
 		cards = cards.filter((c) => (c.game_id || c.game?.id) == filters.game);
 	}
 	// Removed value filter to allow independent suit selection
 
+	// Create a map of suit -> french_suit for sorting
+	const suitToFrenchMap = new Map();
+	cards.forEach((c) => {
+		if (c.suits && c.french_suits) {
+			suitToFrenchMap.set(c.suits, c.french_suits);
+		}
+	});
+
 	const suits = [...new Set(cards.map((c) => c.suits).filter((s) => s))];
-	return suits.sort();
+
+	// Sort by French suits to maintain consistent order across games
+	return suits.sort((a, b) => {
+		const frenchA = suitToFrenchMap.get(a) || a;
+		const frenchB = suitToFrenchMap.get(b) || b;
+		return frenchA.localeCompare(frenchB);
+	});
 }
 
 /**
  * Get available values based on current filters
+ * Sorts by French values to ensure consistent ordering across games
  */
 function getAvailableValues(filters) {
 	let cards = allCards;
 
-	if (filters.year) {
-		cards = cards.filter((c) => c.game?.year == filters.year);
+	if (filters.yearRange) {
+		cards = cards.filter((c) => isYearInRange(c.game?.year, filters.yearRange));
 	}
 	if (filters.game) {
 		cards = cards.filter((c) => (c.game_id || c.game?.id) == filters.game);
@@ -586,24 +652,33 @@ function getAvailableValues(filters) {
 		cards = cards.filter((c) => c.suits == filters.suits);
 	}
 
+	// Create a map of value -> french_value for sorting
+	const valueToFrenchMap = new Map();
+	cards.forEach((c) => {
+		if (c.value && c.french_value) {
+			valueToFrenchMap.set(c.value, c.french_value);
+		}
+	});
+
 	const values = [...new Set(cards.map((c) => c.value).filter((v) => v))];
 
-	// Sort values: numbers first (numerically), then non-numbers (alphabetically)
+	// Sort by French values to maintain consistent order across games
+	// French values are typically numeric strings (e.g., "1", "2", ..., "14")
 	return values.sort((a, b) => {
-		const aNum = parseInt(a);
-		const bNum = parseInt(b);
+		const frenchA = valueToFrenchMap.get(a) || a;
+		const frenchB = valueToFrenchMap.get(b) || b;
 
-		// Both are numbers
-		if (!isNaN(aNum) && !isNaN(bNum)) {
-			return aNum - bNum;
+		// Try to parse as numbers first
+		const numA = parseInt(frenchA);
+		const numB = parseInt(frenchB);
+
+		// Both are numbers - sort numerically
+		if (!isNaN(numA) && !isNaN(numB)) {
+			return numA - numB;
 		}
 
-		// a is number, b is not - numbers come first
-		if (!isNaN(aNum)) return -1;
-		if (!isNaN(bNum)) return 1;
-
-		// Both are non-numbers - alphabetical sort
-		return String(a).localeCompare(String(b));
+		// One or both are not numbers - alphabetical sort
+		return String(frenchA).localeCompare(String(frenchB));
 	});
 }
 
@@ -795,7 +870,7 @@ function updateSlotFromKnobs(slot, knobValues) {
 	console.log("Controlling slot:", slot.id);
 
 	// Get available options for each filter based on current slot state
-	const yearOptions = getAvailableYears();
+	const yearRangeOptions = getYearRanges();
 	const gameOptions = getAvailableGames(slot);
 
 	// For suits and values, we need to pass the current filters to get dynamic options
@@ -804,7 +879,7 @@ function updateSlotFromKnobs(slot, knobValues) {
 	const valueOptions = getAvailableValues(slot.filters);
 
 	console.log("Available options:", {
-		years: yearOptions.length,
+		yearRanges: yearRangeOptions.length,
 		games: gameOptions.length,
 		suits: suitsOptions.length,
 		values: valueOptions.length,
@@ -814,27 +889,28 @@ function updateSlotFromKnobs(slot, knobValues) {
 	const knobOffset = (slot.id - 1) * 4;
 
 	// Map each knob value (0-1023) to its respective filter length with hysteresis
-	let yearIndex = mapKnobToIndexWithHysteresis(knobValues[0], yearOptions.length, knobOffset + 0);
+	// For suits and values, we map to the actual options (no "All" option)
+	let yearRangeIndex = mapKnobToIndexWithHysteresis(knobValues[0], yearRangeOptions.length, knobOffset + 0);
 	let gameIndex = mapKnobToIndexWithHysteresis(knobValues[1], gameOptions.length, knobOffset + 1);
 	let suitsIndex = mapKnobToIndexWithHysteresis(knobValues[2], suitsOptions.length, knobOffset + 2);
 	let valueIndex = mapKnobToIndexWithHysteresis(knobValues[3], valueOptions.length, knobOffset + 3);
 
-	console.log("Calculated indices:", { yearIndex, gameIndex, suitsIndex, valueIndex });
+	console.log("Calculated indices:", { yearRangeIndex, gameIndex, suitsIndex, valueIndex });
 
-	// Get values from options
-	const newYear = yearOptions[yearIndex] || null;
+	// Get values from options - suits and values are guaranteed to be specific (not null)
+	const newYearRange = yearRangeOptions[yearRangeIndex]?.key || null;
 	const newGame = gameOptions[gameIndex] || null;
-	const newSuits = suitsOptions[suitsIndex] || null;
-	const newValue = valueOptions[valueIndex] || null;
+	const newSuits = suitsOptions[suitsIndex] || null; // Will be a specific suit, never null
+	const newValue = valueOptions[valueIndex] || null; // Will be a specific value, never null
 
-	console.log("New filter values:", { newYear, newGame, newSuits, newValue });
+	console.log("New filter values:", { newYearRange, newGame, newSuits, newValue });
 	console.log("Current filter values:", slot.filters);
 
 	// Check if anything changed (compare as strings to handle type differences)
 	let changed = false;
-	if (String(slot.filters.year) !== String(newYear)) {
-		console.log(`Year changed: ${slot.filters.year} -> ${newYear}`);
-		slot.filters.year = newYear;
+	if (String(slot.filters.yearRange) !== String(newYearRange)) {
+		console.log(`Year range changed: ${slot.filters.yearRange} -> ${newYearRange}`);
+		slot.filters.yearRange = newYearRange;
 		changed = true;
 	}
 	if (String(slot.filters.game) !== String(newGame)) {
@@ -966,7 +1042,7 @@ function updateSlotFilterUI(slot) {
 	const suitsSelect = slotEl.querySelector("#suits-" + slot.id);
 	const valueSelect = slotEl.querySelector("#value-" + slot.id);
 
-	if (yearSelect) yearSelect.value = slot.filters.year || "";
+	if (yearSelect) yearSelect.value = slot.filters.yearRange || "";
 	if (gameSelect) gameSelect.value = slot.filters.game || "";
 	if (suitsSelect) suitsSelect.value = slot.filters.suits || "";
 	if (valueSelect) valueSelect.value = slot.filters.value || "";
