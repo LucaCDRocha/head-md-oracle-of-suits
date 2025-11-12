@@ -11,6 +11,9 @@ class GamesTableSeeder extends Seeder
 {
     public function run()
     {
+        // Load deck information from config
+        $decksInfo = config('decks.decks', []);
+
         // Auto-create games from folders in storage/app/public/img/cards
         // Each subfolder name becomes a Game name (if not already present)
         $folders = Storage::disk('public')->directories('img/cards');
@@ -20,11 +23,14 @@ class GamesTableSeeder extends Seeder
                 continue;
             }
 
+            // Check if we have deck information for this game
+            $deckInfo = $decksInfo[$gameName] ?? null;
+
             Game::firstOrCreate([
                 'name' => $gameName,
             ], [
-                'year' => now()->year,
-                'description' => 'Auto-created game from folder ' . $gameName,
+                'year' => $deckInfo['year'] ?? now()->year,
+                'description' => $deckInfo['description'] ?? 'Auto-created game from folder ' . $gameName,
             ]);
         }
     }
