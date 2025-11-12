@@ -78,8 +78,6 @@ window.setup = function () {
  * - Shows/hides selected area (generate button section)
  */
 function applyDebugMode() {
-	console.log("Applying DEBUG mode:", DEBUG);
-
 	// Control knob values display
 	const knobValuesDisplay = document.getElementById("knob-values-display");
 	if (knobValuesDisplay) {
@@ -99,14 +97,11 @@ window.draw = function () {
 };
 
 function handleButtonPress() {
-	console.log("Button press detected");
-
 	// Check if we're currently generating or within debounce period
 	const currentTime = Date.now();
 	const timeSinceLastGenerate = currentTime - lastGenerateTime;
 
 	if (isGenerating) {
-		console.log("Already generating, ignoring button press");
 		const status = document.getElementById("status");
 		if (status) status.innerText = "Generation in progress, please wait...";
 		return;
@@ -114,7 +109,6 @@ function handleButtonPress() {
 
 	if (timeSinceLastGenerate < DEBOUNCE_DURATION) {
 		const remainingTime = Math.ceil((DEBOUNCE_DURATION - timeSinceLastGenerate) / 1000);
-		console.log(`Debounce active, ${remainingTime}s remaining`);
 		const status = document.getElementById("status");
 		if (status) status.innerText = `Please wait ${remainingTime}s before generating again`;
 		return;
@@ -132,7 +126,6 @@ async function onGenerate() {
 	const timeSinceLastGenerate = currentTime - lastGenerateTime;
 
 	if (isGenerating) {
-		console.log("Already generating");
 		return;
 	}
 
@@ -146,8 +139,16 @@ async function onGenerate() {
 	isGenerating = true;
 	const btn = document.getElementById("generate-btn");
 	const status = document.getElementById("status");
+	const loadingOverlay = document.getElementById("loading-overlay");
+	const loadingStatus = document.getElementById("loading-status");
+	const generatedImg = document.getElementById("generated-img");
+
 	btn.disabled = true;
 	status.innerText = "Generating...";
+
+	// Show loading overlay and hide previous image
+	if (loadingOverlay) loadingOverlay.style.display = "flex";
+	if (generatedImg) generatedImg.style.display = "none";
 
 	const selected = getSelectedCards();
 	let baseCardId = getBaseCardId();
@@ -161,32 +162,87 @@ async function onGenerate() {
 		// Status callback for API calls
 		const statusCallback = (msg) => {
 			status.innerText = msg;
+			if (loadingStatus) loadingStatus.innerText = msg;
 		};
 
 		// Generate image using Gemini API
+		statusCallback("Génération de l'image...");
 		const base64 = await generateImage(selected, baseCardId, statusCallback);
 
-		// Store the returned base64 in memory
-		lastGeneratedBase64 = base64;
+		// Check if this is a prompt (DEBUG mode) or actual image
+		if (base64.startsWith("PROMPT:")) {
+			// DEBUG mode: Display the prompt as text
+			const prompt = base64.substring(7); // Remove "PROMPT:" prefix
 
-		// Display the generated image in the DOM
-		const dataUrl = "data:image/png;base64," + base64;
-		const imgEl = document.getElementById("generated-img");
-		if (imgEl) {
-			imgEl.src = dataUrl;
-			imgEl.style.display = "block";
-		}
+			// Hide loading overlay
+			if (loadingOverlay) loadingOverlay.style.display = "none";
 
-		// Upload to backend
-		status.innerText = "Image generated. Uploading to server...";
-		const uploadResult = await uploadHybridBase64(base64, selected, baseCardId, statusCallback);
+			// Hide the image element and show prompt instead
+			const imgEl = document.getElementById("generated-img");
+			if (imgEl) imgEl.style.display = "none";
 
-		// Update download QR code with the hybrid ID
-		if (uploadResult && uploadResult.data && uploadResult.data.id) {
-			updateDownloadQR(uploadResult.data.id);
-			console.log("QR code updated for hybrid ID:", uploadResult.data.id);
+			// Create or get the prompt display element
+			let promptDisplay = document.getElementById("prompt-display");
+			if (!promptDisplay) {
+				promptDisplay = document.createElement("div");
+				promptDisplay.id = "prompt-display";
+				promptDisplay.style.cssText = `
+					max-width: 90%;
+					max-height: 100%;
+					overflow-y: auto;
+					background: white;
+					padding: 20px;
+					border-radius: 12px;
+					box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+					font-family: monospace;
+					font-size: 14px;
+					line-height: 1.6;
+					white-space: pre-wrap;
+					text-align: left;
+				`;
+				document.getElementById("app2-content").appendChild(promptDisplay);
+			}
+			promptDisplay.textContent = prompt;
+			promptDisplay.style.display = "block";
+
+			statusCallback("DEBUG: Prompt affiché");
+
+			// Store the prompt (not base64)
+			lastGeneratedBase64 = null;
+		} else {
+			// Normal mode: Display the generated image
+			// Store the returned base64 in memory
+			lastGeneratedBase64 = base64;
+
+			// Display the generated image in the DOM
+			const dataUrl = "data:image/png;base64," + base64;
+			const imgEl = document.getElementById("generated-img");
+			if (imgEl) {
+				imgEl.src = dataUrl;
+				imgEl.style.display = "block";
+			}
+
+			// Hide prompt display if it exists
+			const promptDisplay = document.getElementById("prompt-display");
+			if (promptDisplay) promptDisplay.style.display = "none";
+
+			// Hide loading overlay
+			if (loadingOverlay) loadingOverlay.style.display = "none";
+
+			// Upload to backend
+			statusCallback("Envoi au serveur...");
+			const uploadResult = await uploadHybridBase64(base64, selected, baseCardId, statusCallback);
+
+			// Update download QR code with the hybrid ID
+			if (uploadResult && uploadResult.data && uploadResult.data.id) {
+				updateDownloadQR(uploadResult.data.id);
+			}
+
+			statusCallback("Terminé!");
 		}
 	} catch (err) {
+		// Hide loading overlay on error
+		if (loadingOverlay) loadingOverlay.style.display = "none";
 		status.innerText = "Error: " + err.message;
 		console.error(err);
 	} finally {

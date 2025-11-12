@@ -28,7 +28,6 @@ export function generateHybridName(selected) {
 export async function uploadHybridBase64(base64, selected, baseCardId, statusCallback) {
 	if (!API_BASE) {
 		statusCallback("API_BASE not configured; cannot upload hybrid.");
-		console.warn("API_BASE not configured; skipping upload");
 		return;
 	}
 
@@ -42,11 +41,9 @@ export async function uploadHybridBase64(base64, selected, baseCardId, statusCal
 
 		// append selected card ids
 		const cardIds = selected.map((s) => s.id);
-		console.log("Uploading with card IDs:", cardIds);
 		selected.forEach((s) => fd.append("cards[]", s.id));
 
 		const baseId = baseCardId || (selected[0] && selected[0].id) || null;
-		console.log("Base card ID:", baseId);
 		if (baseId) fd.append("base_card_id", baseId);
 
 		// Compress the image before uploading
@@ -65,14 +62,9 @@ export async function uploadHybridBase64(base64, selected, baseCardId, statusCal
 		// Backend expects 'img' field name
 		fd.append("img", file);
 
-		console.log("File size:", blob.size, "bytes");
-		console.log("File name:", file.name);
-		console.log("FormData prepared, posting to:", API_BASE + "/api/hybrids");
-
 		statusCallback("Uploading hybrid to server...");
 
 		const url = API_BASE.replace(/\/$/, "") + "/api/hybrids";
-		console.log("Posting to URL:", url);
 
 		const res = await fetch(url, {
 			method: "POST",
@@ -84,24 +76,16 @@ export async function uploadHybridBase64(base64, selected, baseCardId, statusCal
 			redirect: "manual",
 		});
 
-		console.log("Response status:", res.status);
-		console.log("Response headers:", Object.fromEntries(res.headers.entries()));
-
 		const json = await res.json().catch((e) => {
-			console.error("Failed to parse JSON response:", e);
 			return null;
 		});
 
-		console.log("Response JSON:", json);
-
 		if (!res.ok) {
-			console.error("Store error", res.status, json);
 			const errorMsg = json?.message || json?.error || JSON.stringify(json);
 			statusCallback("Upload failed (" + res.status + "): " + errorMsg);
 			throw new Error(errorMsg);
 		}
 
-		console.log("Stored hybrid successfully:", json);
 		statusCallback("Hybrid stored (id: " + (json?.data?.id || "?") + ")");
 		return json;
 	} catch (err) {

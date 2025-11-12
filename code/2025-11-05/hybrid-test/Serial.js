@@ -58,7 +58,6 @@ async function connectSerial() {
 		// Mark as connected and set connection time
 		isConnected = true;
 		connectionTime = Date.now();
-		console.log("Arduino connected. Button inputs will be accepted after stabilization period.");
 
 		readLoop();
 	} catch (err) {
@@ -111,16 +110,9 @@ function parseLine(line) {
 		if (newButtonState === 0 && lastButtonState === 1) {
 			// Button was just pressed (LOW state, active low button with pull-up)
 			if (isStabilized) {
-				console.log("Button pressed!");
 				if (onButtonPressCallback) {
 					onButtonPressCallback();
 				}
-			} else {
-				console.log(
-					`Button press ignored - connection stabilizing (${Math.ceil(
-						(CONNECTION_STABILIZATION_DELAY - timeSinceConnection) / 1000
-					)}s remaining)`
-				);
 			}
 		}
 		lastButtonState = newButtonState;
@@ -132,11 +124,8 @@ function parseLine(line) {
 
 	// Notify callback if values changed
 	if (changed) {
-		console.log("Serial data parsed:", knobValues);
 		if (onKnobChangeCallback) {
 			onKnobChangeCallback(knobValues);
-		} else {
-			console.warn("No knob change callback registered");
 		}
 	}
 }

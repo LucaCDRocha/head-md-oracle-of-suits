@@ -16,7 +16,6 @@ export async function compressImage(base64Data, maxSizeKB = 10000) {
 
 			// Calculate initial file size
 			const initialSize = Math.round((base64Data.length * 3) / 4 / 1024);
-			console.log(`Initial image size: ${initialSize} KB`);
 
 			// If already under limit, return as is
 			if (initialSize <= maxSizeKB) {
@@ -46,11 +45,6 @@ export async function compressImage(base64Data, maxSizeKB = 10000) {
 				compressedSize = Math.round((compressed.length * 3) / 4 / 1024);
 			}
 
-			console.log(
-				`Compressed image size: ${compressedSize} KB (quality: ${quality.toFixed(
-					2
-				)}, dimensions: ${width}x${height})`
-			);
 			resolve(compressed);
 		};
 		img.src = "data:image/png;base64," + base64Data;

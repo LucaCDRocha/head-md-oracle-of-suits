@@ -41,8 +41,6 @@ function extractGameData() {
 	// Group cards by game to build game metadata
 	const gameMap = new Map();
 
-	console.log("Extracting game data from", allCards.length, "cards");
-
 	allCards.forEach((card) => {
 		// Cards may have game_id or game.id depending on API structure
 		const gameId = card.game_id || card.game?.id;
@@ -73,8 +71,6 @@ function extractGameData() {
 		suits: Array.from(game.suits).sort(),
 		values: Array.from(game.values).sort(),
 	}));
-
-	console.log("Extracted games:", allGames);
 }
 
 /**
@@ -276,8 +272,6 @@ function autoSelectCardIfFiltersComplete(slot) {
 function tryMatchByFrenchEquivalence(slot, targetEquivalence) {
 	if (!targetEquivalence) return false;
 
-	console.log(`Trying to match French equivalence: ${targetEquivalence}`);
-
 	// First, try direct match (same French equivalence string)
 	let matchingCards = allCards.filter((card) => {
 		const gameId = card.game_id || card.game?.id;
@@ -296,8 +290,6 @@ function tryMatchByFrenchEquivalence(slot, targetEquivalence) {
 	// This handles cases like: Pentacles -> Diamonds -> Coins
 	// All three might have "3 de Carreau" as their French equivalence
 	if (matchingCards.length === 0) {
-		console.log(`No direct match found, searching for cards with same French equivalence target...`);
-
 		// Find all cards in ANY game that have this French equivalence
 		const cardsWithSameEquivalence = allCards.filter((card) => card.french_equivalence === targetEquivalence);
 
@@ -316,8 +308,6 @@ function tryMatchByFrenchEquivalence(slot, targetEquivalence) {
 				// Must have the same French equivalence as our target
 				return card.french_equivalence === targetEquivalence;
 			});
-
-			console.log(`Found ${matchingCards.length} cards in new game with French equivalence: ${targetEquivalence}`);
 		}
 	}
 
@@ -332,13 +322,9 @@ function tryMatchByFrenchEquivalence(slot, targetEquivalence) {
 		slot.filters.value = matchedCard.value;
 
 		selectCardForSlot(slot, matchedCard);
-		console.log(
-			`✓ Matched: ${matchedCard.name} (${matchedCard.suits}, ${matchedCard.value}) with French equivalence: ${matchedCard.french_equivalence}`
-		);
 		return true;
 	}
 
-	console.log(`✗ No match found for French equivalence: ${targetEquivalence}`);
 	return false;
 }
 
@@ -836,8 +822,6 @@ const MIN_RAW_CHANGE = 5;
  * Card 3 (knobs 8-11): Year, Game, Suits, Value
  */
 export function handleKnobChange(knobValues) {
-	console.log("Knob values received:", knobValues);
-
 	// Process all 3 cards simultaneously
 	let anyChanged = false;
 
@@ -849,15 +833,12 @@ export function handleKnobChange(knobValues) {
 		const startIdx = cardIndex * 4;
 		const cardKnobs = knobValues.slice(startIdx, startIdx + 4);
 
-		console.log(`Processing Card ${cardIndex + 1} with knobs:`, cardKnobs);
-
 		const changed = updateSlotFromKnobs(slot, cardKnobs);
 		if (changed) anyChanged = true;
 	}
 
 	// Re-render UI once if any slot changed
 	if (anyChanged) {
-		console.log("Filters changed, updating UI...");
 		renderSlotUI();
 	}
 }
@@ -867,8 +848,6 @@ export function handleKnobChange(knobValues) {
  * Returns true if any filter changed
  */
 function updateSlotFromKnobs(slot, knobValues) {
-	console.log("Controlling slot:", slot.id);
-
 	// Get available options for each filter based on current slot state
 	const yearRangeOptions = getYearRanges();
 	const gameOptions = getAvailableGames(slot);
@@ -877,13 +856,6 @@ function updateSlotFromKnobs(slot, knobValues) {
 	// This ensures that as you change game, the available suits/values update
 	const suitsOptions = getAvailableSuits(slot.filters);
 	const valueOptions = getAvailableValues(slot.filters);
-
-	console.log("Available options:", {
-		yearRanges: yearRangeOptions.length,
-		games: gameOptions.length,
-		suits: suitsOptions.length,
-		values: valueOptions.length,
-	});
 
 	// Calculate the base knob index offset for this slot
 	const knobOffset = (slot.id - 1) * 4;
@@ -895,36 +867,27 @@ function updateSlotFromKnobs(slot, knobValues) {
 	let suitsIndex = mapKnobToIndexWithHysteresis(knobValues[2], suitsOptions.length, knobOffset + 2);
 	let valueIndex = mapKnobToIndexWithHysteresis(knobValues[3], valueOptions.length, knobOffset + 3);
 
-	console.log("Calculated indices:", { yearRangeIndex, gameIndex, suitsIndex, valueIndex });
-
 	// Get values from options - suits and values are guaranteed to be specific (not null)
 	const newYearRange = yearRangeOptions[yearRangeIndex]?.key || null;
 	const newGame = gameOptions[gameIndex] || null;
 	const newSuits = suitsOptions[suitsIndex] || null; // Will be a specific suit, never null
 	const newValue = valueOptions[valueIndex] || null; // Will be a specific value, never null
 
-	console.log("New filter values:", { newYearRange, newGame, newSuits, newValue });
-	console.log("Current filter values:", slot.filters);
-
 	// Check if anything changed (compare as strings to handle type differences)
 	let changed = false;
 	if (String(slot.filters.yearRange) !== String(newYearRange)) {
-		console.log(`Year range changed: ${slot.filters.yearRange} -> ${newYearRange}`);
 		slot.filters.yearRange = newYearRange;
 		changed = true;
 	}
 	if (String(slot.filters.game) !== String(newGame)) {
-		console.log(`Game changed: ${slot.filters.game} -> ${newGame}`);
 		slot.filters.game = newGame;
 		changed = true;
 	}
 	if (String(slot.filters.suits) !== String(newSuits)) {
-		console.log(`Suits changed: ${slot.filters.suits} -> ${newSuits}`);
 		slot.filters.suits = newSuits;
 		changed = true;
 	}
 	if (String(slot.filters.value) !== String(newValue)) {
-		console.log(`Value changed: ${slot.filters.value} -> ${newValue}`);
 		slot.filters.value = newValue;
 		changed = true;
 	}

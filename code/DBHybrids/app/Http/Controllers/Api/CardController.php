@@ -20,13 +20,14 @@ class CardController extends Controller
                 'game' => $card->game ? $card->game->makeHidden(['created_at', 'updated_at'])->toArray() : null,
                 'suits' => $card->suits,
                 'value' => $card->value,
+                'french_suits' => $card->french_suits,
+                'french_value' => $card->french_value,
                 'img_src' => $card->img_src
                     ? (preg_match('/^https?:\/\//', $card->img_src)
                         ? $card->img_src
                         : asset('storage/' . ltrim($card->img_src, '/'))
-                      )
+                    )
                     : null,
-                'french_equivalence' => $card->french_equivalence,
             ];
         });
 

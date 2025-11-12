@@ -1,5 +1,5 @@
 // API calls for Gemini generative AI
-import { GEMINI_API_KEY } from "../config.js";
+import { GEMINI_API_KEY, DEBUG } from "../config.js";
 
 /**
  * Recursively search for base64 image data in response object
@@ -56,13 +56,35 @@ export async function generateImage(selected, baseCardId, statusCallback) {
 	// build a simple prompt from selected cards
 	const baseId = baseCardId || selected[0]?.id;
 	const baseCard = selected.find((s) => s.id === baseId) || selected[0];
-	const suitName =
-		baseCard?.french_equivalence ||
-		baseCard?.equivalence_name ||
-		baseCard?.equivalence ||
-		baseCard?.suit ||
-		baseCard?.name ||
-		"spades";
+
+	// Get French suit and value from the base card
+	const frenchSuit = baseCard?.french_suits || baseCard?.suits || "♠";
+	const frenchValue = baseCard?.french_value || baseCard?.value || "A";
+
+	// Check if this is a Joker card
+	const isJoker = frenchValue?.toLowerCase() === "joker" || baseCard?.value?.toLowerCase() === "joker";
+
+	// Build corner indices instructions based on card type
+	let cornerInstructions;
+	if (isJoker) {
+		cornerInstructions = `2. CORNER INDICES (JOKER SPECIAL DESIGN):
+   - Top-left corner: Write "JOKER" vertically (rotated 90 degrees clockwise, reading from bottom to top)
+   - Bottom-right corner: Write "JOKER" vertically (rotated 90 degrees counter-clockwise, reading from top to bottom)
+   - Use playful, decorative typography typical of Joker cards
+   - Colorful design - can use multiple colors or rainbow effect
+   - The word "JOKER" should be clearly visible but stylized to match vintage playing card aesthetics`;
+	} else {
+		cornerInstructions = `2. CORNER INDICES (IMPORTANT - Use these exact values):
+   - Top-left corner: Display "${frenchValue}" (rank) and "${frenchSuit}" (suit symbol)
+   - Stack them vertically (rank on top, suit symbol below)
+   - Bottom-right corner: Same symbols rotated 180 degrees
+   - Use classic French playing card typography
+   - Red color for hearts (♥)/diamonds (♦), black for spades (♠)/clubs (♣)
+   - Keep corners minimal and elegant
+   - IMPORTANT: For the rank, use ONLY the first letter or initial (e.g., "J" for Jack, "Q" for Queen, "K" for King, "A" for Ace)
+   - Do NOT write the full word - use only the single character initial
+   - The rank "${frenchValue}" and suit symbol "${frenchSuit}" MUST appear in both corners`;
+	}
 
 	const prompt = `Create a hybrid playing card image with these EXACT specifications:
 
@@ -73,14 +95,7 @@ CARD STRUCTURE (Vintage French playing card style):
    - Border width approximately 5-8% of card width
    - The main card area inside the border should also have rounded corners
 
-2. CORNER INDICES (Minimal, stacked style):
-   - Top-left corner: Display only the rank and suit symbols for "${suitName}"
-   - Stack them vertically (rank on top, suit symbol below)
-   - Bottom-right corner: Same symbols rotated 180 degrees
-   - NO TEXT - only symbols (like A with ♥, K with ♠, etc.)
-   - Use classic French playing card typography
-   - Red color for hearts/diamonds, black for spades/clubs
-   - Keep corners minimal and elegant
+${cornerInstructions}
 
 3. CENTRAL HYBRID ARTWORK:
    - In the remaining center space, create a HYBRID fusion artwork
@@ -93,7 +108,22 @@ TECHNICAL REQUIREMENTS:
 - Portrait orientation (3:4 aspect ratio)
 - Professional playing card quality with vintage aesthetic
 - Clean, crisp design with rounded corners throughout
-- White border with rounded corners is essential`;
+- White border with rounded corners is essential${
+		isJoker
+			? ""
+			: `
+- Corner indices must show: "${frenchValue}${frenchSuit}" in top-left and bottom-right (rotated)`
+	}`;
+
+	// If DEBUG mode is enabled, return the prompt as text instead of generating
+	if (DEBUG) {
+		console.log("DEBUG MODE: Returning prompt instead of generating image");
+		console.log("Full prompt:", prompt);
+		console.log(baseCard);
+		statusCallback("DEBUG: Showing prompt instead of generating");
+		// Return a special marker that indicates this is a prompt, not base64 image
+		return "PROMPT:" + prompt;
+	}
 
 	const payload = {
 		contents: [
@@ -135,11 +165,8 @@ TECHNICAL REQUIREMENTS:
 	// Try to find base64-encoded image data in the response
 	const base64 = findBase64Data(json);
 	if (!base64) {
-		console.warn("No base64 image data found", json);
 		throw new Error("No image data found in API response.");
 	}
 
-	console.log("Generated image base64 length:", base64.length);
-	console.log(`Requested card dimensions: ${CARD_WIDTH}x${CARD_HEIGHT} (5:7 ratio)`);
 	return base64;
 }
