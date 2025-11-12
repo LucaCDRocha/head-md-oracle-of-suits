@@ -88,16 +88,47 @@ canvas {
 
 .knob-value-item {
 	display: flex;
-	justify-content: space-between;
+	flex-direction: column;
+	align-items: flex-start;
 	margin: 4px 0;
-	gap: 12px;
+	gap: 4px;
 }
 
-.knob-value-item span {
+.knob-value-item > span {
 	color: #00ff00;
 	font-weight: bold;
 	min-width: 50px;
-	text-align: right;
+}
+
+/* Pagination dots */
+.knob-pagination {
+	display: flex;
+	gap: 4px;
+	align-items: center;
+	justify-content: flex-start;
+	min-height: 8px;
+}
+
+.knob-pagination-dot {
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+	background: rgba(0, 0, 0, 0.2);
+	transition: all 0.2s ease;
+}
+
+.knob-pagination-dot.near {
+	background: rgba(0, 0, 0, 0.4);
+}
+
+.knob-pagination-dot.far {
+	background: rgba(0, 0, 0, 0.1);
+}
+
+.knob-pagination-dot.active {
+	background: rgba(0, 0, 0, 1);
+	width: 8px;
+	height: 8px;
 }
 
 #app {
@@ -440,6 +471,7 @@ canvas {
 	gap: 2px;
 	min-width: 0;
 	flex: 1;
+	align-items: center;
 }
 
 .filter-group label {
@@ -475,6 +507,17 @@ canvas {
 	appearance: none;
 	-webkit-appearance: none;
 	-moz-appearance: none;
+}
+
+/* Pagination dots within filter groups */
+.filter-group .knob-pagination {
+	display: flex;
+	gap: 4px;
+	align-items: center;
+	justify-content: center;
+	min-height: 10px;
+	order: 3;
+	margin-top: 4px;
 }
 
 .filter-select:hover {
@@ -786,10 +829,51 @@ canvas {
 /* Slot information section */
 .slot-info {
 	padding: 12px;
-	margin: 12px 0;
+	margin: 12px 0 0 0;
 	background: rgba(255, 255, 255, 0.5);
 	border-radius: 6px;
 	order: 2;
+}
+
+.slot-info h4 {
+	margin: 0 0 8px 0;
+	font-size: 0.9rem;
+	font-weight: 700;
+	color: #000;
+	text-transform: capitalize;
+}
+
+.slot-info p {
+	margin: 0;
+	font-size: 0.75rem;
+	line-height: 1.4;
+	color: #333;
+	text-align: justify;
+}
+
+/* Slot pagination section - between info and filters */
+.slot-pagination-section {
+	padding: 12px;
+	margin: 8px 0;
+	background: rgba(255, 255, 255, 0.3);
+	border-radius: 6px;
+	order: 2.5;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.pagination-item {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+.pagination-label {
+	font-size: 0.75rem;
+	font-weight: 600;
+	color: #000;
+	min-width: 50px;
 }
 
 .slot-info h4 {

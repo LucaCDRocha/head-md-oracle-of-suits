@@ -102,13 +102,12 @@ function createSlotElement(slot) {
 		slotDiv.classList.add("base-card");
 	}
 
-	// Header (hidden by CSS but kept for structure)
+	// Header (removed card number label)
 	const header = document.createElement("div");
 	header.className = "slot-header";
 
-	const title = document.createElement("h3");
-	title.textContent = `Card ${slot.id}`;
-	header.appendChild(title);
+	// Title removed - no "Card X" label
+	// header is kept for layout structure but empty
 
 	slotDiv.appendChild(header);
 
@@ -363,6 +362,13 @@ function createYearFilter(slot) {
 
 	filterGroup.appendChild(label);
 	filterGroup.appendChild(select);
+
+	// Add pagination dots below the select
+	const pagination = document.createElement("div");
+	pagination.className = "knob-pagination";
+	pagination.id = `slot-${slot.id}-knob-0-pagination`;
+	filterGroup.appendChild(pagination);
+
 	return filterGroup;
 }
 
@@ -426,6 +432,13 @@ function createGameFilter(slot) {
 
 	filterGroup.appendChild(label);
 	filterGroup.appendChild(select);
+
+	// Add pagination dots below the select
+	const pagination = document.createElement("div");
+	pagination.className = "knob-pagination";
+	pagination.id = `slot-${slot.id}-knob-1-pagination`;
+	filterGroup.appendChild(pagination);
+
 	return filterGroup;
 }
 
@@ -467,6 +480,13 @@ function createSuitsFilter(slot) {
 
 	filterGroup.appendChild(label);
 	filterGroup.appendChild(select);
+
+	// Add pagination dots below the select
+	const pagination = document.createElement("div");
+	pagination.className = "knob-pagination";
+	pagination.id = `slot-${slot.id}-knob-2-pagination`;
+	filterGroup.appendChild(pagination);
+
 	return filterGroup;
 }
 
@@ -508,6 +528,13 @@ function createValueFilter(slot) {
 
 	filterGroup.appendChild(label);
 	filterGroup.appendChild(select);
+
+	// Add pagination dots below the select
+	const pagination = document.createElement("div");
+	pagination.className = "knob-pagination";
+	pagination.id = `slot-${slot.id}-knob-3-pagination`;
+	filterGroup.appendChild(pagination);
+
 	return filterGroup;
 }
 
@@ -651,6 +678,7 @@ function getAvailableValues(filters) {
 	// Sort by French values to maintain consistent order across games
 	// French values are typically numeric strings (e.g., "1", "2", ..., "14")
 	return values.sort((a, b) => {
+		// Get french values, fallback to original values
 		const frenchA = valueToFrenchMap.get(a) || a;
 		const frenchB = valueToFrenchMap.get(b) || b;
 
@@ -661,6 +689,14 @@ function getAvailableValues(filters) {
 		// Both are numbers - sort numerically
 		if (!isNaN(numA) && !isNaN(numB)) {
 			return numA - numB;
+		}
+
+		// If french values didn't work, try parsing original values
+		const origNumA = parseInt(a);
+		const origNumB = parseInt(b);
+
+		if (!isNaN(origNumA) && !isNaN(origNumB)) {
+			return origNumA - origNumB;
 		}
 
 		// One or both are not numbers - alphabetical sort
@@ -867,6 +903,13 @@ function updateSlotFromKnobs(slot, knobValues) {
 	let suitsIndex = mapKnobToIndexWithHysteresis(knobValues[2], suitsOptions.length, knobOffset + 2);
 	let valueIndex = mapKnobToIndexWithHysteresis(knobValues[3], valueOptions.length, knobOffset + 3);
 
+	// Update pagination dots for each knob
+	const slotKnobOffset = slot.id - 1;
+	updateKnobPagination(slot.id, 0, yearRangeIndex, yearRangeOptions.length);
+	updateKnobPagination(slot.id, 1, gameIndex, gameOptions.length);
+	updateKnobPagination(slot.id, 2, suitsIndex, suitsOptions.length);
+	updateKnobPagination(slot.id, 3, valueIndex, valueOptions.length);
+
 	// Get values from options - suits and values are guaranteed to be specific (not null)
 	const newYearRange = yearRangeOptions[yearRangeIndex]?.key || null;
 	const newGame = gameOptions[gameIndex] || null;
@@ -1009,4 +1052,77 @@ function updateSlotFilterUI(slot) {
 	if (gameSelect) gameSelect.value = slot.filters.game || "";
 	if (suitsSelect) suitsSelect.value = slot.filters.suits || "";
 	if (valueSelect) valueSelect.value = slot.filters.value || "";
+}
+
+/**
+ * Update pagination dots for a specific knob in a slot
+ * Shows max 5 dots at a time, scrolling window as needed
+ * @param {number} slotId - Slot ID (1-3)
+ * @param {number} knobIndex - Knob index within slot (0-3: Year, Game, Suits, Rank)
+ * @param {number} currentIndex - Current selected index
+ * @param {number} totalOptions - Total number of options
+ */
+function updateKnobPagination(slotId, knobIndex, currentIndex, totalOptions) {
+	const paginationEl = document.getElementById(`slot-${slotId}-knob-${knobIndex}-pagination`);
+	if (!paginationEl) return;
+
+	// Clear existing dots
+	paginationEl.innerHTML = "";
+
+	// Don't show pagination if there are 5 or fewer options
+	if (totalOptions <= 5) {
+		// Show all dots
+		for (let i = 0; i < totalOptions; i++) {
+			const dot = document.createElement("div");
+			dot.className = "knob-pagination-dot";
+			const distance = Math.abs(i - currentIndex);
+
+			if (i === currentIndex) {
+				dot.classList.add("active");
+			} else if (distance === 1) {
+				dot.classList.add("near");
+			} else if (distance >= 2 || i === 0 || i === totalOptions - 1) {
+				// Apply "far" to dots that are 2+ away OR at the edges
+				dot.classList.add("far");
+			}
+			paginationEl.appendChild(dot);
+		}
+		return;
+	}
+
+	// Show a sliding window of 5 dots
+	const maxDots = 5;
+	const halfWindow = Math.floor(maxDots / 2);
+
+	// Calculate the window start and end
+	let windowStart = Math.max(0, currentIndex - halfWindow);
+	let windowEnd = Math.min(totalOptions, windowStart + maxDots);
+
+	// Adjust if we're near the end
+	if (windowEnd - windowStart < maxDots) {
+		windowStart = Math.max(0, windowEnd - maxDots);
+	}
+
+	// Create dots for the window
+	for (let i = windowStart; i < windowEnd; i++) {
+		const dot = document.createElement("div");
+		dot.className = "knob-pagination-dot";
+		const distance = Math.abs(i - currentIndex);
+
+		// Position in the visible window (0-4)
+		const positionInWindow = i - windowStart;
+		const windowSize = windowEnd - windowStart;
+
+		if (i === currentIndex) {
+			dot.classList.add("active");
+		} else if (distance === 1) {
+			dot.classList.add("near");
+		} else if (distance >= 2 || positionInWindow === 0 || positionInWindow === windowSize - 1) {
+			// Apply "far" class to dots that are:
+			// - 2+ steps away from current
+			// - OR at the edges of the window (first or last position)
+			dot.classList.add("far");
+		}
+		paginationEl.appendChild(dot);
+	}
 }
