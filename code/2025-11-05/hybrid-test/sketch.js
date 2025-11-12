@@ -2,6 +2,7 @@ import { initSlotSelector, getSelectedCards, getBaseCardId, drawPreview, handleK
 import { generateImage } from "./api/geminiApi.js";
 import { uploadHybridBase64 } from "./api/hybridApi.js";
 import { setupSerial, setKnobChangeCallback, setButtonPressCallback } from "./Serial.js";
+import { initQRCodes, updateDownloadQR } from "./ui/qrCodes.js";
 
 let canvas;
 let lastGeneratedBase64 = null;
@@ -28,6 +29,9 @@ window.setup = function () {
 	canvas = createCanvas(512, 512);
 	canvas.parent(holder);
 	background(240);
+
+	// Initialize QR codes
+	initQRCodes();
 
 	// Setup Arduino serial connection
 	setupSerial();
@@ -150,7 +154,13 @@ async function onGenerate() {
 
 		// Upload to backend
 		status.innerText = "Image generated. Uploading to server...";
-		await uploadHybridBase64(base64, selected, baseCardId, statusCallback);
+		const uploadResult = await uploadHybridBase64(base64, selected, baseCardId, statusCallback);
+
+		// Update download QR code with the hybrid ID
+		if (uploadResult && uploadResult.data && uploadResult.data.id) {
+			updateDownloadQR(uploadResult.data.id);
+			console.log("QR code updated for hybrid ID:", uploadResult.data.id);
+		}
 	} catch (err) {
 		status.innerText = "Error: " + err.message;
 		console.error(err);

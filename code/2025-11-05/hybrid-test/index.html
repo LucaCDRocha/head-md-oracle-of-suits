@@ -10,15 +10,29 @@
 
 		<script src="libraries/p5.min.js"></script>
 		<script src="libraries/p5.sound.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 	</head>
 
 	<body>
 		<!-- Top half - Installation display area -->
 		<div id="app2">
-			<h2>Installation Display Area</h2>
-			<p>This is the top section for your installation.</p>
-			<!-- image returned by generative API will be shown here -->
-			<img id="generated-img" alt="Generated result" style="display: none" />
+			<div id="app2-header">
+				<img src="assets/logo.png" alt="Hybrids" id="logo" />
+			</div>
+			<div id="app2-content">
+				<!-- image returned by generative API will be shown here -->
+				<img id="generated-img" alt="Generated hybrid card" style="display: none" />
+			</div>
+			<div id="app2-actions">
+				<div class="qr-code-container">
+					<div id="qr-view-all" class="qr-code"></div>
+					<p class="qr-label">See all the hybrids created</p>
+				</div>
+				<div class="qr-code-container">
+					<div id="qr-download" class="qr-code"></div>
+					<p class="qr-label">Download your hybrid</p>
+				</div>
+			</div>
 		</div>
 
 		<!-- Bottom half - Card selection interface -->
