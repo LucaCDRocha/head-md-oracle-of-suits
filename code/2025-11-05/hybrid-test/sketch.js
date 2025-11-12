@@ -1,10 +1,15 @@
 import { initSlotSelector, getSelectedCards, getBaseCardId, drawPreview, handleKnobChange } from "./ui/slotSelector.js";
 import { generateImage } from "./api/geminiApi.js";
 import { uploadHybridBase64 } from "./api/hybridApi.js";
-import { setupSerial, setKnobChangeCallback } from "./Serial.js";
+import { setupSerial, setKnobChangeCallback, setButtonPressCallback } from "./Serial.js";
 
 let canvas;
 let lastGeneratedBase64 = null;
+
+// Debounce state for button press
+let isGenerating = false;
+let lastGenerateTime = 0;
+const DEBOUNCE_DURATION = 5000; // 5 seconds minimum between generations
 
 // Add global error handler to prevent page reload on uncaught errors
 window.addEventListener("error", function (e) {
@@ -32,13 +37,10 @@ window.setup = function () {
 		handleKnobChange(knobValues);
 	});
 
-	// Setup fullscreen image click handler
-	const generatedImg = document.getElementById("generated-img");
-	if (generatedImg) {
-		generatedImg.addEventListener("click", () => {
-			generatedImg.style.display = "none";
-		});
-	}
+	// Set callback for button press
+	setButtonPressCallback(() => {
+		handleButtonPress();
+	});
 
 	// wire UI
 	document.getElementById("generate-btn").addEventListener(
@@ -67,7 +69,52 @@ window.draw = function () {
 	drawPreview(window);
 };
 
+function handleButtonPress() {
+	console.log("Button press detected");
+
+	// Check if we're currently generating or within debounce period
+	const currentTime = Date.now();
+	const timeSinceLastGenerate = currentTime - lastGenerateTime;
+
+	if (isGenerating) {
+		console.log("Already generating, ignoring button press");
+		const status = document.getElementById("status");
+		if (status) status.innerText = "Generation in progress, please wait...";
+		return;
+	}
+
+	if (timeSinceLastGenerate < DEBOUNCE_DURATION) {
+		const remainingTime = Math.ceil((DEBOUNCE_DURATION - timeSinceLastGenerate) / 1000);
+		console.log(`Debounce active, ${remainingTime}s remaining`);
+		const status = document.getElementById("status");
+		if (status) status.innerText = `Please wait ${remainingTime}s before generating again`;
+		return;
+	}
+
+	// Trigger generation
+	onGenerate().catch((error) => {
+		console.error("Error in button-triggered generation:", error);
+	});
+}
+
 async function onGenerate() {
+	// Check debounce again (in case called from UI button)
+	const currentTime = Date.now();
+	const timeSinceLastGenerate = currentTime - lastGenerateTime;
+
+	if (isGenerating) {
+		console.log("Already generating");
+		return;
+	}
+
+	if (timeSinceLastGenerate < DEBOUNCE_DURATION) {
+		const remainingTime = Math.ceil((DEBOUNCE_DURATION - timeSinceLastGenerate) / 1000);
+		const status = document.getElementById("status");
+		if (status) status.innerText = `Please wait ${remainingTime}s before generating again`;
+		return;
+	}
+
+	isGenerating = true;
 	const btn = document.getElementById("generate-btn");
 	const status = document.getElementById("status");
 	btn.disabled = true;
@@ -108,6 +155,8 @@ async function onGenerate() {
 		status.innerText = "Error: " + err.message;
 		console.error(err);
 	} finally {
+		isGenerating = false;
+		lastGenerateTime = Date.now();
 		btn.disabled = false;
 		btn.textContent = "Generate & Upload Hybrid";
 	}

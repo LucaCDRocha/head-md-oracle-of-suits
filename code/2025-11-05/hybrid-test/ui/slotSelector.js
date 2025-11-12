@@ -12,7 +12,7 @@ let slots = [
 	{ id: 2, filters: {}, selectedCard: null },
 	{ id: 3, filters: {}, selectedCard: null },
 ];
-let baseSlotId = 1;
+let baseSlotId = 2; // Middle card is the base card for Gemini generation
 
 /**
  * Initialize the slot selector UI
@@ -57,6 +57,7 @@ function extractGameData() {
 				id: gameId,
 				name: card.game?.name || `Game ${gameId}`,
 				year: card.game?.year || null,
+				description: card.game?.description || null,
 				suits: new Set(),
 				values: new Set(),
 			});
@@ -113,22 +114,6 @@ function createSlotElement(slot) {
 	title.textContent = `Card ${slot.id}`;
 	header.appendChild(title);
 
-	// Base card radio button
-	const baseRadio = document.createElement("input");
-	baseRadio.type = "radio";
-	baseRadio.name = "base_slot";
-	baseRadio.value = slot.id;
-	baseRadio.checked = baseSlotId === slot.id;
-	baseRadio.addEventListener("change", () => {
-		baseSlotId = slot.id;
-		renderSlotUI(); // Re-render to update visual indicator
-	});
-
-	const baseLabel = document.createElement("label");
-	baseLabel.textContent = " Base card";
-	baseLabel.prepend(baseRadio);
-	header.appendChild(baseLabel);
-
 	slotDiv.appendChild(header);
 
 	// Card preview area (will be displayed first due to CSS order)
@@ -137,9 +122,15 @@ function createSlotElement(slot) {
 	previewDiv.id = `preview-${slot.id}`;
 
 	if (slot.selectedCard) {
+		const gameName = slot.selectedCard.game?.name || "";
+		const gameDescription = slot.selectedCard.game?.description || "";
 		previewDiv.innerHTML = `
 			<img src="${slot.selectedCard.img_src}" alt="${slot.selectedCard.name}" />
-			<div class="card-info">${slot.selectedCard.name}</div>
+			<div class="card-info">
+				<div class="card-name">${slot.selectedCard.name}</div>
+				${gameName ? `<div class="game-name">${gameName}</div>` : ""}
+				${gameDescription ? `<div class="game-description">${gameDescription}</div>` : ""}
+			</div>
 		`;
 	} else {
 		previewDiv.innerHTML = '<div class="no-card">Select filters to choose a card</div>';
@@ -147,7 +138,27 @@ function createSlotElement(slot) {
 
 	slotDiv.appendChild(previewDiv);
 
-	// Filters section (will be displayed below preview due to CSS order)
+	// Add information section below card preview
+	const infoSection = document.createElement("div");
+	infoSection.className = "slot-info";
+	infoSection.id = `info-${slot.id}`;
+
+	if (slot.selectedCard) {
+		const gameDescription = slot.selectedCard.game?.description || "No description available";
+		infoSection.innerHTML = `
+			<h4>Informations</h4>
+			<p>${gameDescription}</p>
+		`;
+	} else {
+		infoSection.innerHTML = `
+			<h4>Informations</h4>
+			<p>Select a card to view information</p>
+		`;
+	}
+
+	slotDiv.appendChild(infoSection);
+
+	// Filters section (will be displayed below info due to CSS order)
 	const filtersDiv = document.createElement("div");
 	filtersDiv.className = "slot-filters";
 
@@ -615,9 +626,25 @@ function selectCardForSlot(slot, card) {
 	// Update UI
 	const previewDiv = document.getElementById(`preview-${slot.id}`);
 	if (previewDiv) {
+		const gameName = card.game?.name || "";
+		const gameDescription = card.game?.description || "";
 		previewDiv.innerHTML = `
 			<img src="${card.img_src}" alt="${card.name}" />
-			<div class="card-info">${card.name}</div>
+			<div class="card-info">
+				<div class="card-name">${card.name}</div>
+				${gameName ? `<div class="game-name">${gameName}</div>` : ""}
+				${gameDescription ? `<div class="game-description">${gameDescription}</div>` : ""}
+			</div>
+		`;
+	}
+
+	// Update info section
+	const infoDiv = document.getElementById(`info-${slot.id}`);
+	if (infoDiv) {
+		const gameDescription = card.game?.description || "No description available";
+		infoDiv.innerHTML = `
+			<h4>Informations</h4>
+			<p>${gameDescription}</p>
 		`;
 	}
 
@@ -713,6 +740,19 @@ export function drawPreview(p5Instance) {
 
 // ============= KNOB CONTROL SYSTEM =============
 
+// Store previous knob indices to implement hysteresis
+let previousKnobIndices = Array(12).fill(-1);
+
+// Store the actual knob raw values to detect real movement
+let previousKnobRawValues = Array(12).fill(-1);
+
+// Hysteresis threshold: how many raw analog units required to trigger a change
+// Increased to prevent flickering even at boundaries
+const HYSTERESIS_THRESHOLD = 20;
+
+// Minimum change required to even consider updating (prevents micro-fluctuations)
+const MIN_RAW_CHANGE = 5;
+
 /**
  * Handle knob value changes from Arduino
  * knobValues = [k1, k2, ..., k12] each 0-1023
@@ -770,32 +810,14 @@ function updateSlotFromKnobs(slot, knobValues) {
 		values: valueOptions.length,
 	});
 
-	// Map each knob value (0-1023) to its respective filter length
-	// Use Math.floor to get index, and clamp to valid range
-	let yearIndex = 0;
-	let gameIndex = 0;
-	let suitsIndex = 0;
-	let valueIndex = 0;
+	// Calculate the base knob index offset for this slot
+	const knobOffset = (slot.id - 1) * 4;
 
-	if (yearOptions.length > 0) {
-		yearIndex = Math.floor((knobValues[0] / 1024) * yearOptions.length);
-		yearIndex = Math.min(yearIndex, yearOptions.length - 1);
-	}
-
-	if (gameOptions.length > 0) {
-		gameIndex = Math.floor((knobValues[1] / 1024) * gameOptions.length);
-		gameIndex = Math.min(gameIndex, gameOptions.length - 1);
-	}
-
-	if (suitsOptions.length > 0) {
-		suitsIndex = Math.floor((knobValues[2] / 1024) * suitsOptions.length);
-		suitsIndex = Math.min(suitsIndex, suitsOptions.length - 1);
-	}
-
-	if (valueOptions.length > 0) {
-		valueIndex = Math.floor((knobValues[3] / 1024) * valueOptions.length);
-		valueIndex = Math.min(valueIndex, valueOptions.length - 1);
-	}
+	// Map each knob value (0-1023) to its respective filter length with hysteresis
+	let yearIndex = mapKnobToIndexWithHysteresis(knobValues[0], yearOptions.length, knobOffset + 0);
+	let gameIndex = mapKnobToIndexWithHysteresis(knobValues[1], gameOptions.length, knobOffset + 1);
+	let suitsIndex = mapKnobToIndexWithHysteresis(knobValues[2], suitsOptions.length, knobOffset + 2);
+	let valueIndex = mapKnobToIndexWithHysteresis(knobValues[3], valueOptions.length, knobOffset + 3);
 
 	console.log("Calculated indices:", { yearIndex, gameIndex, suitsIndex, valueIndex });
 
@@ -840,6 +862,96 @@ function updateSlotFromKnobs(slot, knobValues) {
 	}
 
 	return changed;
+}
+
+/**
+ * Map a knob value (0-1023) to an index (0 to numOptions-1) with hysteresis
+ * to prevent flickering when analog values fluctuate by ±2-3
+ *
+ * @param {number} knobValue - Raw analog value from Arduino (0-1023)
+ * @param {number} numOptions - Number of available options to map to
+ * @param {number} knobId - Unique ID for this knob (0-11) to track previous state
+ * @returns {number} The selected index with hysteresis applied
+ */
+function mapKnobToIndexWithHysteresis(knobValue, numOptions, knobId) {
+	if (numOptions === 0) return 0;
+	if (numOptions === 1) return 0;
+
+	// Get previous values
+	const previousIndex = previousKnobIndices[knobId];
+	const previousRawValue = previousKnobRawValues[knobId];
+
+	// Check if the knob has actually moved significantly
+	if (previousRawValue !== -1) {
+		const rawChange = Math.abs(knobValue - previousRawValue);
+
+		// If the change is too small, ignore it completely (noise filtering)
+		if (rawChange < MIN_RAW_CHANGE) {
+			return previousIndex !== -1 ? previousIndex : 0;
+		}
+	}
+
+	// Calculate the ideal index without hysteresis
+	const rawIndex = Math.floor((knobValue / 1024) * numOptions);
+	const clampedIndex = Math.min(rawIndex, numOptions - 1);
+
+	// If this is the first reading or we don't have a previous value
+	if (previousIndex === -1) {
+		previousKnobIndices[knobId] = clampedIndex;
+		previousKnobRawValues[knobId] = knobValue;
+		return clampedIndex;
+	}
+
+	// If the calculated index is the same as before, update raw value and return
+	if (clampedIndex === previousIndex) {
+		previousKnobRawValues[knobId] = knobValue;
+		return previousIndex;
+	}
+
+	// The index wants to change - apply hysteresis with expanded deadband
+	// Calculate boundaries with overlap to create a stable zone
+	const stepSize = 1024 / numOptions;
+
+	// For the CURRENT index position, calculate its safe zone
+	// This creates a wider "sticky" region around each option
+	const currentIndexStart = clampedIndex * stepSize;
+	const currentIndexEnd = (clampedIndex + 1) * stepSize;
+	const currentIndexCenter = currentIndexStart + stepSize / 2;
+
+	// For the PREVIOUS index, calculate its boundaries
+	const previousIndexStart = previousIndex * stepSize;
+	const previousIndexEnd = (previousIndex + 1) * stepSize;
+	const previousIndexCenter = previousIndexStart + stepSize / 2;
+
+	// Calculate distance from the previous index center
+	const distanceFromPreviousCenter = Math.abs(knobValue - previousIndexCenter);
+
+	// Only switch if we're:
+	// 1. Far enough from the previous center (HYSTERESIS_THRESHOLD)
+	// 2. AND clearly past the midpoint between the two options
+	const midpointBetweenOptions = (previousIndexCenter + currentIndexCenter) / 2;
+
+	// Determine if we should switch based on direction of movement
+	let shouldSwitch = false;
+
+	if (clampedIndex > previousIndex) {
+		// Moving to a higher index - must be past midpoint AND threshold
+		shouldSwitch = knobValue > midpointBetweenOptions + HYSTERESIS_THRESHOLD;
+	} else {
+		// Moving to a lower index - must be past midpoint AND threshold
+		shouldSwitch = knobValue < midpointBetweenOptions - HYSTERESIS_THRESHOLD;
+	}
+
+	if (shouldSwitch) {
+		// Switch confirmed - update both tracking variables
+		previousKnobIndices[knobId] = clampedIndex;
+		previousKnobRawValues[knobId] = knobValue;
+		return clampedIndex;
+	} else {
+		// Stay with previous index
+		previousKnobRawValues[knobId] = knobValue;
+		return previousIndex;
+	}
 }
 
 /**

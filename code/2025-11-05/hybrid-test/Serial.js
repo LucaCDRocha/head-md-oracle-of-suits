@@ -8,11 +8,22 @@ let buffer = "";
 // Card 1: knobs 0-3, Card 2: knobs 4-7, Card 3: knobs 8-11
 export let knobValues = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 
+// Button state (0 = HIGH/not pressed, 1 = LOW/pressed)
+let buttonState = 0;
+let lastButtonState = 0;
+
 // Callback that will be called when knob values change
 let onKnobChangeCallback = null;
 
+// Callback that will be called when button is pressed
+let onButtonPressCallback = null;
+
 export function setKnobChangeCallback(callback) {
 	onKnobChangeCallback = callback;
+}
+
+export function setButtonPressCallback(callback) {
+	onButtonPressCallback = callback;
 }
 
 export function setupSerial() {
@@ -67,9 +78,10 @@ async function readLoop() {
 
 function parseLine(line) {
 	const parts = line.split(/\s+/);
-	if (parts.length < 12) return;
+	if (parts.length < 13) return; // Now expecting 12 knobs + 1 button
 
 	const newValues = parts.slice(0, 12).map(Number);
+	const newButtonState = parseInt(parts[12]);
 
 	let changed = false;
 	for (let i = 0; i < 12; i++) {
@@ -77,6 +89,19 @@ function parseLine(line) {
 			knobValues[i] = newValues[i];
 			changed = true;
 		}
+	}
+
+	// Check for button press (transition from HIGH to LOW)
+	if (!isNaN(newButtonState)) {
+		if (newButtonState === 0 && lastButtonState === 1) {
+			// Button was just pressed (LOW state, active low button)
+			console.log("Button pressed!");
+			if (onButtonPressCallback) {
+				onButtonPressCallback();
+			}
+		}
+		lastButtonState = newButtonState;
+		buttonState = newButtonState;
 	}
 
 	// Update display

@@ -56,6 +56,8 @@ void loop() {
   Serial.print(sensor11);
   Serial.print(' ');
   Serial.print(sensor12);
+  Serial.print(' ');
+  Serial.print(buttonStateMerge);
   Serial.println();
 
 

@@ -17,14 +17,14 @@
 		<div id="app2">
 			<h2>Installation Display Area</h2>
 			<p>This is the top section for your installation.</p>
+			<!-- image returned by generative API will be shown here -->
+			<img id="generated-img" alt="Generated result" style="display: none" />
 		</div>
 
 		<!-- Bottom half - Card selection interface -->
 		<div id="app">
 			<!-- p5 canvas holder (kept, but preview section removed) -->
 			<div id="p5-holder"></div>
-			<!-- image returned by generative API will be shown here -->
-			<img id="generated-img" alt="Generated result" style="display: none" />
 
 			<section id="controls">
 				<div id="cards-list">Loading cards…</div>
@@ -83,8 +83,8 @@
 		<script src="libraries/p5.min.js"></script>
 		<script src="libraries/p5.sound.min.js"></script>
 
-		<!-- Load config (with window.ENV for backward compatibility) -->
-		<script src="config.js"></script>
+		<!-- Load config as ES6 module -->
+		<script type="module" src="config.js"></script>
 
 		<!-- Load main sketch as ES6 module -->
 		<script type="module" src="sketch.js"></script>
