@@ -304,65 +304,67 @@
         @else
             <div class="hybrids-grid">
                 @foreach ($hybrids as $hybrid)
-                    <div class="hybrid-card" data-hybrid-id="{{ $hybrid->id }}" data-hybrid-name="{{ $hybrid->name }}"
-                        data-hybrid-image="{{ $hybrid->img_src
-                            ? (preg_match('/^https?:\/\//', $hybrid->img_src)
-                                ? $hybrid->img_src
-                                : asset('storage/' . ltrim($hybrid->img_src, '/')))
-                            : '' }}"
-                        data-cards="{{ json_encode(
-                            $hybrid->cards->map(function ($card) {
-                                return [
-                                    'name' => $card->name,
-                                    'game' => $card->game ? $card->game->name : null,
-                                    'img_src' => $card->img_src
-                                        ? (preg_match('/^https?:\/\//', $card->img_src)
-                                            ? $card->img_src
-                                            : asset('storage/' . ltrim($card->img_src, '/')))
-                                        : null,
-                                    'is_base' => $card->pivot->is_base,
-                                ];
-                            }),
-                        ) }}"
-                        onclick="openModal(this)">
-                        <img src="{{ $hybrid->img_src
-                            ? (preg_match('/^https?:\/\//', $hybrid->img_src)
-                                ? $hybrid->img_src
-                                : asset('storage/' . ltrim($hybrid->img_src, '/')))
-                            : null }}"
-                            alt="{{ $hybrid->name }}" class="hybrid-image">
+                    <a href="{{ route('hybrids.show', $hybrid->id) }}" style="text-decoration: none; color: inherit;">
+                        <div class="hybrid-card" data-hybrid-id="{{ $hybrid->id }}"
+                            data-hybrid-name="{{ $hybrid->name }}"
+                            data-hybrid-image="{{ $hybrid->img_src
+                                ? (preg_match('/^https?:\/\//', $hybrid->img_src)
+                                    ? $hybrid->img_src
+                                    : asset('storage/' . ltrim($hybrid->img_src, '/')))
+                                : '' }}"
+                            data-cards="{{ json_encode(
+                                $hybrid->cards->map(function ($card) {
+                                    return [
+                                        'name' => $card->name,
+                                        'game' => $card->game ? $card->game->name : null,
+                                        'img_src' => $card->img_src
+                                            ? (preg_match('/^https?:\/\//', $card->img_src)
+                                                ? $card->img_src
+                                                : asset('storage/' . ltrim($card->img_src, '/')))
+                                            : null,
+                                        'is_base' => $card->pivot->is_base,
+                                    ];
+                                }),
+                            ) }}">
+                            <img src="{{ $hybrid->img_src
+                                ? (preg_match('/^https?:\/\//', $hybrid->img_src)
+                                    ? $hybrid->img_src
+                                    : asset('storage/' . ltrim($hybrid->img_src, '/')))
+                                : null }}"
+                                alt="{{ $hybrid->name }}" class="hybrid-image">
 
-                        <div class="hybrid-info">
-                            <h2 class="hybrid-name">{{ $hybrid->name }}</h2>
+                            <div class="hybrid-info">
+                                <h2 class="hybrid-name">{{ $hybrid->name }}</h2>
 
-                            <div class="hybrid-meta">
-                                <div class="likes">
-                                    ❤️ <span>{{ $hybrid->nb_like }}</span>
+                                <div class="hybrid-meta">
+                                    <div class="likes">
+                                        ❤️ <span>{{ $hybrid->nb_like }}</span>
+                                    </div>
+                                    <div class="date">
+                                        {{ $hybrid->created_at->format('M d, Y') }}
+                                    </div>
                                 </div>
-                                <div class="date">
-                                    {{ $hybrid->created_at->format('M d, Y') }}
-                                </div>
+
+                                @if ($hybrid->cards->isNotEmpty())
+                                    <div class="cards-used">
+                                        <div class="cards-used-title">Cards Used:</div>
+                                        <ul class="card-list">
+                                            @foreach ($hybrid->cards as $card)
+                                                <li class="card-item {{ $card->pivot->is_base ? 'base' : '' }}">
+                                                    {{ $card->name }}
+                                                    @if ($card->game)
+                                                        <span style="color: #999; font-size: 0.85em;">
+                                                            ({{ $card->game->name }})
+                                                        </span>
+                                                    @endif
+                                                </li>
+                                            @endforeach
+                                        </ul>
+                                    </div>
+                                @endif
                             </div>
-
-                            @if ($hybrid->cards->isNotEmpty())
-                                <div class="cards-used">
-                                    <div class="cards-used-title">Cards Used:</div>
-                                    <ul class="card-list">
-                                        @foreach ($hybrid->cards as $card)
-                                            <li class="card-item {{ $card->pivot->is_base ? 'base' : '' }}">
-                                                {{ $card->name }}
-                                                @if ($card->game)
-                                                    <span style="color: #999; font-size: 0.85em;">
-                                                        ({{ $card->game->name }})
-                                                    </span>
-                                                @endif
-                                            </li>
-                                        @endforeach
-                                    </ul>
-                                </div>
-                            @endif
                         </div>
-                    </div>
+                    </a>
                 @endforeach
             </div>
         @endif

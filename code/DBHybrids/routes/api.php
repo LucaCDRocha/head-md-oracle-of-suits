@@ -18,4 +18,5 @@ use App\Http\Controllers\Api\HybridController;
 
 Route::get('/cards', [CardController::class, 'index']);
 Route::get('/hybrids', [HybridController::class, 'index']);
+Route::get('/hybrids/{id}', [HybridController::class, 'show']);
 Route::post('/hybrids', [HybridController::class, 'store']);

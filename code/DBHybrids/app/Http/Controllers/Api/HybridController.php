@@ -67,7 +67,7 @@ class HybridController extends Controller
             // Allow an uploaded image file under the `img` field (increased to 10MB)
             'img' => 'nullable|image|max:10240',
             'cards' => 'required|array|size:3',
-            'cards.*' => 'required|integer|distinct',
+            'cards.*' => 'required|integer',
             'base_card_id' => 'required|integer',
         ]);
 
@@ -75,9 +75,10 @@ class HybridController extends Controller
             return response()->json(['error' => 'base_card_id must be one of the cards array'], 422);
         }
 
-        // Verify cards exist
-        $existing = Card::whereIn('id', $data['cards'])->pluck('id')->all();
-        if (count($existing) !== 3) {
+        // Verify cards exist (check unique card IDs since duplicates are allowed)
+        $uniqueCardIds = array_unique($data['cards']);
+        $existing = Card::whereIn('id', $uniqueCardIds)->pluck('id')->all();
+        if (count($existing) !== count($uniqueCardIds)) {
             return response()->json(['error' => 'One or more cards not found'], 422);
         }
 
@@ -144,5 +145,53 @@ class HybridController extends Controller
         ];
 
         return response()->json(['data' => $payload], 201);
+    }
+
+    /**
+     * Return a single hybrid by ID with its related cards.
+     */
+    public function show($id)
+    {
+        $hybrid = Hybrid::with('cards.game')->find($id);
+
+        if (!$hybrid) {
+            return response()->json(['error' => 'Hybrid not found'], 404);
+        }
+
+        $payload = [
+            'id' => $hybrid->id,
+            'name' => $hybrid->name,
+            'img_src' => $hybrid->img_src
+                ? (preg_match('/^https?:\/\//', $hybrid->img_src)
+                    ? $hybrid->img_src
+                    : asset('storage/' . ltrim($hybrid->img_src, '/'))
+                )
+                : null,
+            'nb_like' => $hybrid->nb_like,
+            'created_at' => $hybrid->created_at,
+            'cards' => $hybrid->cards->map(function ($card) {
+                return [
+                    'id' => $card->id,
+                    'name' => $card->name,
+                    'suits' => $card->suits,
+                    'value' => $card->value,
+                    'img_src' => $card->img_src
+                        ? (preg_match('/^https?:\/\//', $card->img_src)
+                            ? $card->img_src
+                            : asset('storage/' . ltrim($card->img_src, '/'))
+                        )
+                        : null,
+                    'french_equivalence' => $card->french_equivalence,
+                    'game' => $card->game ? [
+                        'id' => $card->game->id,
+                        'name' => $card->game->name,
+                        'description' => $card->game->description,
+                    ] : null,
+                    'is_base' => isset($card->pivot) && isset($card->pivot->is_base) ? (bool) $card->pivot->is_base : false,
+                ];
+            }),
+        ];
+
+        return response()->json(['data' => $payload]);
     }
 }
