@@ -6,6 +6,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>All Hybrids - Oracle of Suits</title>
     <style>
+        :root {
+            --color-bg: #FFEDCC;
+            --color-accent-green: #83F6BD;
+            --color-accent-pink: #FF6398;
+            --color-dark: #060606;
+            --color-white: #ffffff;
+            --color-accent-green-hover: #70e0aa;
+            --color-accent-pink-hover: #ff4d8a;
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -14,7 +24,7 @@
 
         body {
             font-family: system-ui, -apple-system, sans-serif;
-            background: #f5e6d3;
+            background: var(--color-dark);
             padding: 20px;
             min-height: 100vh;
         }
@@ -31,13 +41,14 @@
 
         h1 {
             font-size: 3rem;
-            color: #2c2c2c;
+            color: var(--color-bg);
             margin-bottom: 10px;
         }
 
         .subtitle {
             font-size: 1.2rem;
-            color: #666;
+            color: var(--color-bg);
+            opacity: 0.7;
         }
 
         .stats {
@@ -46,18 +57,19 @@
             gap: 30px;
             margin: 20px 0;
             font-size: 1.1rem;
-            color: #555;
+            color: var(--color-bg);
         }
 
         .stat {
-            background: white;
+            background: var(--color-dark);
             padding: 10px 20px;
             border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 2px 4px rgba(6, 6, 6, 0.1);
+            border: 2px solid var(--color-bg);
         }
 
         .stat strong {
-            color: #2c2c2c;
+            color: var(--color-accent-pink);
             font-size: 1.3rem;
         }
 
@@ -69,24 +81,24 @@
         }
 
         .hybrid-card {
-            background: white;
+            background: var(--color-bg);
             border-radius: 12px;
             overflow: hidden;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 12px rgba(255, 237, 204, 0.1);
             transition: transform 0.2s ease, box-shadow 0.2s ease;
             cursor: pointer;
         }
 
         .hybrid-card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+            box-shadow: 0 8px 20px rgba(255, 237, 204, 0.2);
         }
 
         .hybrid-image {
             width: 100%;
             height: 300px;
             object-fit: cover;
-            background: #f0f0f0;
+            background: var(--color-dark);
         }
 
         .hybrid-info {
@@ -96,7 +108,7 @@
         .hybrid-name {
             font-size: 1.3rem;
             font-weight: 700;
-            color: #2c2c2c;
+            color: var(--color-dark);
             margin-bottom: 10px;
         }
 
@@ -106,7 +118,8 @@
             align-items: center;
             margin-bottom: 15px;
             font-size: 0.9rem;
-            color: #666;
+            color: var(--color-dark);
+            opacity: 0.7;
         }
 
         .likes {
@@ -117,7 +130,7 @@
 
         .likes span {
             font-weight: 600;
-            color: #e74c3c;
+            color: var(--color-accent-pink);
         }
 
         .cards-used {
@@ -129,7 +142,8 @@
         .cards-used-title {
             font-size: 0.85rem;
             font-weight: 700;
-            color: #888;
+            color: var(--color-dark);
+            opacity: 0.6;
             text-transform: uppercase;
             margin-bottom: 8px;
         }
@@ -140,7 +154,8 @@
 
         .card-item {
             font-size: 0.9rem;
-            color: #555;
+            color: var(--color-dark);
+            opacity: 0.8;
             padding: 4px 0;
             display: flex;
             align-items: center;
@@ -149,18 +164,20 @@
 
         .card-item.base {
             font-weight: 700;
-            color: #2c2c2c;
+            color: var(--color-dark);
+            opacity: 1;
         }
 
         .card-item.base::before {
             content: "★";
-            color: #f39c12;
+            color: var(--color-accent-green);
         }
 
         .no-hybrids {
             text-align: center;
             padding: 60px 20px;
-            color: #999;
+            color: var(--color-dark);
+            opacity: 0.5;
             font-size: 1.2rem;
         }
 
@@ -168,17 +185,60 @@
             display: inline-block;
             margin-bottom: 20px;
             padding: 10px 20px;
-            background: white;
-            color: #2c2c2c;
+            background: var(--color-bg);
+            color: var(--color-dark);
             text-decoration: none;
             border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 2px 4px rgba(255, 237, 204, 0.3);
             transition: all 0.2s ease;
         }
 
         .back-link:hover {
-            background: #2c2c2c;
-            color: white;
+            background: var(--color-white);
+            color: var(--color-dark);
+        }
+
+        .sort-controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 30px 0;
+        }
+
+        .sort-button {
+            padding: 10px 25px;
+            background: var(--color-bg);
+            color: var(--color-dark);
+            text-decoration: none;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(255, 237, 204, 0.3);
+            transition: all 0.2s ease;
+            cursor: pointer;
+            border: 2px solid transparent;
+            font-weight: 500;
+            font-size: 1rem;
+        }
+
+        .sort-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(255, 237, 204, 0.4);
+        }
+
+        .sort-button.active {
+            background: var(--color-accent-green);
+            color: var(--color-dark);
+            border-color: var(--color-accent-green);
+            box-shadow: 0 4px 12px rgba(131, 246, 189, 0.3);
+        }
+
+        .sort-label {
+            display: block;
+            text-align: center;
+            color: var(--color-bg);
+            opacity: 0.7;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+            font-weight: 600;
         }
 
         /* Modal Styles */
@@ -189,7 +249,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.95);
+            background: rgba(6, 6, 6, 0.95);
             z-index: 9999;
             overflow: auto;
         }
@@ -212,7 +272,7 @@
             max-height: 60vh;
             object-fit: contain;
             border-radius: 12px;
-            box-shadow: 0 8px 32px rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(255, 237, 204, 0.1);
         }
 
         .modal-source-cards {
@@ -233,11 +293,11 @@
             width: 100%;
             height: auto;
             border-radius: 8px;
-            box-shadow: 0 4px 16px rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 16px rgba(255, 237, 204, 0.1);
         }
 
         .modal-source-card p {
-            color: white;
+            color: var(--color-bg);
             text-align: center;
             margin-top: 10px;
             font-size: 0.9em;
@@ -247,12 +307,12 @@
             position: fixed;
             top: 20px;
             right: 20px;
-            color: white;
+            color: var(--color-bg);
             font-size: 40px;
             font-weight: bold;
             cursor: pointer;
             z-index: 10000;
-            background: rgba(0, 0, 0, 0.5);
+            background: rgba(255, 237, 204, 0.1);
             width: 50px;
             height: 50px;
             border-radius: 50%;
@@ -263,7 +323,7 @@
         }
 
         .modal-close:hover {
-            background: rgba(0, 0, 0, 0.8);
+            background: rgba(255, 237, 204, 0.2);
         }
 
         @media (max-width: 768px) {
@@ -281,8 +341,6 @@
 
 <body>
     <div class="container">
-        <a href="/" class="back-link">← Back to Home</a>
-
         <header>
             <h1>🃏 Oracle of Suits - Hybrids Gallery</h1>
             <p class="subtitle">Explore all generated hybrid cards</p>
@@ -294,6 +352,18 @@
                 <div class="stat">
                     <strong>{{ $hybrids->sum('nb_like') }}</strong> Total Likes
                 </div>
+            </div>
+
+            <div class="sort-controls">
+                <span class="sort-label">Sort by:</span>
+                <a href="{{ route('hybrids.index', ['sort' => 'date']) }}"
+                    class="sort-button {{ !isset($sortBy) || $sortBy === 'date' ? 'active' : '' }}">
+                    📅 Newest First
+                </a>
+                <a href="{{ route('hybrids.index', ['sort' => 'likes']) }}"
+                    class="sort-button {{ isset($sortBy) && $sortBy === 'likes' ? 'active' : '' }}">
+                    ❤️ Most Liked
+                </a>
             </div>
         </header>
 
