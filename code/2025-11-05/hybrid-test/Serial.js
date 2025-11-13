@@ -130,6 +130,16 @@ function parseLine(line) {
 	}
 }
 
+// Simulate serial input using keyboard for testing without Arduino
+export function setKnobValue(knobIndex, value) {
+	knobValues[knobIndex] = value;
+	updateKnobDisplay();
+
+	if (onKnobChangeCallback) {
+		onKnobChangeCallback(knobValues);	
+	}
+}
+
 function updateKnobDisplay() {
 	// Update display for all 12 knobs
 	for (let i = 0; i < 12; i++) {
