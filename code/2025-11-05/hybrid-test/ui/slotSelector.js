@@ -1026,12 +1026,12 @@ let previousKnobRawValues = Array(12).fill(-1);
 // Store the number of options for each knob to detect when options change
 let previousKnobNumOptions = Array(12).fill(-1);
 
+// Store the min and max values of the active sliding window for each knob
+let knobSlidingWindows = Array(12).fill({ min: 0, max: 1023 });
+
 // Hysteresis threshold: how many raw analog units required to trigger a change
 // Increased to prevent flickering even at boundaries
 const HYSTERESIS_THRESHOLD = 20;
-
-// Minimum change required to even consider updating (prevents micro-fluctuations)
-const MIN_RAW_CHANGE = 5;
 
 /**
  * Handle knob value changes from Arduino
@@ -1181,16 +1181,45 @@ function mapKnobToIndexWithHysteresis(knobValue, numOptions, knobId) {
 	if (numOptions === 0) return 0;
 	if (numOptions === 1) return 0;
 
+	// Adjuste sliding window size for this knob
+	let { min, max } = knobSlidingWindows[knobId];
+
+	let slidingWindowSize = Math.min(numOptions * 46, 1023);
+	min = Math.min(min, 1023 - slidingWindowSize);
+	max = min + slidingWindowSize;
+	// if (knobId === 1)
+	// 	console.log(`Knob ${knobId}: Sliding window [${min.toFixed(1)}, ${max.toFixed(1)}] for ${numOptions} options`);
+
+	// Adjust window position to keep the knobValue within the window
+	if (knobValue < min) {
+		min = knobValue;
+		max = min + slidingWindowSize;
+	} else if (knobValue > max) {
+		max = knobValue;
+		min = max - slidingWindowSize;
+	}
+
+	// Save updated sliding window
+	knobSlidingWindows[knobId] = { min, max };
+
+
 	// Get previous values
 	const previousIndex = previousKnobIndices[knobId];
 	const previousRawValue = previousKnobRawValues[knobId];
 	const previousNumOptions = previousKnobNumOptions[knobId];
 
+	const rawIndex = Math.floor(map(knobValue, min, max, 0, numOptions));
+	const clampedIndex = Math.min(rawIndex, numOptions - 1);
+	// if (knobId === 1)
+	// 	console.log(`Knob ${knobId}: Raw index ${rawIndex}, Clamped index ${clampedIndex}, Prev index ${previousIndex}`);
+
+	previousKnobIndices[knobId] = clampedIndex;
+	previousKnobRawValues[knobId] = knobValue;
+	previousKnobNumOptions[knobId] = numOptions;
+
 	// Check if the number of options changed or if previous index is out of bounds
 	if (previousNumOptions !== numOptions || previousIndex >= numOptions) {
 		// Options changed - reset hysteresis and recalculate
-		const rawIndex = Math.floor((knobValue / 1024) * numOptions);
-		const clampedIndex = Math.min(rawIndex, numOptions - 1);
 
 		previousKnobIndices[knobId] = clampedIndex;
 		previousKnobRawValues[knobId] = knobValue;
@@ -1198,20 +1227,6 @@ function mapKnobToIndexWithHysteresis(knobValue, numOptions, knobId) {
 
 		return clampedIndex;
 	}
-
-	// Check if the knob has actually moved significantly
-	if (previousRawValue !== -1) {
-		const rawChange = Math.abs(knobValue - previousRawValue);
-
-		// If the change is too small, ignore it completely (noise filtering)
-		if (rawChange < MIN_RAW_CHANGE) {
-			return previousIndex !== -1 ? previousIndex : 0;
-		}
-	}
-
-	// Calculate the ideal index without hysteresis
-	const rawIndex = Math.floor((knobValue / 1024) * numOptions);
-	const clampedIndex = Math.min(rawIndex, numOptions - 1);
 
 	// If this is the first reading or we don't have a previous value
 	if (previousIndex === -1) {
@@ -1229,7 +1244,7 @@ function mapKnobToIndexWithHysteresis(knobValue, numOptions, knobId) {
 
 	// The index wants to change - apply hysteresis with expanded deadband
 	// Calculate boundaries with overlap to create a stable zone
-	const stepSize = 1024 / numOptions;
+	const stepSize = slidingWindowSize / numOptions;
 
 	// For the CURRENT index position, calculate its safe zone
 	// This creates a wider "sticky" region around each option

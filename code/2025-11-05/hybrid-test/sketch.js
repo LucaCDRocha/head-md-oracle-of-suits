@@ -1,7 +1,7 @@
 import { initSlotSelector, getSelectedCards, getBaseCardId, drawPreview, handleKnobChange } from "./ui/slotSelector.js";
 import { generateImage } from "./api/geminiApi.js";
 import { uploadHybridBase64 } from "./api/hybridApi.js";
-import { setupSerial, setKnobChangeCallback, setButtonPressCallback } from "./Serial.js";
+import { setupSerial, setKnobChangeCallback, setButtonPressCallback, setKnobValue } from "./Serial.js";
 import { initQRCodes, updateDownloadQR } from "./ui/qrCodes.js";
 import { DEBUG } from "./config.js";
 import soundEffects from "./sounds/soundEffects.js";
@@ -109,7 +109,32 @@ function applyDebugMode() {
 window.draw = function () {
 	// Use drawPreview from slot selector module
 	drawPreview(window);
+
+	simulateSerialInput();
 };
+
+// make setKnobValue globally available and callable from browser console
+window.setKnobValue = setKnobValue;
+
+function simulateSerialInput() {
+
+	let keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', 'A', 'B'];
+
+	for (let i = 0; i < keys.length; i++) {
+		const knobIndex = i;
+		if (keyIsDown(keys[i].charCodeAt(0))) {
+			// map mouse x position within div with id cards-list to 0-1023
+			const cardsListDiv = document.getElementById("cards-list");
+			const rect = cardsListDiv.getBoundingClientRect();
+			const relativeX = mouseX - rect.left;
+			const value = Math.floor(map(relativeX, 0, rect.width, 0, 1023));
+			//console.log(`Simulating knob ${knobIndex} change to ${value}`);
+			//console.log(`mousex=${mouseX} width=${width} mappedValue=${value}`);
+			setKnobValue(knobIndex, value);
+		}
+	}
+	
+}
 
 function handleButtonPress() {
 	// Check if we're currently generating or within debounce period
