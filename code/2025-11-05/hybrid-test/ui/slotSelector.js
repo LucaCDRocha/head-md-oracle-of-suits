@@ -1030,9 +1030,6 @@ let previousKnobNumOptions = Array(12).fill(-1);
 // Increased to prevent flickering even at boundaries
 const HYSTERESIS_THRESHOLD = 20;
 
-// Minimum change required to even consider updating (prevents micro-fluctuations)
-const MIN_RAW_CHANGE = 5;
-
 /**
  * Handle knob value changes from Arduino
  * knobValues = [k1, k2, ..., k12] each 0-1023
@@ -1197,16 +1194,6 @@ function mapKnobToIndexWithHysteresis(knobValue, numOptions, knobId) {
 		previousKnobNumOptions[knobId] = numOptions;
 
 		return clampedIndex;
-	}
-
-	// Check if the knob has actually moved significantly
-	if (previousRawValue !== -1) {
-		const rawChange = Math.abs(knobValue - previousRawValue);
-
-		// If the change is too small, ignore it completely (noise filtering)
-		if (rawChange < MIN_RAW_CHANGE) {
-			return previousIndex !== -1 ? previousIndex : 0;
-		}
 	}
 
 	// Calculate the ideal index without hysteresis
