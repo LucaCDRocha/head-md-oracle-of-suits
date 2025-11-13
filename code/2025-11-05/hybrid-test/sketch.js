@@ -4,9 +4,12 @@ import { uploadHybridBase64 } from "./api/hybridApi.js";
 import { setupSerial, setKnobChangeCallback, setButtonPressCallback } from "./Serial.js";
 import { initQRCodes, updateDownloadQR } from "./ui/qrCodes.js";
 import { DEBUG } from "./config.js";
+import soundEffects from "./sounds/soundEffects.js";
+import LoadingAnimation from "./ui/loadingAnimation.js";
 
 let canvas;
 let lastGeneratedBase64 = null;
+let loadingAnimation = null;
 
 // Debounce state for button press
 let isGenerating = false;
@@ -33,6 +36,18 @@ window.setup = function () {
 
 	// Initialize QR codes
 	initQRCodes();
+
+	// Initialize loading animation
+	loadingAnimation = new LoadingAnimation("loading-overlay");
+
+	// Initialize sound effects on first user interaction
+	document.body.addEventListener(
+		"click",
+		() => {
+			soundEffects.init();
+		},
+		{ once: true }
+	);
 
 	// Setup Arduino serial connection
 	setupSerial();
@@ -140,15 +155,25 @@ async function onGenerate() {
 	const btn = document.getElementById("generate-btn");
 	const status = document.getElementById("status");
 	const loadingOverlay = document.getElementById("loading-overlay");
-	const loadingStatus = document.getElementById("loading-status");
 	const generatedImg = document.getElementById("generated-img");
 
 	btn.disabled = true;
 	status.innerText = "Generating...";
 
-	// Show loading overlay and hide previous image
-	if (loadingOverlay) loadingOverlay.style.display = "flex";
+	// PLAY START SOUND
+	soundEffects.playStartSound();
+
+	// Show loading overlay with animation and hide previous image
+	if (loadingOverlay) {
+		loadingOverlay.style.display = "flex";
+		loadingAnimation.start();
+	}
 	if (generatedImg) generatedImg.style.display = "none";
+
+	// Start ambient processing sound
+	const processingLoop = setInterval(() => {
+		soundEffects.playProcessingLoop(2);
+	}, 2000);
 
 	const selected = getSelectedCards();
 	let baseCardId = getBaseCardId();
@@ -162,12 +187,17 @@ async function onGenerate() {
 		// Status callback for API calls
 		const statusCallback = (msg) => {
 			status.innerText = msg;
-			if (loadingStatus) loadingStatus.innerText = msg;
 		};
 
 		// Generate image using Gemini API
 		statusCallback("Génération de l'image...");
 		const base64 = await generateImage(selected, baseCardId, statusCallback);
+
+		// Stop processing sounds
+		clearInterval(processingLoop);
+
+		// Stop loading animation
+		loadingAnimation.stop();
 
 		// Check if this is a prompt (DEBUG mode) or actual image
 		if (base64.startsWith("PROMPT:")) {
@@ -214,6 +244,15 @@ async function onGenerate() {
 			// Store the returned base64 in memory
 			lastGeneratedBase64 = base64;
 
+			// Keep loading overlay visible for a moment before reveal
+			await new Promise((resolve) => setTimeout(resolve, 500));
+
+			// PLAY COMPLETE SOUND before showing image
+			soundEffects.playCompleteSound();
+
+			// Small delay to let the sound play
+			await new Promise((resolve) => setTimeout(resolve, 300));
+
 			// Display the generated image in the DOM
 			const dataUrl = "data:image/png;base64," + base64;
 			const imgEl = document.getElementById("generated-img");
@@ -241,6 +280,12 @@ async function onGenerate() {
 			statusCallback("Terminé!");
 		}
 	} catch (err) {
+		// Stop processing sounds on error
+		clearInterval(processingLoop);
+
+		// Stop loading animation
+		loadingAnimation.stop();
+
 		// Hide loading overlay on error
 		if (loadingOverlay) loadingOverlay.style.display = "none";
 		status.innerText = "Error: " + err.message;

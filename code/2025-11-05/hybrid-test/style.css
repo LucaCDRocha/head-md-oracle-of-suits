@@ -775,7 +775,7 @@ canvas {
 	left: 0;
 	right: 0;
 	bottom: 0;
-	background: rgba(0, 0, 0, 0.85);
+	background: rgba(0, 0, 0, 0.95);
 	display: flex;
 	flex-direction: column;
 	align-items: center;
@@ -784,40 +784,10 @@ canvas {
 	border-radius: 1rem 1rem 0 0;
 }
 
-.loading-spinner {
-	width: 80px;
-	height: 80px;
-	border: 8px solid rgba(255, 255, 255, 0.2);
-	border-top: 8px solid #fff;
-	border-radius: 50%;
-	animation: spin 1s linear infinite;
-	margin-bottom: 24px;
-}
-
-@keyframes spin {
-	0% {
-		transform: rotate(0deg);
-	}
-	100% {
-		transform: rotate(360deg);
-	}
-}
-
-.loading-text {
-	color: #fff;
-	font-size: 24px;
-	font-weight: 700;
-	margin: 0 0 12px 0;
-	text-align: center;
-	letter-spacing: 1px;
-}
-
-.loading-subtext {
-	color: rgba(255, 255, 255, 0.8);
-	font-size: 16px;
-	font-weight: 400;
-	margin: 0;
-	text-align: center;
+#loading-canvas {
+	width: 100%;
+	height: 100%;
+	display: block;
 }
 
 #status {

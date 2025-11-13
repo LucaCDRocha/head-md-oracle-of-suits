@@ -21,11 +21,9 @@
 				<img src="assets/logo.png" alt="Hybrids" id="logo" />
 			</div>
 			<div id="app2-content">
-				<!-- Loading overlay -->
+				<!-- Loading overlay with animation canvas -->
 				<div id="loading-overlay" style="display: none">
-					<div class="loading-spinner"></div>
-					<p class="loading-text">En train de générer...</p>
-					<p class="loading-subtext" id="loading-status">Merci de patienter</p>
+					<canvas id="loading-canvas"></canvas>
 				</div>
 				<!-- image returned by generative API will be shown here -->
 				<img id="generated-img" alt="Generated hybrid card" style="display: none" />
