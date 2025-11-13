@@ -225,9 +225,6 @@ class LoadingAnimation {
 			this.drawParticle(particle);
 		});
 
-		// Draw card shape in center
-		this.drawCardShape(progress);
-
 		// Draw status text
 		ctx.save();
 		ctx.font = 'bold 24px "Nippo", monospace';
