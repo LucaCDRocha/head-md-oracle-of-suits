@@ -1184,7 +1184,7 @@ function mapKnobToIndexWithHysteresis(knobValue, numOptions, knobId) {
 	// Adjuste sliding window size for this knob
 	let { min, max } = knobSlidingWindows[knobId];
 
-	let slidingWindowSize = Math.min(numOptions * 46, 1023);
+	let slidingWindowSize = Math.min(numOptions * 55, 1023);
 	min = Math.min(min, 1023 - slidingWindowSize);
 	max = min + slidingWindowSize;
 	// if (knobId === 1)
@@ -1213,9 +1213,9 @@ function mapKnobToIndexWithHysteresis(knobValue, numOptions, knobId) {
 	// if (knobId === 1)
 	// 	console.log(`Knob ${knobId}: Raw index ${rawIndex}, Clamped index ${clampedIndex}, Prev index ${previousIndex}`);
 
-	previousKnobIndices[knobId] = clampedIndex;
-	previousKnobRawValues[knobId] = knobValue;
-	previousKnobNumOptions[knobId] = numOptions;
+	// previousKnobIndices[knobId] = clampedIndex;
+	// previousKnobRawValues[knobId] = knobValue;
+	// previousKnobNumOptions[knobId] = numOptions;
 
 	// Check if the number of options changed or if previous index is out of bounds
 	if (previousNumOptions !== numOptions || previousIndex >= numOptions) {
@@ -1242,47 +1242,39 @@ function mapKnobToIndexWithHysteresis(knobValue, numOptions, knobId) {
 		return previousIndex;
 	}
 
-	// The index wants to change - apply hysteresis with expanded deadband
-	// Calculate boundaries with overlap to create a stable zone
+	// Recalculate using absolute positions inside the sliding window (include min offset)
 	const stepSize = slidingWindowSize / numOptions;
 
-	// For the CURRENT index position, calculate its safe zone
-	// This creates a wider "sticky" region around each option
-	const currentIndexStart = clampedIndex * stepSize;
-	const currentIndexEnd = (clampedIndex + 1) * stepSize;
-	const currentIndexCenter = currentIndexStart + stepSize / 2;
+	// Compute centers in absolute knob units
+	const clampedCenter = min + (clampedIndex + 0.5) * stepSize;
+	const previousCenter = min + (previousIndex + 0.5) * stepSize;
 
-	// For the PREVIOUS index, calculate its boundaries
-	const previousIndexStart = previousIndex * stepSize;
-	const previousIndexEnd = (previousIndex + 1) * stepSize;
-	const previousIndexCenter = previousIndexStart + stepSize / 2;
+	// If indexes are equal, nothing to switch
+	if (clampedIndex === previousIndex) {
+		previousKnobRawValues[knobId] = knobValue;
+		return previousIndex;
+	}
 
-	// Calculate distance from the previous index center
-	const distanceFromPreviousCenter = Math.abs(knobValue - previousIndexCenter);
+	// Midpoint between the two centers
+	const midpointBetweenCenters = (clampedCenter + previousCenter) / 2;
 
-	// Only switch if we're:
-	// 1. Far enough from the previous center (HYSTERESIS_THRESHOLD)
-	// 2. AND clearly past the midpoint between the two options
-	const midpointBetweenOptions = (previousIndexCenter + currentIndexCenter) / 2;
-
-	// Determine if we should switch based on direction of movement
+	// Only switch if we cross the midpoint plus hysteresis threshold
 	let shouldSwitch = false;
-
 	if (clampedIndex > previousIndex) {
-		// Moving to a higher index - must be past midpoint AND threshold
-		shouldSwitch = knobValue > midpointBetweenOptions + HYSTERESIS_THRESHOLD;
+		// Moving upward
+		shouldSwitch = knobValue > midpointBetweenCenters + HYSTERESIS_THRESHOLD;
 	} else {
-		// Moving to a lower index - must be past midpoint AND threshold
-		shouldSwitch = knobValue < midpointBetweenOptions - HYSTERESIS_THRESHOLD;
+		// Moving downward
+		shouldSwitch = knobValue < midpointBetweenCenters - HYSTERESIS_THRESHOLD;
 	}
 
 	if (shouldSwitch) {
-		// Switch confirmed - update both tracking variables
 		previousKnobIndices[knobId] = clampedIndex;
 		previousKnobRawValues[knobId] = knobValue;
+		previousKnobNumOptions[knobId] = numOptions;
 		return clampedIndex;
 	} else {
-		// Stay with previous index
+		// Stay with previous index until threshold crossed
 		previousKnobRawValues[knobId] = knobValue;
 		return previousIndex;
 	}
