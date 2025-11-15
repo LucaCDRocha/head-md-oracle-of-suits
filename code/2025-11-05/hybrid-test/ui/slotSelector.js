@@ -1031,7 +1031,7 @@ let knobSlidingWindows = Array(12).fill({ min: 0, max: 1023 });
 
 // Hysteresis threshold: how many raw analog units required to trigger a change
 // Increased to prevent flickering even at boundaries
-const HYSTERESIS_THRESHOLD = 20;
+const HYSTERESIS_THRESHOLD = 10;
 
 /**
  * Handle knob value changes from Arduino
