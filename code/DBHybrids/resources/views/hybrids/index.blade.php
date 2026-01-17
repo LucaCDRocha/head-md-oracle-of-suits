@@ -97,8 +97,8 @@
 
         .hybrid-image {
             width: 100%;
-            height: 300px;
-            object-fit: cover;
+            height: auto;
+            display: block;
             background: var(--color-dark);
         }
 
