@@ -26,7 +26,7 @@
             font-family: system-ui, -apple-system, sans-serif;
             background: var(--color-dark);
             padding: 20px;
-            padding-bottom: 100px; /* Space for fixed pagination */
+            padding-bottom: 200px; /* Space for fixed pagination */
             min-height: 100vh;
         }
 
