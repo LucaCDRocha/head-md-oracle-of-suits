@@ -201,8 +201,9 @@
 
         .sort-controls {
             display: flex;
-            justify-content: center;
-            gap: 15px;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
             margin: 30px 0;
         }
 
@@ -230,6 +231,11 @@
             color: var(--color-dark);
             border-color: var(--color-accent-green);
             box-shadow: 0 4px 12px rgba(131, 246, 189, 0.3);
+        }
+
+        .sort-buttons-wrapper {
+            display: flex;
+            gap: 15px;
         }
 
         .sort-label {
@@ -511,14 +517,16 @@
 
             <div class="sort-controls">
                 <span class="sort-label">Sort by:</span>
-                <a href="{{ route('hybrids.index', ['sort' => 'date']) }}"
-                    class="sort-button {{ !isset($sortBy) || $sortBy === 'date' ? 'active' : '' }}">
-                    📅 Newest First
-                </a>
-                <a href="{{ route('hybrids.index', ['sort' => 'likes']) }}"
-                    class="sort-button {{ isset($sortBy) && $sortBy === 'likes' ? 'active' : '' }}">
-                    ❤️ Most Liked
-                </a>
+                <div class="sort-buttons-wrapper">
+                    <a href="{{ route('hybrids.index', ['sort' => 'date']) }}"
+                        class="sort-button {{ !isset($sortBy) || $sortBy === 'date' ? 'active' : '' }}">
+                        📅 Newest First
+                    </a>
+                    <a href="{{ route('hybrids.index', ['sort' => 'likes']) }}"
+                        class="sort-button {{ isset($sortBy) && $sortBy === 'likes' ? 'active' : '' }}">
+                        ❤️ Most Liked
+                    </a>
+                </div>
             </div>
         </header>
 
