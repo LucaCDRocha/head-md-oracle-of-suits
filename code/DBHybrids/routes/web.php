@@ -22,7 +22,7 @@ Route::get('/hybrids', function () {
             break;
     }
 
-    $hybrids = $query->paginate(15)->onEachSide(2)->withQueryString();
+    $hybrids = $query->paginate(15)->onEachSide(1)->withQueryString();
     $totalHybrids = Hybrid::count();
     $totalLikes = Hybrid::sum('nb_like');
 
