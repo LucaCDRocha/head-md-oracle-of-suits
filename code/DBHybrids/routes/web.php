@@ -55,10 +55,26 @@ Route::get('/hybrids/{id}/download', function ($id) {
     }
 
     // For local images stored in storage
-    $imagePath = storage_path('app/public/' . ltrim($hybrid->img_src, '/'));
+    // Remove leading slash to ensure proper path construction
+    $relativePath = ltrim($hybrid->img_src, '/');
+    
+    // Try multiple possible locations
+    $possiblePaths = [
+        storage_path('app/public/' . $relativePath),
+        public_path('storage/' . $relativePath),
+        base_path($relativePath),
+    ];
 
-    if (!file_exists($imagePath)) {
-        abort(404, 'Image file not found');
+    $imagePath = null;
+    foreach ($possiblePaths as $path) {
+        if (file_exists($path) && is_file($path)) {
+            $imagePath = $path;
+            break;
+        }
+    }
+
+    if (!$imagePath) {
+        abort(404, 'Image file not found. Checked paths: ' . implode(', ', $possiblePaths));
     }
 
     // Generate a clean filename
