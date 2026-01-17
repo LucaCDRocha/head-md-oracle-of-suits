@@ -22,9 +22,11 @@ Route::get('/hybrids', function () {
             break;
     }
 
-    $hybrids = $query->get();
+    $hybrids = $query->paginate(15)->onEachSide(2)->withQueryString();
+    $totalHybrids = Hybrid::count();
+    $totalLikes = Hybrid::sum('nb_like');
 
-    return view('hybrids.index', compact('hybrids', 'sortBy'));
+    return view('hybrids.index', compact('hybrids', 'sortBy', 'totalHybrids', 'totalLikes'));
 })->name('hybrids.index');
 
 Route::get('/hybrids/{id}', function ($id) {

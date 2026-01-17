@@ -26,6 +26,7 @@
             font-family: system-ui, -apple-system, sans-serif;
             background: var(--color-dark);
             padding: 20px;
+            padding-bottom: 100px; /* Space for fixed pagination */
             min-height: 100vh;
         }
 
@@ -336,6 +337,160 @@
                 max-width: 80%;
             }
         }
+
+        /* Pagination Styles */
+        .pagination-wrapper {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 15px 20px;
+            background: linear-gradient(to top, 
+                        var(--color-dark) 80%, 
+                        transparent);
+            z-index: 1000;
+        }
+
+        .pagination-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            background: var(--color-bg);
+            padding: 15px 25px;
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5),
+                        0 4px 16px rgba(0, 0, 0, 0.3);
+            border: 2px solid var(--color-dark);
+            width: 100%;
+        }
+
+        .pagination-info {
+            font-size: 0.8rem;
+            color: var(--color-dark);
+            white-space: nowrap;
+            font-weight: 600;
+            opacity: 0.7;
+            text-align: center;
+        }
+
+        .pagination-wrapper nav {
+            display: flex;
+            align-items: center;
+            flex-direction: column;
+            width: 100%;
+            gap: 4px;
+        }
+
+        .pagination-wrapper ul {
+            display: flex;
+            flex-direction: row;
+            gap: 4px;
+            list-style: none;
+            align-items: center;
+            margin: 0;
+            padding: 0;
+        }
+
+        .pagination-wrapper li {
+            display: inline-block;
+        }
+
+        .pagination-wrapper a,
+        .pagination-wrapper span {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            border-radius: 50%;
+            text-decoration: none;
+            color: var(--color-dark);
+            font-weight: 600;
+            transition: all 0.2s ease;
+            width: 36px;
+            height: 36px;
+            font-size: 0.9rem;
+            background: transparent;
+        }
+
+        .pagination-wrapper a:hover {
+            background: var(--color-accent-green);
+            color: var(--color-dark);
+            transform: scale(1.1);
+        }
+
+        .pagination-wrapper .active span {
+            background: var(--color-accent-pink);
+            color: var(--color-white);
+            font-weight: 700;
+            transform: scale(1.05);
+        }
+
+        .pagination-wrapper .disabled span {
+            color: #bbb;
+            cursor: not-allowed;
+            opacity: 0.3;
+        }
+
+        .pagination-wrapper .disabled a {
+            pointer-events: none;
+        }
+
+        /* Previous/Next buttons */
+        .pagination-nav-buttons {
+            display: flex;
+            flex-direction: row;
+            gap: 12px;
+            margin-top: 5px;
+            width: 100%;
+        }
+
+        .pagination-nav-buttons a,
+        .pagination-nav-buttons span {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 20px;
+            border-radius: 20px;
+            text-decoration: none;
+            color: var(--color-dark);
+            font-weight: 600;
+            font-size: 0.85rem;
+            background: rgba(6, 6, 6, 0.08);
+            transition: all 0.2s ease;
+            flex-grow: 1;
+        }
+
+        .pagination-nav-buttons a:hover {
+            background: var(--color-accent-green);
+            color: var(--color-dark);
+            transform: scale(1.05);
+        }
+
+        .pagination-nav-buttons span.disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            background: transparent;
+        }
+
+        /* Dots */
+        .pagination-wrapper .dots {
+            width: 30px;
+            text-align: center;
+            opacity: 0.4;
+            font-weight: bold;
+        }
+
+        /* Page numbers container */
+        .pagination-pages {
+            display: flex;
+            flex-direction: row;
+            gap: 3px;
+            align-items: center;
+        }
     </style>
 </head>
 
@@ -347,10 +502,10 @@
 
             <div class="stats">
                 <div class="stat">
-                    <strong>{{ $hybrids->count() }}</strong> Hybrids
+                    <strong>{{ $totalHybrids }}</strong> Hybrids
                 </div>
                 <div class="stat">
-                    <strong>{{ $hybrids->sum('nb_like') }}</strong> Total Likes
+                    <strong>{{ $totalLikes }}</strong> Total Likes
                 </div>
             </div>
 
@@ -437,6 +592,15 @@
                     </a>
                 @endforeach
             </div>
+
+            <!-- Pagination -->
+            @if ($hybrids->hasPages())
+                <div class="pagination-wrapper">
+                    <div class="pagination-container">
+                        {{ $hybrids->links('vendor.pagination.custom') }}
+                    </div>
+                </div>
+            @endif
         @endif
     </div>
 
