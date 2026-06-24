@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+		<title>Hybrid Builder - Oracle of Suits</title>
+
+		<link rel="stylesheet" type="text/css" href="style.css" />
+
+		<!-- Load p5.js and dependencies -->
+		<script src="libraries/p5.min.js"></script>
+		<script src="libraries/p5.sound.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+		<link href="https://api.fontshare.com/css?f[]=nippo" rel="stylesheet" />
+	</head>
+
+	<body>
+		<!-- Top half - Installation display area -->
+		<div id="app2">
+			<div id="app2-header">
+				<img src="assets/logo.png" alt="Hybrids" id="logo" />
+			</div>
+			<div id="app2-content">
+				<!-- Loading overlay with animation canvas -->
+				<div id="loading-overlay" style="display: none">
+					<canvas id="loading-canvas"></canvas>
+				</div>
+				<!-- image returned by generative API will be shown here -->
+				<img id="generated-img" alt="Generated hybrid card" style="display: none" />
+			</div>
+			<div id="app2-actions">
+				<div class="qr-code-container">
+					<div id="qr-view-all" class="qr-code"></div>
+					<p class="qr-label">See all the hybrids created</p>
+				</div>
+				<div class="qr-code-container">
+					<div id="qr-download" class="qr-code"></div>
+					<p class="qr-label">Take your hybrid with you</p>
+				</div>
+			</div>
+		</div>
+
+		<!-- Bottom half - Card selection interface -->
+		<div id="app">
+			<!-- p5 canvas holder -->
+			<div id="p5-holder"></div>
+
+			<section id="controls">
+				<div id="cards-list">Loading cards…</div>
+
+				<div id="selected-area">
+					<div style="display: none">
+						<h3>Selected (0/3)</h3>
+						<div id="selected-summary"></div>
+					</div>
+					<div>
+						<button id="generate-btn" type="button" disabled>Generate & Upload Hybrid</button>
+					</div>
+					<div id="status"></div>
+				</div>
+			</section>
+
+			<header style="display: none">
+				<h1>Hybrid builder</h1>
+				<p>Select 3 cards, pick a base card, generate a hybrid image and upload it to the DB.</p>
+			</header>
+
+			<!-- Arduino Knob Control Panel (hidden) -->
+			<div id="knob-control-panel" style="display: none">
+				<div id="knob-status">
+					<span id="knob-indicator">🎛️ 12 Knobs: 4 per card</span>
+				</div>
+			</div>
+
+			<!-- Knob Values Display (top right) -->
+			<div id="knob-values-display">
+				<div class="knob-card-group">
+					<div class="knob-card-label">Card 1</div>
+					<div class="knob-value-item">
+						<span>K1:</span>
+						<span id="knob-1-value">0</span>
+						<div class="knob-pagination" id="knob-1-pagination"></div>
+					</div>
+					<div class="knob-value-item">
+						<span>K2:</span>
+						<span id="knob-2-value">0</span>
+						<div class="knob-pagination" id="knob-2-pagination"></div>
+					</div>
+					<div class="knob-value-item">
+						<span>K3:</span>
+						<span id="knob-3-value">0</span>
+						<div class="knob-pagination" id="knob-3-pagination"></div>
+					</div>
+					<div class="knob-value-item">
+						<span>K4:</span>
+						<span id="knob-4-value">0</span>
+						<div class="knob-pagination" id="knob-4-pagination"></div>
+					</div>
+				</div>
+				<div class="knob-card-group">
+					<div class="knob-card-label">Card 2</div>
+					<div class="knob-value-item">
+						<span>K5:</span>
+						<span id="knob-5-value">0</span>
+						<div class="knob-pagination" id="knob-5-pagination"></div>
+					</div>
+					<div class="knob-value-item">
+						<span>K6:</span>
+						<span id="knob-6-value">0</span>
+						<div class="knob-pagination" id="knob-6-pagination"></div>
+					</div>
+					<div class="knob-value-item">
+						<span>K7:</span>
+						<span id="knob-7-value">0</span>
+						<div class="knob-pagination" id="knob-7-pagination"></div>
+					</div>
+					<div class="knob-value-item">
+						<span>K8:</span>
+						<span id="knob-8-value">0</span>
+						<div class="knob-pagination" id="knob-8-pagination"></div>
+					</div>
+				</div>
+				<div class="knob-card-group">
+					<div class="knob-card-label">Card 3</div>
+					<div class="knob-value-item">
+						<span>K9:</span>
+						<span id="knob-9-value">0</span>
+						<div class="knob-pagination" id="knob-9-pagination"></div>
+					</div>
+					<div class="knob-value-item">
+						<span>K10:</span>
+						<span id="knob-10-value">0</span>
+						<div class="knob-pagination" id="knob-10-pagination"></div>
+					</div>
+					<div class="knob-value-item">
+						<span>K11:</span>
+						<span id="knob-11-value">0</span>
+						<div class="knob-pagination" id="knob-11-pagination"></div>
+					</div>
+					<div class="knob-value-item">
+						<span>K12:</span>
+						<span id="knob-12-value">0</span>
+						<div class="knob-pagination" id="knob-12-pagination"></div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- Load config as ES6 module -->
+		<script type="module" src="config.js"></script>
+
+		<!-- Load main sketch as ES6 module -->
+		<script type="module" src="sketch.js"></script>
+	</body>
+</html>
