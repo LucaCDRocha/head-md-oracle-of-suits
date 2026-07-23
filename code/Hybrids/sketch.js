@@ -141,7 +141,8 @@ function simulateSerialInput() {
       const cardsListDiv = document.getElementById("cards-list");
       const rect = cardsListDiv.getBoundingClientRect();
       const relativeX = mouseX - rect.left;
-      const value = Math.floor(map(relativeX, 0, rect.width, 0, 1023));
+      const rawValue = Math.floor(map(relativeX, 0, rect.width, 0, 1023));
+      const value = Math.max(0, Math.min(rawValue, 1023));
       setKnobValue(knobIndex, value);
     }
   }
@@ -173,6 +174,13 @@ function handleButtonPress() {
 }
 
 async function onGenerate() {
+  const selected = getSelectedCards();
+  if (!selected || selected.length !== 3) {
+    const status = document.getElementById("status");
+    if (status) status.innerText = "Error: Please select exactly 3 cards before generating.";
+    return;
+  }
+
   const currentTime = Date.now();
   const timeSinceLastGenerate = currentTime - lastGenerateTime;
 
@@ -211,7 +219,6 @@ async function onGenerate() {
     soundEffects.playProcessingLoop(2);
   }, 2000);
 
-  const selected = getSelectedCards();
   let baseCardId = getBaseCardId();
 
   if (!baseCardId && selected.length > 0) {

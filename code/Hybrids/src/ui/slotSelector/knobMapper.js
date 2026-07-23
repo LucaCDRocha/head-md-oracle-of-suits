@@ -51,7 +51,7 @@ export function mapKnobToIndexWithHysteresis(knobValue, numOptions, knobId) {
 	const previousNumOptions = previousKnobNumOptions[knobId];
 
 	const rawIndex = Math.floor(mapValue(knobValue, min, max, 0, numOptions));
-	const clampedIndex = Math.min(rawIndex, numOptions - 1);
+	const clampedIndex = Math.max(0, Math.min(rawIndex, numOptions - 1));
 
 	// Check if options count changed
 	if (previousNumOptions !== numOptions || previousIndex >= numOptions) {
