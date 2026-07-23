@@ -173,105 +173,142 @@ export async function generateImage(selected, baseCardId, statusCallback) {
 		(id) => workflow[id].class_type === "LoadImage"
 	);
 
-	// Sort numerically to assign consistently
-	base64NodeIds.sort((a, b) => parseInt(a) - parseInt(b));
-	standardNodeIds.sort((a, b) => parseInt(a) - parseInt(b));
+	// Find base card and other cards
+	const baseId = baseCardId || selected[0]?.id;
+	const baseCard = selected.find((s) => s.id === baseId) || selected[0];
+	const otherCards = selected.filter(c => c.id !== baseCard.id);
 
 	if (base64NodeIds.length > 0) {
 		statusCallback("Traitement des images base64 pour ComfyUI...");
-		for (let i = 0; i < base64NodeIds.length; i++) {
-			const nodeId = base64NodeIds[i];
-			const cardIndex = i % selected.length;
-			const card = selected[cardIndex];
+		
+		// Find base image node
+		const baseNodeId = base64NodeIds.find(
+			(id) => workflow[id]._meta?.title && workflow[id]._meta.title.toLowerCase().includes("base")
+		) || "120"; // Fallback to "120"
+		
+		const resolvedBaseNodeId = workflow[baseNodeId] ? baseNodeId : base64NodeIds[0];
+		
+		// Other base64 nodes sorted numerically
+		const otherNodeIds = base64NodeIds.filter(id => id !== resolvedBaseNodeId);
+		otherNodeIds.sort((a, b) => parseInt(a) - parseInt(b));
+
+		// Set base image base64
+		statusCallback("Preparation de l'image de base (base64)...");
+		const baseRawBase64 = await fetchImageAsRawBase64(baseCard.img_src);
+		workflow[resolvedBaseNodeId].inputs.base64_data = baseRawBase64;
+
+		// Set other images base64
+		for (let i = 0; i < otherNodeIds.length; i++) {
+			const nodeId = otherNodeIds[i];
+			const cardsList = otherCards.length > 0 ? otherCards : selected;
+			const card = cardsList[i % cardsList.length];
 			
-			statusCallback(`Preparation de l'image base64 ${i+1}/${base64NodeIds.length}...`);
+			statusCallback(`Preparation de l'image secondaire ${i+1}/${otherNodeIds.length}...`);
 			const rawBase64 = await fetchImageAsRawBase64(card.img_src);
-			
-			// Inject base64 string directly into workflow JSON inputs
 			workflow[nodeId].inputs.base64_data = rawBase64;
 		}
 	} else if (standardNodeIds.length > 0) {
 		statusCallback("Envoi des images de référence à ComfyUI...");
-		for (let i = 0; i < standardNodeIds.length; i++) {
-			const nodeId = standardNodeIds[i];
-			const cardIndex = i % selected.length;
-			const card = selected[cardIndex];
+		
+		// Find base image node for standard LoadImage
+		const baseNodeId = standardNodeIds.find(
+			(id) => workflow[id]._meta?.title && workflow[id]._meta.title.toLowerCase().includes("base")
+		) || standardNodeIds[0];
+
+		const otherNodeIds = standardNodeIds.filter(id => id !== baseNodeId);
+		otherNodeIds.sort((a, b) => parseInt(a) - parseInt(b));
+
+		// Upload base image
+		statusCallback("Upload de l'image de base...");
+		const baseBlob = await fetchImageAsBlob(baseCard.img_src);
+		const baseExt = baseCard.img_src.split('.').pop().split('?')[0] || 'jpg';
+		const baseUploadFilename = `card_reference_base_${Date.now()}.${baseExt}`;
+		const baseComfyFilename = await uploadToComfyUI(baseBlob, baseUploadFilename);
+		workflow[baseNodeId].inputs.image = baseComfyFilename;
+
+		// Upload other images
+		for (let i = 0; i < otherNodeIds.length; i++) {
+			const nodeId = otherNodeIds[i];
+			const cardsList = otherCards.length > 0 ? otherCards : selected;
+			const card = cardsList[i % cardsList.length];
 			
-			statusCallback(`Preparation de l'image ${i+1}/${standardNodeIds.length}...`);
+			statusCallback(`Preparation de l'image secondaire ${i+1}/${otherNodeIds.length}...`);
 			const blob = await fetchImageAsBlob(card.img_src);
-			
-			// Formulate filename
 			const ext = card.img_src.split('.').pop().split('?')[0] || 'jpg';
 			const uploadFilename = `card_reference_${i}_${Date.now()}.${ext}`;
 			
-			statusCallback(`Upload de l'image ${i+1}/${standardNodeIds.length}...`);
+			statusCallback(`Upload de l'image secondaire ${i+1}/${otherNodeIds.length}...`);
 			const comfyFilename = await uploadToComfyUI(blob, uploadFilename);
-			
-			// Assign to workflow LoadImage node
 			workflow[nodeId].inputs.image = comfyFilename;
 		}
 	}
 
-	// 3. Find the positive prompt node dynamically
-	let positiveNodeId = null;
-	
-	// Trace positive connection from KSampler node
-	const samplerNodeId = Object.keys(workflow).find(
-		(id) => workflow[id].class_type === "KSampler"
+	// 3. Inject actual suit and rank of the base card into the base prompt (node 112 / Prompt string)
+	const promptNode = Object.values(workflow).find(
+		(node) => node.class_type === "PrimitiveStringMultiline" && 
+		          node.inputs && 
+		          typeof node.inputs.value === "string" && 
+		          node.inputs.value.includes("CARD LAYOUT")
 	);
 
-	if (samplerNodeId && workflow[samplerNodeId].inputs) {
-		const sampler = workflow[samplerNodeId].inputs;
-		if (Array.isArray(sampler.positive)) {
-			positiveNodeId = String(sampler.positive[0]);
-		}
-	}
-
-	// Fallback to config value or search CLIPTextEncode
-	if (!positiveNodeId || !workflow[positiveNodeId]) {
-		const promptNodeIdStr = String(COMFYUI_PROMPT_NODE_ID);
-		if (workflow[promptNodeIdStr] && workflow[promptNodeIdStr].class_type === "CLIPTextEncode") {
-			positiveNodeId = promptNodeIdStr;
+	if (promptNode) {
+		const suit = baseCard.suits || "";
+		const value = baseCard.value || "";
+		const isJoker = String(value).toLowerCase() === "joker";
+		
+		let cornerMarkingsDesc = "";
+		if (isJoker) {
+			cornerMarkingsDesc = `Top-left and bottom-right corners must display strictly the word "JOKER" (rotated 180 degrees on the bottom-right corner). Keep all corners clean of other suit symbols or ranks. Absolutely IGNORE any suit symbols, rank markings, or corner numbers mentioned in Card 2 and Card 3.`;
+		} else if (suit || value) {
+			const rankStr = value ? `"${value}"` : "the rank";
+			const suitStr = suit ? `"${suit}"` : "the suit symbol";
+			
+			// Determine color based on suit symbol
+			let colorDesc = "";
+			if (suit === "♥" || suit === "♦" || suit.toLowerCase().includes("heart") || suit.toLowerCase().includes("diamond")) {
+				colorDesc = " Use red color for both the rank and the suit symbol.";
+			} else if (suit === "♠" || suit === "♣" || suit.toLowerCase().includes("spade") || suit.toLowerCase().includes("club")) {
+				colorDesc = " Use black color for both the rank and the suit symbol.";
+			}
+			
+			cornerMarkingsDesc = `Top-left and bottom-right corners must display strictly the matching rank ${rankStr} and suit symbol ${suitStr} belonging strictly to the base card. Rotate the bottom-right corner indices 180 degrees upside-down.${colorDesc} Absolutely IGNORE any suit symbols, rank markings, or corner numbers mentioned in Card 2 and Card 3.`;
 		} else {
-			// Find first CLIPTextEncode node that isn't the negative prompt
-			positiveNodeId = Object.keys(workflow).find((id) => {
-				if (workflow[id].class_type !== "CLIPTextEncode") return false;
-				const txt = (workflow[id].inputs.text || "").toLowerCase();
-				return !txt.includes("bad quality") && !txt.includes("blurry") && !txt.includes("lowres");
-			});
+			cornerMarkingsDesc = `If the base card is a Tarot Major Arcana card or has no corner indices, keep all corners clean and unprinted. Absolutely IGNORE any suit symbols, rank markings, or corner numbers mentioned in Card 2 and Card 3.`;
 		}
-	}
-
-	// 4. Inject prompt to harmonize the mix
-	if (positiveNodeId && workflow[positiveNodeId]) {
-		const baseId = baseCardId || selected[0]?.id;
-		const baseCard = selected.find((s) => s.id === baseId) || selected[0];
 		
-		const otherCards = selected.filter(c => c.id !== baseCard.id);
+		let promptValue = promptNode.inputs.value;
 		
-		let mixDetails = `A playing card that is a hybrid fusion based on the base card "${baseCard.name}" (from the deck "${baseCard.game?.name || 'Unknown'} ")`;
-		if (otherCards.length > 0) {
-			const otherDescriptions = otherCards.map(c => `"${c.name}" (from the deck "${c.game?.name || 'Unknown'}")`).join(" and ");
-			mixDetails += `, fused with elements from ${otherDescriptions}`;
+		// Find the line starting with "- Corner Markings:" and replace it
+		const cornerMarkingsRegex = /- Corner Markings:.*?(?=\n\n|\n[A-Z]|$)/s;
+		if (cornerMarkingsRegex.test(promptValue)) {
+			promptValue = promptValue.replace(
+				cornerMarkingsRegex,
+				`- Corner Markings: ${cornerMarkingsDesc}`
+			);
+		} else {
+			// Fallback: replace substring
+			promptValue = promptValue.replace(
+				"matching rank initial and suit symbol belonging strictly to Primary Card 1",
+				`matching rank initial ${value ? `"${value}"` : ""} and suit symbol ${suit ? `"${suit}"` : ""} belonging strictly to the base card`
+			);
 		}
-
-		const originalPrompt = workflow[positiveNodeId].inputs.text || "";
 		
-		// Blend card details with the original style keywords in the workflow
-		const harmonizedPrompt = `${mixDetails}. ${originalPrompt}`;
-		workflow[positiveNodeId].inputs.text = harmonizedPrompt;
+		promptNode.inputs.value = promptValue;
 		
 		if (DEBUG) {
-			console.log("COMFYUI HARMONIZED PROMPT:", harmonizedPrompt);
+			console.log("COMFYUI INJECTED BASE PROMPT:", promptValue);
 		}
-	} else {
-		console.warn("Could not locate a positive prompt node in the workflow. Image generation might use template values.");
 	}
 
-	// 5. Randomize seed in all KSampler nodes
+	// 5. Randomize seeds / noise_seeds in all nodes if present
 	for (const id in workflow) {
-		if (workflow[id].class_type === "KSampler" && workflow[id].inputs && workflow[id].inputs.seed !== undefined) {
-			workflow[id].inputs.seed = Math.floor(Math.random() * 1000000000000);
+		if (workflow[id].inputs) {
+			if (workflow[id].inputs.seed !== undefined) {
+				workflow[id].inputs.seed = Math.floor(Math.random() * 1000000000000000);
+			}
+			if (workflow[id].inputs.noise_seed !== undefined) {
+				workflow[id].inputs.noise_seed = Math.floor(Math.random() * 1000000000000000);
+			}
 		}
 	}
 

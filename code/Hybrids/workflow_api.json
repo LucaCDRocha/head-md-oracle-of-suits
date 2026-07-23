@@ -1,169 +1,9 @@
 {
-  "1": {
+  "78": {
     "inputs": {
-      "ckpt_name": "DreamShaperXL_Turbo_v2_1.safetensors"
-    },
-    "class_type": "CheckpointLoaderSimple",
-    "_meta": {
-      "title": "Load Checkpoint"
-    }
-  },
-  "3": {
-    "inputs": {
-      "ipadapter_file": "ip-adapter_sdxl_vit-h.safetensors"
-    },
-    "class_type": "IPAdapterModelLoader",
-    "_meta": {
-      "title": "IPAdapter Model Loader"
-    }
-  },
-  "4": {
-    "inputs": {
-      "clip_name": "laionCLIP-ViT-H-14-laion2B-s32B-b79K.safetensors"
-    },
-    "class_type": "CLIPVisionLoader",
-    "_meta": {
-      "title": "Load CLIP Vision"
-    }
-  },
-  "8": {
-    "inputs": {
-      "images.image0": [
-        "29",
-        0
-      ],
-      "images.image1": [
-        "31",
-        0
-      ],
-      "images.image2": [
-        "30",
-        0
-      ]
-    },
-    "class_type": "BatchImagesNode",
-    "_meta": {
-      "title": "Batch Images"
-    }
-  },
-  "9": {
-    "inputs": {
-      "weight": 0.6,
-      "weight_type": "linear",
-      "combine_embeds": "concat",
-      "start_at": 0,
-      "end_at": 0.5,
-      "embeds_scaling": "V only",
-      "model": [
-        "1",
-        0
-      ],
-      "ipadapter": [
-        "3",
-        0
-      ],
-      "image": [
-        "8",
-        0
-      ],
-      "clip_vision": [
-        "4",
-        0
-      ]
-    },
-    "class_type": "IPAdapterAdvanced",
-    "_meta": {
-      "title": "IPAdapter Advanced"
-    }
-  },
-  "10": {
-    "inputs": {
-      "width": 752,
-      "height": 1048,
-      "batch_size": 1
-    },
-    "class_type": "EmptyLatentImage",
-    "_meta": {
-      "title": "Empty Latent Image"
-    }
-  },
-  "11": {
-    "inputs": {
-      "text": "modern, split screen, multiple cards, grid, two cards, blurry, low quality, text, photorealistic",
-      "clip": [
-        "1",
-        1
-      ]
-    },
-    "class_type": "CLIPTextEncode",
-    "_meta": {
-      "title": "CLIP Text Encode (Prompt)"
-    }
-  },
-  "12": {
-    "inputs": {
-      "text": "A single magnificent vintage card, intricate woodcut engraving style, highly detailed antique design, clean borders, museum quality, aged paper texture",
-      "clip": [
-        "1",
-        1
-      ]
-    },
-    "class_type": "CLIPTextEncode",
-    "_meta": {
-      "title": "CLIP Text Encode (Prompt)"
-    }
-  },
-  "13": {
-    "inputs": {
-      "seed": 990769499748447,
-      "steps": 26,
-      "cfg": 8,
-      "sampler_name": "euler",
-      "scheduler": "simple",
-      "denoise": 1,
-      "model": [
-        "9",
-        0
-      ],
-      "positive": [
-        "12",
-        0
-      ],
-      "negative": [
-        "11",
-        0
-      ],
-      "latent_image": [
-        "10",
-        0
-      ]
-    },
-    "class_type": "KSampler",
-    "_meta": {
-      "title": "KSampler"
-    }
-  },
-  "14": {
-    "inputs": {
-      "samples": [
-        "13",
-        0
-      ],
-      "vae": [
-        "1",
-        2
-      ]
-    },
-    "class_type": "VAEDecode",
-    "_meta": {
-      "title": "VAE Decode"
-    }
-  },
-  "15": {
-    "inputs": {
-      "filename_prefix": "ComfyUI",
+      "filename_prefix": "Flux2-Klein",
       "images": [
-        "14",
+        "77:82",
         0
       ]
     },
@@ -172,29 +12,179 @@
       "title": "Save Image"
     }
   },
-  "29": {
+  "96": {
     "inputs": {
-      "base64_data": "",
-      "image_output": "Preview",
-      "save_prefix": "ComfyUI"
+      "text_input": "",
+      "task": "more_detailed_caption",
+      "fill_mask": false,
+      "keep_model_loaded": false,
+      "max_new_tokens": 2048,
+      "num_beams": 3,
+      "do_sample": true,
+      "output_mask_select": "",
+      "seed": 856282888266486,
+      "image": [
+        "120",
+        0
+      ],
+      "florence2_model": [
+        "97",
+        0
+      ]
     },
-    "class_type": "easy loadImageBase64",
+    "class_type": "Florence2Run",
     "_meta": {
-      "title": "Load Image (Base64)"
+      "title": "Florence2Run"
     }
   },
-  "30": {
+  "97": {
     "inputs": {
-      "base64_data": "",
-      "image_output": "Preview",
-      "save_prefix": "ComfyUI"
+      "model": "microsoft/Florence-2-base",
+      "precision": "fp16",
+      "convert_to_safetensors": true
     },
-    "class_type": "easy loadImageBase64",
+    "class_type": "DownloadAndLoadFlorence2Model",
     "_meta": {
-      "title": "Load Image (Base64)"
+      "title": "DownloadAndLoadFlorence2Model"
     }
   },
-  "31": {
+  "98": {
+    "inputs": {
+      "string_a": [
+        "112",
+        0
+      ],
+      "string_b": [
+        "123",
+        0
+      ],
+      "delimiter": "Card 1: "
+    },
+    "class_type": "StringConcatenate",
+    "_meta": {
+      "title": "Concatenate Text"
+    }
+  },
+  "99": {
+    "inputs": {
+      "text_input": "",
+      "task": "more_detailed_caption",
+      "fill_mask": false,
+      "keep_model_loaded": false,
+      "max_new_tokens": 2048,
+      "num_beams": 3,
+      "do_sample": true,
+      "output_mask_select": "",
+      "seed": 677364868014685,
+      "image": [
+        "121",
+        0
+      ],
+      "florence2_model": [
+        "97",
+        0
+      ]
+    },
+    "class_type": "Florence2Run",
+    "_meta": {
+      "title": "Florence2Run"
+    }
+  },
+  "100": {
+    "inputs": {
+      "text_input": "",
+      "task": "more_detailed_caption",
+      "fill_mask": false,
+      "keep_model_loaded": false,
+      "max_new_tokens": 2048,
+      "num_beams": 3,
+      "do_sample": true,
+      "output_mask_select": "",
+      "seed": 13700639965395,
+      "image": [
+        "122",
+        0
+      ],
+      "florence2_model": [
+        "97",
+        0
+      ]
+    },
+    "class_type": "Florence2Run",
+    "_meta": {
+      "title": "Florence2Run"
+    }
+  },
+  "101": {
+    "inputs": {
+      "string_a": [
+        "98",
+        0
+      ],
+      "string_b": [
+        "124",
+        0
+      ],
+      "delimiter": ", combined with elements of Card 2: "
+    },
+    "class_type": "StringConcatenate",
+    "_meta": {
+      "title": "Concatenate Text"
+    }
+  },
+  "102": {
+    "inputs": {
+      "string_a": [
+        "101",
+        0
+      ],
+      "string_b": [
+        "125",
+        0
+      ],
+      "delimiter": ", and Card 3: "
+    },
+    "class_type": "StringConcatenate",
+    "_meta": {
+      "title": "Concatenate Text"
+    }
+  },
+  "111": {
+    "inputs": {
+      "source": [
+        "115",
+        0
+      ]
+    },
+    "class_type": "PreviewAny",
+    "_meta": {
+      "title": "Preview as Text"
+    }
+  },
+  "112": {
+    "inputs": {
+      "value": "A high-quality full-bleed portrait illustration of a single playing card or tarot card in a 3:4 aspect ratio.\n\nCARD LAYOUT & CORNER INDICES RULES:\n- Frame & Contour: Inherit the outer border frame and border style from Primary Card 1. If Primary Card 1 is borderless, render the image full-bleed without extra frames.\n- Corner Markings: Top-left and bottom-right corners must display the matching rank initial and suit symbol belonging strictly to Primary Card 1. Rotate the bottom-right corner indices 180 degrees upside-down. If Primary Card 1 is a Tarot Major Arcana card or has no corner indices, keep all corners clean and unprinted. Absolutely IGNORE any suit symbols, rank markings, or corner numbers mentioned in Card 2 and Card 3.\n\nCENTRAL HYBRID ARTWORK (WILD & CREATIVE BLEND):\nIn the central artwork space, create an imaginative, dynamic, and fluid hybrid scene that creatively merges, overlaps, and reimagines the visual elements, figures, clothing, props, and motifs from these three sources:"
+    },
+    "class_type": "PrimitiveStringMultiline",
+    "_meta": {
+      "title": "Prompt"
+    }
+  },
+  "115": {
+    "inputs": {
+      "string_a": [
+        "102",
+        0
+      ],
+      "string_b": ".\n\nCOMPOSITION FREEDOM:\nDo NOT draw a static or monolithic central pose. Feel free to use expressive angles, overlapping limbs, surreal combinations, decorative background accents, and fluid artistic arrangements to seamlessly blend all three sources into one striking cohesive masterpiece.\n\nARTISTIC STYLE:\nRefined vintage editorial illustration style with crisp line art, detailed garment patterns, rich balanced color palette, and soft ambient lighting, capturing a sophisticated card art aesthetic.",
+      "delimiter": ""
+    },
+    "class_type": "StringConcatenate",
+    "_meta": {
+      "title": "Concatenate Text"
+    }
+  },
+  "120": {
     "inputs": {
       "base64_data": "",
       "image_output": "Preview",
@@ -202,7 +192,276 @@
     },
     "class_type": "easy loadImageBase64",
     "_meta": {
-      "title": "Load Image (Base64)"
+      "title": "Load Image (Base64) img1 base"
+    }
+  },
+  "121": {
+    "inputs": {
+      "base64_data": "",
+      "image_output": "Preview",
+      "save_prefix": "ComfyUI"
+    },
+    "class_type": "easy loadImageBase64",
+    "_meta": {
+      "title": "Load Image (Base64) img2"
+    }
+  },
+  "122": {
+    "inputs": {
+      "base64_data": "",
+      "image_output": "Preview",
+      "save_prefix": "ComfyUI"
+    },
+    "class_type": "easy loadImageBase64",
+    "_meta": {
+      "title": "Load Image (Base64) img3"
+    }
+  },
+  "123": {
+    "inputs": {
+      "string": [
+        "96",
+        2
+      ],
+      "regex_pattern": "(?i)\\b(The image is a (playing|tarot) card( illustration| from the [^.]+ series)?|It is a rectangular card[^.]*|The card (is rectangular|features)[^.]*|The text on the card reads[^.]*|there is a [a-z]+ border[^.]*|with a [a-z]+ background[^.]*|in a cursive font)\\b\\.?",
+      "replace": "",
+      "case_insensitive": true,
+      "multiline": false,
+      "dotall": false,
+      "count": 0
+    },
+    "class_type": "RegexReplace",
+    "_meta": {
+      "title": "Replace Text (Regex)"
+    }
+  },
+  "124": {
+    "inputs": {
+      "string": [
+        "99",
+        2
+      ],
+      "regex_pattern": "(?i)\\b(The image is a (playing|tarot) card( illustration| from the [^.]+ series)?|It is a rectangular card[^.]*|The card (is rectangular|features)[^.]*|The text on the card reads[^.]*|there is a [a-z]+ border[^.]*|with a [a-z]+ background[^.]*|in a cursive font)\\b\\.?",
+      "replace": "",
+      "case_insensitive": true,
+      "multiline": false,
+      "dotall": false,
+      "count": 0
+    },
+    "class_type": "RegexReplace",
+    "_meta": {
+      "title": "Replace Text (Regex)"
+    }
+  },
+  "125": {
+    "inputs": {
+      "string": [
+        "100",
+        2
+      ],
+      "regex_pattern": "(?i)\\b(The image is a (playing|tarot) card( illustration| from the [^.]+ series)?|It is a rectangular card[^.]*|The card (is rectangular|features)[^.]*|The text on the card reads[^.]*|there is a [a-z]+ border[^.]*|with a [a-z]+ background[^.]*|in a cursive font)\\b\\.?",
+      "replace": "",
+      "case_insensitive": true,
+      "multiline": false,
+      "dotall": false,
+      "count": 0
+    },
+    "class_type": "RegexReplace",
+    "_meta": {
+      "title": "Replace Text (Regex)"
+    }
+  },
+  "77:80": {
+    "inputs": {
+      "sampler_name": "euler"
+    },
+    "class_type": "KSamplerSelect",
+    "_meta": {
+      "title": "KSamplerSelect"
+    }
+  },
+  "77:81": {
+    "inputs": {
+      "noise": [
+        "77:86",
+        0
+      ],
+      "guider": [
+        "77:90",
+        0
+      ],
+      "sampler": [
+        "77:80",
+        0
+      ],
+      "sigmas": [
+        "77:93",
+        0
+      ],
+      "latent_image": [
+        "77:83",
+        0
+      ]
+    },
+    "class_type": "SamplerCustomAdvanced",
+    "_meta": {
+      "title": "SamplerCustomAdvanced"
+    }
+  },
+  "77:82": {
+    "inputs": {
+      "samples": [
+        "77:81",
+        0
+      ],
+      "vae": [
+        "77:89",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE Decode"
+    }
+  },
+  "77:83": {
+    "inputs": {
+      "width": [
+        "77:84",
+        0
+      ],
+      "height": [
+        "77:85",
+        0
+      ],
+      "batch_size": 1
+    },
+    "class_type": "EmptyFlux2LatentImage",
+    "_meta": {
+      "title": "Empty Flux 2 Latent"
+    }
+  },
+  "77:84": {
+    "inputs": {
+      "value": 752
+    },
+    "class_type": "PrimitiveInt",
+    "_meta": {
+      "title": "Width"
+    }
+  },
+  "77:85": {
+    "inputs": {
+      "value": 1048
+    },
+    "class_type": "PrimitiveInt",
+    "_meta": {
+      "title": "Height"
+    }
+  },
+  "77:86": {
+    "inputs": {
+      "noise_seed": 181674969864409
+    },
+    "class_type": "RandomNoise",
+    "_meta": {
+      "title": "RandomNoise"
+    }
+  },
+  "77:87": {
+    "inputs": {
+      "unet_name": "flux-2-klein-4b.safetensors",
+      "weight_dtype": "default"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "Load Diffusion Model"
+    }
+  },
+  "77:88": {
+    "inputs": {
+      "clip_name": "qwen_3_4b.safetensors",
+      "type": "flux2",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "Load CLIP"
+    }
+  },
+  "77:89": {
+    "inputs": {
+      "vae_name": "flux2-vae.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "Load VAE"
+    }
+  },
+  "77:90": {
+    "inputs": {
+      "cfg": 1,
+      "model": [
+        "77:87",
+        0
+      ],
+      "positive": [
+        "77:92",
+        0
+      ],
+      "negative": [
+        "77:91",
+        0
+      ]
+    },
+    "class_type": "CFGGuider",
+    "_meta": {
+      "title": "CFG Guider"
+    }
+  },
+  "77:91": {
+    "inputs": {
+      "conditioning": [
+        "77:92",
+        0
+      ]
+    },
+    "class_type": "ConditioningZeroOut",
+    "_meta": {
+      "title": "ConditioningZeroOut"
+    }
+  },
+  "77:92": {
+    "inputs": {
+      "text": [
+        "115",
+        0
+      ],
+      "clip": [
+        "77:88",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP Text Encode (Positive Prompt)"
+    }
+  },
+  "77:93": {
+    "inputs": {
+      "steps": 4,
+      "width": [
+        "77:84",
+        0
+      ],
+      "height": [
+        "77:85",
+        0
+      ]
+    },
+    "class_type": "Flux2Scheduler",
+    "_meta": {
+      "title": "Flux2Scheduler"
     }
   }
 }
