@@ -5,7 +5,7 @@ import {
   drawPreview,
   handleKnobChange,
 } from "./src/ui/slotSelector/index.js";
-import { generateImage } from "./src/api/geminiApi.js";
+import { generateImage } from "./src/api/generationApi.js";
 import { uploadHybridBase64 } from "./src/api/hybridApi.js";
 import {
   setupSerial,

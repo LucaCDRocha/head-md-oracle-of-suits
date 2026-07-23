@@ -50,8 +50,8 @@ export async function uploadHybridBase64(base64, selected, baseCardId, statusCal
 		const ab = new ArrayBuffer(byteString.length);
 		const ia = new Uint8Array(ab);
 		for (let i = 0; i < byteString.length; i++) ia[i] = byteString.charCodeAt(i);
-		const blob = new Blob([ia], { type: "image/png" });
-		const file = new File([blob], `hybrid_${Date.now()}.png`, { type: "image/png" });
+		const blob = new Blob([ia], { type: "image/jpeg" });
+		const file = new File([blob], `hybrid_${Date.now()}.jpg`, { type: "image/jpeg" });
 
 		fd.append("img", file);
 

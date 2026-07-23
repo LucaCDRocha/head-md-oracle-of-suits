@@ -88,14 +88,8 @@ class HybridController extends Controller
             // Store in public/storage/img/hybrids directory
             $file = $request->file('img');
             $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-            $destinationPath = public_path('storage/img/hybrids');
-
-            // Create directory if it doesn't exist
-            if (!file_exists($destinationPath)) {
-                mkdir($destinationPath, 0755, true);
-            }
-
-            $file->move($destinationPath, $filename);
+            // Use Laravel's Storage facade to bypass the PHP Windows is_writable symlink bug
+            \Illuminate\Support\Facades\Storage::disk('public')->putFileAs('img/hybrids', $file, $filename);
             $img_src = 'img/hybrids/' . $filename;
         } else {
             $img_src = $data['img_src'] ?? null;
