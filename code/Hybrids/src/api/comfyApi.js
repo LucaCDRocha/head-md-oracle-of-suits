@@ -250,30 +250,50 @@ export async function generateImage(selected, baseCardId, statusCallback) {
 		          typeof node.inputs.value === "string" && 
 		          node.inputs.value.includes("CARD LAYOUT")
 	);
-
 	if (promptNode) {
 		const suit = baseCard.suits || "";
 		const value = baseCard.value || "";
+		const gameName = (baseCard.game?.name || "").toLowerCase();
+		const suitLower = suit.toLowerCase();
+		
+		// Determine if the base card is a standard playing card (Bicycle, Copag, Jass, Piquet, Ducale, etc.)
+		const isTarot = gameName.includes("tarot") || gameName.includes("marseille") || gameName.includes("waite");
+		const isJass = gameName.includes("jass");
+		const isPlayingCard = !isTarot;
+
 		const isJoker = String(value).toLowerCase() === "joker";
 		
+		const suitSymbolMap = {
+			"spades": "♠",
+			"hearts": "♥",
+			"diamonds": "♦",
+			"clubs": "♣",
+			"♠": "♠",
+			"♥": "♥",
+			"♦": "♦",
+			"♣": "♣"
+		};
+		const suitSymbol = suitSymbolMap[suitLower] || suit;
+
 		let cornerMarkingsDesc = "";
 		if (isJoker) {
 			cornerMarkingsDesc = `Top-left and bottom-right corners must display strictly the word "JOKER" (rotated 180 degrees on the bottom-right corner). Keep all corners clean of other suit symbols or ranks. Absolutely IGNORE any suit symbols, rank markings, or corner numbers mentioned in Card 2 and Card 3.`;
-		} else if (suit || value) {
+		} else if (isPlayingCard) {
 			const rankStr = value ? `"${value}"` : "the rank";
-			const suitStr = suit ? `"${suit}"` : "the suit symbol";
+			const suitStr = suitSymbol ? `"${suitSymbol}"` : "the suit symbol";
 			
 			// Determine color based on suit symbol
 			let colorDesc = "";
-			if (suit === "♥" || suit === "♦" || suit.toLowerCase().includes("heart") || suit.toLowerCase().includes("diamond")) {
+			if (suitLower.includes("heart") || suitLower.includes("diamond") || suitLower.includes("♥") || suitLower.includes("♦")) {
 				colorDesc = " Use red color for both the rank and the suit symbol.";
-			} else if (suit === "♠" || suit === "♣" || suit.toLowerCase().includes("spade") || suit.toLowerCase().includes("club")) {
+			} else if (suitLower.includes("spade") || suitLower.includes("club") || suitLower.includes("♠") || suitLower.includes("♣")) {
 				colorDesc = " Use black color for both the rank and the suit symbol.";
 			}
 			
-			cornerMarkingsDesc = `Top-left and bottom-right corners must display strictly the matching rank ${rankStr} and suit symbol ${suitStr} belonging strictly to the base card. Rotate the bottom-right corner indices 180 degrees upside-down.${colorDesc} Absolutely IGNORE any suit symbols, rank markings, or corner numbers mentioned in Card 2 and Card 3.`;
+			cornerMarkingsDesc = `Top-left and bottom-right corners must display strictly the matching rank ${rankStr} and suit symbol ${suitStr} belonging strictly to the base card. Rotate the bottom-right corner indices 180 degrees upside-down.${colorDesc} Do NOT include any other suit symbols (such as hearts, diamonds, spades, clubs, cups, swords, wands, etc.) in the corners or near the indices. Only draw the single specified suit symbol ${suitStr} and nothing else. Absolutely IGNORE any suit symbols, rank markings, or corner numbers mentioned in Card 2 and Card 3.`;
 		} else {
-			cornerMarkingsDesc = `If the base card is a Tarot Major Arcana card or has no corner indices, keep all corners clean and unprinted. Absolutely IGNORE any suit symbols, rank markings, or corner numbers mentioned in Card 2 and Card 3.`;
+			// For Tarot cards, they prefer not to have corner numbers, but if they are there they should be correct
+			cornerMarkingsDesc = `Preferably keep all corners clean, plain, and unprinted. However, if the generation layout includes corner markings or corner circles, they must display strictly the rank/number "${value}" of the base card (e.g., "${value}" or its Roman numeral equivalent) and absolutely nothing else. Do NOT write any other numbers (such as "4", "3", etc.) or suit symbols in the corners.`;
 		}
 		
 		let promptValue = promptNode.inputs.value;
@@ -289,7 +309,38 @@ export async function generateImage(selected, baseCardId, statusCallback) {
 			// Fallback: replace substring
 			promptValue = promptValue.replace(
 				"matching rank initial and suit symbol belonging strictly to Primary Card 1",
-				`matching rank initial ${value ? `"${value}"` : ""} and suit symbol ${suit ? `"${suit}"` : ""} belonging strictly to the base card`
+				`matching rank initial ${value ? `"${value}"` : ""} and suit symbol ${suitSymbol ? `"${suitSymbol}"` : ""} belonging strictly to the base card`
+			);
+		}
+
+		// Generate whitelist of allowed text/numbers based on the base card name, value, and suit
+		const nameClean = (baseCard.name || "").replace(/of\s+\w+/gi, ""); // Remove "of Clubs", "of Major Arcana"
+		const cardNameWords = nameClean.split(/[\s-_,.]+/).filter(w => w.length > 1 && w.toLowerCase() !== "the");
+		const allowedWords = [...new Set([value, suitSymbol, ...cardNameWords])].filter(Boolean);
+		const allowedWordsStr = allowedWords.map(w => `"${w}"`).join(", ");
+
+		const isCourtCard = value && (
+			value === "K" || value === "Q" || value === "J" || 
+			value === "King" || value === "Queen" || value === "Jack" || 
+			value === "Roi" || value === "Dame" || value === "Valet" || 
+			value === "Page" || value === "Cavalier" ||
+			String(value).toLowerCase().includes("king") ||
+			String(value).toLowerCase().includes("queen") ||
+			String(value).toLowerCase().includes("jack")
+		);
+
+		// Add strict layout and clean composition rules (no card titles/texts at the bottom, no deformed bodies/limbs)
+		let cleanCompositionRule = `\n- Absolutely No Hallucinated Text or Numbers: You must absolutely NOT write, draw, or print any numbers (such as "4", "3", "7", etc.) or words (such as "June Stwert", "Temperance", "The Star", "The Moon", etc.) that do not belong to the base card. The ONLY allowed text, words, or numbers anywhere on the generated card are: ${allowedWordsStr} (if any text/numbers are generated at all). Any other names, titles, Roman numerals, or words mentioned in the descriptions of Card 2 and Card 3 must be completely ignored and must NOT be written anywhere on the card.
+- Symmetrical & Clean Layout: Ensure the bottom area of the card is clean and logically matches the scene (e.g. rocks, cliff, grass, or simple decorative background). Do NOT generate any extra, partial, upside-down, or deformed human bodies, limbs, or faces at the bottom of the card.`;
+
+		if (isJass || isCourtCard) {
+			cleanCompositionRule += `\n- Mirrored Symmetrical Design: The card must be a mirrored double-headed playing card layout. Draw a clear horizontal division line across the middle of the card. Symmetrically mirror the central illustration and suit symbols between the top half and the bottom half (the bottom half must be an upside-down mirrored copy of the top half). Symmetrically arrange the suit symbols (e.g. acorns, bells, roses, shields, clubs, spades, hearts, diamonds) on the top and bottom halves matching the count and layout of the base card.`;
+		}
+
+		if (!promptValue.includes("Symmetrical & Clean Layout")) {
+			promptValue = promptValue.replace(
+				"\n\nCENTRAL HYBRID ARTWORK",
+				`${cleanCompositionRule}\n\nCENTRAL HYBRID ARTWORK`
 			);
 		}
 		
