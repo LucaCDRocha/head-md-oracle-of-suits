@@ -4,6 +4,9 @@
 
 import { COMFYUI_API_BASE, COMFYUI_PROMPT_NODE_ID, DEBUG } from "../../config.js";
 
+// Set to true to print the full concatenated prompt preview in the browser console
+const LOG_PROMPT_PREVIEW = false;
+
 // Default standard text-to-image workflow fallback (SD1.5 structure)
 const DEFAULT_WORKFLOW = {
   "3": {
@@ -377,24 +380,26 @@ export async function generateImage(selected, baseCardId, statusCallback) {
 		
 		promptNode.inputs.value = promptValue;
 		
-		// Rebuild the final concatenated prompt on the client-side for debugging / monitoring
-		try {
-			const node112Text = promptNode.inputs.value;
-			const card1Desc = `[Florence2 description of Card 1: ${formatCardDescription(baseCard)}]`;
-			const card2Desc = otherCards[0] ? `[Florence2 description of Card 2: ${formatCardDescription(otherCards[0])}]` : "";
-			const card3Desc = otherCards[1] ? `[Florence2 description of Card 3: ${formatCardDescription(otherCards[1])}]` : "";
-			
-			const delimiter1 = workflow["98"] ? workflow["98"].inputs.delimiter : "Card 1: ";
-			const delimiter2 = (workflow["101"] && otherCards[0]) ? workflow["101"].inputs.delimiter : ", combined with elements of Card 2: ";
-			const delimiter3 = (workflow["102"] && otherCards[1]) ? workflow["102"].inputs.delimiter : ", and Card 3: ";
-			const suffixText = suffixNode ? suffixNode.inputs.string_b : "";
-			
-			const fullPromptPreview = node112Text + delimiter1 + card1Desc + delimiter2 + card2Desc + delimiter3 + card3Desc + suffixText;
-			
-			console.log("=== COMFYUI GENERATOR: FULL COMBINED PROMPT PREVIEW ===");
-			console.log(fullPromptPreview);
-		} catch (err) {
-			console.warn("Could not generate client-side full prompt preview:", err);
+		// Rebuild and log the final concatenated prompt on the client-side for debugging / monitoring if enabled
+		if (LOG_PROMPT_PREVIEW) {
+			try {
+				const node112Text = promptNode.inputs.value;
+				const card1Desc = `[Florence2 description of Card 1: ${formatCardDescription(baseCard)}]`;
+				const card2Desc = otherCards[0] ? `[Florence2 description of Card 2: ${formatCardDescription(otherCards[0])}]` : "";
+				const card3Desc = otherCards[1] ? `[Florence2 description of Card 3: ${formatCardDescription(otherCards[1])}]` : "";
+				
+				const delimiter1 = workflow["98"] ? workflow["98"].inputs.delimiter : "Card 1: ";
+				const delimiter2 = (workflow["101"] && otherCards[0]) ? workflow["101"].inputs.delimiter : ", combined with elements of Card 2: ";
+				const delimiter3 = (workflow["102"] && otherCards[1]) ? workflow["102"].inputs.delimiter : ", and Card 3: ";
+				const suffixText = suffixNode ? suffixNode.inputs.string_b : "";
+				
+				const fullPromptPreview = node112Text + delimiter1 + card1Desc + delimiter2 + card2Desc + delimiter3 + card3Desc + suffixText;
+				
+				console.log("=== COMFYUI GENERATOR: FULL COMBINED PROMPT PREVIEW ===");
+				console.log(fullPromptPreview);
+			} catch (err) {
+				console.warn("Could not generate client-side full prompt preview:", err);
+			}
 		}
 	}
 
