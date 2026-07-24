@@ -12,6 +12,7 @@ export let slots = [
 	{ id: 3, filters: {}, selectedCard: null },
 ];
 export let baseSlotId = 2; // Middle card is default base card for Gemini
+export let slotAbortControllers = [null, null, null];
 
 export function setBaseSlotId(id) {
 	baseSlotId = id;
@@ -25,6 +26,38 @@ export async function fetchAndInitCards() {
 	slots.forEach((slot) => {
 		selectRandomCard(slot);
 	});
+}
+
+async function decodeTiffToDataUrl(url, signal) {
+	try {
+		if (typeof UTIF === 'undefined') {
+			console.warn("UTIF library is not loaded. Cannot decode TIFF image:", url);
+			return url;
+		}
+		const response = await fetch(url, { signal });
+		if (!response.ok) throw new Error("Failed to fetch TIFF");
+		const buffer = await response.arrayBuffer();
+		const ifds = UTIF.decode(buffer);
+		UTIF.decodeImage(buffer, ifds[0]);
+		const rgba = UTIF.toRGBA8(ifds[0]);
+
+		const canvas = document.createElement('canvas');
+		canvas.width = ifds[0].width;
+		canvas.height = ifds[0].height;
+		const ctx = canvas.getContext('2d');
+
+		const imgData = ctx.createImageData(canvas.width, canvas.height);
+		imgData.data.set(rgba);
+		ctx.putImageData(imgData, 0, 0);
+
+		return canvas.toDataURL('image/png');
+	} catch (err) {
+		if (err.name === 'AbortError') {
+			throw err;
+		}
+		console.error("Error decoding TIFF at:", url, err);
+		return url;
+	}
 }
 
 /**
@@ -87,22 +120,72 @@ export function selectRandomCard(slot) {
  * Select a card for a slot
  */
 export function selectCardForSlot(slot, card) {
-	slot.selectedCard = card;
+	// Cancel any pending fetch/decoding for this slot
+	const slotIdx = slot.id - 1;
+	if (slotAbortControllers[slotIdx]) {
+		slotAbortControllers[slotIdx].abort();
+		slotAbortControllers[slotIdx] = null;
+	}
 
-	// Load p5 image for preview (will be available after p5 setup)
-	if (typeof loadImage !== "undefined" || typeof window.loadImage !== "undefined") {
-		const p5LoadImage = window.loadImage || loadImage;
-		
-		let imgUrl = card.img_src;
-		if (imgUrl && imgUrl.startsWith('http') && !imgUrl.includes('localhost:8080')) {
-			imgUrl = `/proxy-image?url=${encodeURIComponent(imgUrl)}`;
+	slot.selectedCard = card;
+	if (!card) return;
+
+	const p5LoadImage = typeof window !== 'undefined' && window.loadImage ? window.loadImage : (typeof loadImage !== "undefined" ? loadImage : null);
+
+	const triggerImageLoad = (imgUrl) => {
+		if (p5LoadImage && imgUrl) {
+			let finalUrl = imgUrl;
+			if (finalUrl.startsWith('http') && !finalUrl.includes('localhost:8080')) {
+				finalUrl = `/proxy-image?url=${encodeURIComponent(finalUrl)}`;
+			}
+			card.img = p5LoadImage(
+				finalUrl,
+				() => {},
+				() => {}
+			);
+		} else {
+			card.img = null;
 		}
 
-		slot.selectedCard.img = p5LoadImage(
-			imgUrl,
-			() => {},
-			() => {}
-		);
+		// Dynamically update the preview image in the DOM
+		if (typeof document !== 'undefined') {
+			const slotEl = document.getElementById(`slot-${slot.id}`);
+			if (slotEl) {
+				const imgEl = slotEl.querySelector('.card-preview img');
+				if (imgEl) {
+					imgEl.src = imgUrl || '';
+				}
+			}
+		}
+	};
+
+	const isTiff = card.img_src && (card.img_src.toLowerCase().endsWith('.tif') || card.img_src.toLowerCase().endsWith('.tiff'));
+
+	if (isTiff && !card.img_src.startsWith('data:')) {
+		// Use placeholder or empty first, then load decoded image asynchronously
+		triggerImageLoad('');
+
+		let url = card.img_src;
+		if (url.startsWith('http') && !url.includes('localhost:8080')) {
+			url = `/proxy-image?url=${encodeURIComponent(url)}`;
+		}
+
+		// Create new AbortController for this fetch
+		const controller = new AbortController();
+		slotAbortControllers[slotIdx] = controller;
+
+		decodeTiffToDataUrl(url, controller.signal).then(dataUrl => {
+			card.img_src = dataUrl; // save data URL to card so we don't decode again
+			if (slot.selectedCard && slot.selectedCard.id === card.id) {
+				triggerImageLoad(dataUrl);
+			}
+		}).catch(err => {
+			if (err.name !== 'AbortError') {
+				console.error("Failed to decode card image:", card, err);
+			}
+		});
+	} else {
+		triggerImageLoad(card.img_src);
 	}
 }
 
@@ -178,8 +261,7 @@ export function tryMatchByFrenchEquivalence(slot, targetEquivalence) {
  * Get all available years from games
  */
 export function getAvailableYears() {
-	const years = [...new Set(allGames.map((g) => g.year).filter((y) => y))];
-	return years.sort((a, b) => a - b);
+	return [...new Set(allGames.map((g) => g.year).filter(Boolean))];
 }
 
 /**
@@ -187,31 +269,33 @@ export function getAvailableYears() {
  */
 export function getYearRanges() {
 	const years = getAvailableYears();
-	if (years.length === 0) return [];
+	
+	const order = [
+		'avant 1700',
+		'1700-1800',
+		'1800-1850',
+		'1850-1900',
+		'1900-1950',
+		'1950-2000',
+		'2000-present'
+	];
+	
+	years.sort((a, b) => {
+		const idxA = order.indexOf(a);
+		const idxB = order.indexOf(b);
+		if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+		if (idxA !== -1) return -1;
+		if (idxB !== -1) return 1;
+		return a.localeCompare(b);
+	});
 
-	const minYear = Math.min(...years);
-	const maxYear = Math.max(...years);
-
-	const startCentury = Math.floor(minYear / 100) * 100;
-	const endCentury = Math.ceil((maxYear + 1) / 100) * 100;
-
-	const ranges = [];
-	for (let start = startCentury; start < endCentury; start += 100) {
-		const end = start + 100;
-		const gamesInRange = allGames.filter((g) => g.year >= start && g.year < end);
-
-		if (gamesInRange.length > 0) {
-			ranges.push({
-				key: `${start}-${end}`,
-				label: `${start} - ${end}`,
-				start: start,
-				end: end,
-				count: gamesInRange.length,
-			});
-		}
-	}
-
-	return ranges;
+	return years.map((y) => {
+		return {
+			key: y,
+			label: y,
+			count: allGames.filter((g) => g.year === y).length
+		};
+	});
 }
 
 /**
@@ -219,8 +303,7 @@ export function getYearRanges() {
  */
 export function isYearInRange(year, rangeKey) {
 	if (!year || !rangeKey) return false;
-	const [start, end] = rangeKey.split("-").map(Number);
-	return year >= start && year < end;
+	return year === rangeKey;
 }
 
 /**

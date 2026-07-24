@@ -13,6 +13,10 @@ class Game extends Model
         'name',
         'year',
         'description',
+        'description_eng',
+        'nb_cards',
+        'type',
+        'suits_type',
     ];
 
     public function cards()

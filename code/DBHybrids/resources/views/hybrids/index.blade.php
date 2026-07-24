@@ -621,7 +621,42 @@
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/utif@3.1.0/UTIF.min.js"></script>
     <script>
+        function replaceTiffImages(container) {
+            if (typeof UTIF === 'undefined') return;
+            const parent = container || document;
+            const tiffImages = parent.querySelectorAll('img[src$=".tif"], img[src$=".tiff"], img[data-src$=".tif"], img[data-src$=".tiff"]');
+            tiffImages.forEach(img => {
+                let src = img.src || img.getAttribute('data-src');
+                if (!src || src.startsWith('data:')) return;
+                
+                fetch(src)
+                    .then(response => response.arrayBuffer())
+                    .then(buffer => {
+                        const ifds = UTIF.decode(buffer);
+                        UTIF.decodeImage(buffer, ifds[0]);
+                        const rgba = UTIF.toRGBA8(ifds[0]);
+                        
+                        const canvas = document.createElement('canvas');
+                        canvas.width = ifds[0].width;
+                        canvas.height = ifds[0].height;
+                        const ctx = canvas.getContext('2d');
+                        
+                        const imgData = ctx.createImageData(canvas.width, canvas.height);
+                        imgData.data.set(rgba);
+                        ctx.putImageData(imgData, 0, 0);
+                        
+                        img.src = canvas.toDataURL('image/png');
+                    })
+                    .catch(err => console.error('Error decoding TIFF image:', src, err));
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            replaceTiffImages();
+        });
+
         function openModal(element) {
             const hybridImage = element.dataset.hybridImage;
             const hybridName = element.dataset.hybridName;
@@ -657,6 +692,9 @@
                 cardDiv.appendChild(p);
                 sourceCardsContainer.appendChild(cardDiv);
             });
+
+            // Decode any TIFF images dynamically generated in the modal
+            replaceTiffImages(sourceCardsContainer);
 
             // Show modal
             document.getElementById('hybridModal').classList.add('active');

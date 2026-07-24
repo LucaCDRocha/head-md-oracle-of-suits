@@ -30,63 +30,9 @@ class HybridsTableSeeder extends Seeder
 
         $files = File::files($hybridsDir);
 
-        // If no files found, create default special hybrids HA and HQ
+        // If no files found, just warn and return
         if (count($files) === 0) {
-            $this->command->warn("No hybrid image files found in {$hybridsDir}. Creating default HA and HQ hybrids from mapping.");
-
-            $specialSets = [
-                'HA' => [
-                    ['query' => 'King of spades', 'is_base' => false],
-                    ['query' => 'Ace of roses', 'is_base' => true],
-                    ['query' => 'Queen of cups', 'is_base' => false],
-                ],
-                'HQ' => [
-                    ['query' => '3 of pentacles', 'is_base' => false],
-                    ['query' => '1 of Major Arcana', 'is_base' => false],
-                    ['query' => 'Queen of cups', 'is_base' => true],
-                ],
-            ];
-
-            foreach ($specialSets as $name => $special) {
-                $hybrid = Hybrid::create([
-                    'name' => $name,
-                    'nb_like' => 0,
-                    'img_src' => null,
-                ]);
-
-                $foundIds = [];
-                foreach ($special as $item) {
-                    // reuse flexible lookup
-                    $card = Card::whereRaw('LOWER(french_equivalence) LIKE ?', ["%" . strtolower($item['query']) . "%"])->first()
-                        ?? Card::whereRaw('LOWER(name) LIKE ?', ["%" . strtolower($item['query']) . "%"])->first()
-                        ?? Card::whereRaw('LOWER(value) LIKE ?', ["%" . strtolower($item['query']) . "%"])->first()
-                        ?? Card::whereRaw('LOWER(suits) LIKE ?', ["%" . strtolower($item['query']) . "%"])->first();
-
-                    if ($card) {
-                        $foundIds[] = ['id' => $card->id, 'is_base' => $item['is_base']];
-                    } else {
-                        $fallback = Card::inRandomOrder()->first();
-                        if ($fallback) {
-                            $foundIds[] = ['id' => $fallback->id, 'is_base' => $item['is_base']];
-                            $this->command->warn("Could not find card matching '{$item['query']}', attached random card id {$fallback->id} instead for hybrid {$name}.");
-                        }
-                    }
-                }
-
-                if (count($foundIds) === 3) {
-                    $attach = [];
-                    foreach ($foundIds as $f) {
-                        $attach[$f['id']] = ['is_base' => $f['is_base'] ? 1 : 0];
-                    }
-                    // ensure only these cards are attached (replace any existing attachments)
-                    $hybrid->cards()->sync($attach);
-                    $this->command->info("Created default hybrid {$hybrid->id} ({$name}) attached to cards: " . implode(',', array_column($foundIds, 'id')));
-                } else {
-                    $this->command->warn("Default hybrid {$name} could not find 3 matching cards; no attachments made.");
-                }
-            }
-
-            // nothing else to do
+            $this->command->warn("No hybrid image files found in {$hybridsDir}. Seed skipped.");
             return;
         }
 
@@ -142,18 +88,18 @@ class HybridsTableSeeder extends Seeder
             // special mapping for certain filenames
             $special = null;
             if (strtolower($name) === 'ha') {
-                // HA: King of spades, Ace of roses (is_base), Queen of cups
+                // HA: Roi de Pique, As de Rose (is_base), Dame de Coupe
                 $special = [
-                    ['query' => 'King of spades', 'is_base' => false],
-                    ['query' => 'Ace of roses', 'is_base' => true],
-                    ['query' => 'Queen of cups', 'is_base' => false],
+                    ['query' => 'Roi de Pique', 'is_base' => false],
+                    ['query' => 'As de Rose', 'is_base' => true],
+                    ['query' => 'Dame de Coupe', 'is_base' => false],
                 ];
             } elseif (strtolower($name) === 'hq') {
-                // HQ: 3 of pentacles, The Magician (major arcana), Queen of cups (is_base)
+                // HQ: 3 de Denier, Atout 1, Dame de Coupe (is_base)
                 $special = [
-                    ['query' => '3 of pentacles', 'is_base' => false],
-                    ['query' => '1 of Major Arcana', 'is_base' => false],
-                    ['query' => 'Queen of cups', 'is_base' => true],
+                    ['query' => '3 de Denier', 'is_base' => false],
+                    ['query' => 'Atout 1', 'is_base' => false],
+                    ['query' => 'Dame de Coupe', 'is_base' => true],
                 ];
             }
 

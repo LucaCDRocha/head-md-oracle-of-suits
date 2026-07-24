@@ -5,7 +5,7 @@
 import { COMFYUI_API_BASE, COMFYUI_PROMPT_NODE_ID, DEBUG } from "../../config.js";
 
 // Set to true to print the full concatenated prompt preview in the browser console
-const LOG_PROMPT_PREVIEW = false;
+const LOG_PROMPT_PREVIEW = true;
 
 // Default standard text-to-image workflow fallback (SD1.5 structure)
 const DEFAULT_WORKFLOW = {
