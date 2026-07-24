@@ -134,12 +134,27 @@ async function uploadToComfyUI(blob, filename) {
 }
 
 /**
- * Generate an image using ComfyUI local API
- * @param {Array} selected - Array of selected cards
- * @param {number} baseCardId - ID of the base card
- * @param {Function} statusCallback - Callback to update status messages
- * @returns {Promise<string>} Base64 encoded image data
+ * Formats a card description using its value, suits, and game name.
  */
+function formatCardDescription(card) {
+	if (!card) return "";
+	const val = card.value || "";
+	const suit = card.suits || "";
+	const game = card.game?.name || "";
+	const isJoker = String(val).toLowerCase() === "joker";
+	
+	if (isJoker) {
+		return `Joker card from deck "${game}"`;
+	}
+	if (val && suit) {
+		return `"${val} of ${suit}" card from deck "${game}"`;
+	}
+	if (val) {
+		return `"${val}" card from deck "${game}"`;
+	}
+	return `card from deck "${game}"`;
+}
+
 export async function generateImage(selected, baseCardId, statusCallback) {
 	if (!selected || selected.length === 0) {
 		throw new Error("No cards selected for generation");
@@ -331,23 +346,55 @@ export async function generateImage(selected, baseCardId, statusCallback) {
 
 		// Add strict layout and clean composition rules (no card titles/texts at the bottom, no deformed bodies/limbs)
 		let cleanCompositionRule = `\n- Absolutely No Hallucinated Text or Numbers: You must absolutely NOT write, draw, or print any numbers (such as "4", "3", "7", etc.) or words (such as "June Stwert", "Temperance", "The Star", "The Moon", etc.) that do not belong to the base card. The ONLY allowed text, words, or numbers anywhere on the generated card are: ${allowedWordsStr} (if any text/numbers are generated at all). Any other names, titles, Roman numerals, or words mentioned in the descriptions of Card 2 and Card 3 must be completely ignored and must NOT be written anywhere on the card.
+- Absolutely No Nudity: The generated card must be completely free of any nudity, nakedness, or partial nudity. All human figures or characters depicted on the card must be fully clothed in elegant robes, garments, classical armor, or attire matching the style of the cards. Ensure there is no naked skin of the torso, chest, or lower body. Absolutely no bare breasts, no exposed chests, no bare torsos, and no naked midriffs. All chest and torso skin must be completely covered with thick fabric, shirts, armor, or robes. Absolutely no sheer, translucent, or see-through clothing; all outfits must be completely opaque, high-necked, and fully closed up to the collarbone.
 - Symmetrical & Clean Layout: Ensure the bottom area of the card is clean and logically matches the scene (e.g. rocks, cliff, grass, or simple decorative background). Do NOT generate any extra, partial, upside-down, or deformed human bodies, limbs, or faces at the bottom of the card.`;
 
 		if (isJass || isCourtCard) {
 			cleanCompositionRule += `\n- Mirrored Symmetrical Design: The card must be a mirrored double-headed playing card layout. Draw a clear horizontal division line across the middle of the card. Symmetrically mirror the central illustration and suit symbols between the top half and the bottom half (the bottom half must be an upside-down mirrored copy of the top half). Symmetrically arrange the suit symbols (e.g. acorns, bells, roses, shields, clubs, spades, hearts, diamonds) on the top and bottom halves matching the count and layout of the base card.`;
 		}
 
-		if (!promptValue.includes("Symmetrical & Clean Layout")) {
-			promptValue = promptValue.replace(
-				"\n\nCENTRAL HYBRID ARTWORK",
-				`${cleanCompositionRule}\n\nCENTRAL HYBRID ARTWORK`
-			);
+		// Find the final concatenation node (usually node 115) containing the prompt suffix, and append constraints there
+		const suffixNode = Object.values(workflow).find(
+			(node) => node.class_type === "StringConcatenate" && 
+			          typeof node.inputs?.string_b === "string" && 
+			          node.inputs.string_b.includes("ARTISTIC STYLE")
+		);
+
+		if (suffixNode) {
+			suffixNode.inputs.string_b = suffixNode.inputs.string_b + "\n\nCRITICAL CONSTRAINTS (MUST OVERRIDE ALL PREVIOUS DESCRIPTIONS AND CAPTIONS):" + cleanCompositionRule;
+		}
+
+		// Inject the explicit card identity names and source decks into the delimiters of the workflow's StringConcatenate nodes
+		if (workflow["98"]) {
+			workflow["98"].inputs.delimiter = `\n\nPrimary Card 1 (Base Card: ${formatCardDescription(baseCard)}) is described as: `;
+		}
+		if (workflow["101"] && otherCards[0]) {
+			workflow["101"].inputs.delimiter = `, combined with elements of Card 2 (${formatCardDescription(otherCards[0])}) described as: `;
+		}
+		if (workflow["102"] && otherCards[1]) {
+			workflow["102"].inputs.delimiter = `, and Card 3 (${formatCardDescription(otherCards[1])}) described as: `;
 		}
 		
 		promptNode.inputs.value = promptValue;
 		
-		if (DEBUG) {
-			console.log("COMFYUI INJECTED BASE PROMPT:", promptValue);
+		// Rebuild the final concatenated prompt on the client-side for debugging / monitoring
+		try {
+			const node112Text = promptNode.inputs.value;
+			const card1Desc = `[Florence2 description of Card 1: ${formatCardDescription(baseCard)}]`;
+			const card2Desc = otherCards[0] ? `[Florence2 description of Card 2: ${formatCardDescription(otherCards[0])}]` : "";
+			const card3Desc = otherCards[1] ? `[Florence2 description of Card 3: ${formatCardDescription(otherCards[1])}]` : "";
+			
+			const delimiter1 = workflow["98"] ? workflow["98"].inputs.delimiter : "Card 1: ";
+			const delimiter2 = (workflow["101"] && otherCards[0]) ? workflow["101"].inputs.delimiter : ", combined with elements of Card 2: ";
+			const delimiter3 = (workflow["102"] && otherCards[1]) ? workflow["102"].inputs.delimiter : ", and Card 3: ";
+			const suffixText = suffixNode ? suffixNode.inputs.string_b : "";
+			
+			const fullPromptPreview = node112Text + delimiter1 + card1Desc + delimiter2 + card2Desc + delimiter3 + card3Desc + suffixText;
+			
+			console.log("=== COMFYUI GENERATOR: FULL COMBINED PROMPT PREVIEW ===");
+			console.log(fullPromptPreview);
+		} catch (err) {
+			console.warn("Could not generate client-side full prompt preview:", err);
 		}
 	}
 
