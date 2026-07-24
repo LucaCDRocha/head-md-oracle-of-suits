@@ -492,7 +492,7 @@
             try {
                 const action = isLiked ? 'unlike' : 'like';
 
-                const response = await fetch(`/hybrids/${hybridId}/like`, {
+                const response = await fetch(`/${hybridId}/like`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

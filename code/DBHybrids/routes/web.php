@@ -4,10 +4,6 @@ use Illuminate\Support\Facades\Route;
 use App\Models\Hybrid;
 
 Route::get('/', function () {
-    return view('welcome');
-});
-
-Route::get('/hybrids', function () {
     $sortBy = request()->query('sort', 'date'); // default to 'date'
 
     $query = Hybrid::with('cards.game');
@@ -29,7 +25,7 @@ Route::get('/hybrids', function () {
     return view('hybrids.index', compact('hybrids', 'sortBy', 'totalHybrids', 'totalLikes'));
 })->name('hybrids.index');
 
-Route::get('/hybrids/{id}', function ($id) {
+Route::get('/{id}', function ($id) {
     $hybrid = Hybrid::with('cards.game')->find($id);
 
     if (!$hybrid) {
@@ -39,7 +35,7 @@ Route::get('/hybrids/{id}', function ($id) {
     return view('hybrids.show', compact('hybrid'));
 })->name('hybrids.show');
 
-Route::get('/hybrids/{id}/download', function ($id) {
+Route::get('/{id}/download', function ($id) {
     $hybrid = Hybrid::find($id);
 
     if (!$hybrid) {
@@ -85,7 +81,7 @@ Route::get('/hybrids/{id}/download', function ($id) {
     return response()->download($imagePath, $filename);
 })->name('hybrids.download');
 
-Route::post('/hybrids/{id}/like', function ($id) {
+Route::post('/{id}/like', function ($id) {
     $hybrid = Hybrid::find($id);
 
     if (!$hybrid) {
