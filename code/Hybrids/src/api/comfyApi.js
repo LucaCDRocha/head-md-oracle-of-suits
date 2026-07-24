@@ -493,28 +493,12 @@ export async function generateImage(selected, baseCardId, statusCallback) {
 		const allowedWords = [...new Set([value, suitSymbol, ...cardNameWords])].filter(Boolean);
 		const allowedWordsStr = allowedWords.map(w => `"${w}"`).join(", ");
 
-		const isCourtCard = value && (
-			value === "K" || value === "Q" || value === "J" || 
-			value === "King" || value === "Queen" || value === "Jack" || 
-			value === "Knight" || value === "Ober" || value === "Unter" ||
-			value === "Page" || value === "Cavalier" ||
-			value === "Roi" || value === "Dame" || value === "Valet" ||
-			String(value).toLowerCase().includes("king") ||
-			String(value).toLowerCase().includes("queen") ||
-			String(value).toLowerCase().includes("jack") ||
-			String(value).toLowerCase().includes("knight")
-		);
-
 		// Add strict layout and clean composition rules (no card titles/texts at the bottom, no deformed bodies/limbs)
 		let cleanCompositionRule = `\n- Absolutely No Hallucinated Text or Numbers: You must absolutely NOT write, draw, or print any numbers (such as "4", "3", "7", etc.) or words (such as "June Stwert", "Temperance", "The Star", "The Moon", etc.) that do not belong to the base card. The ONLY allowed text, words, or numbers anywhere on the generated card are: ${allowedWordsStr} (if any text/numbers are generated at all). Any other names, titles, Roman numerals, or words mentioned in the descriptions of Card 2 and Card 3 must be completely ignored and must NOT be written anywhere on the card.
 - Absolutely No Nudity: The generated card must be completely free of any nudity, nakedness, or partial nudity. All human figures or characters depicted on the card must be fully clothed in elegant robes, garments, classical armor, or attire matching the style of the cards. Ensure there is no naked skin of the torso, chest, or lower body. Absolutely no bare breasts, no exposed chests, no bare torsos, and no naked midriffs. All chest and torso skin must be completely covered with thick fabric, shirts, armor, or robes. Absolutely no sheer, translucent, or see-through clothing; all outfits must be completely opaque, high-necked, and fully closed up to the collarbone.
 - Character Generation Rule: Only draw human figures, characters, or persons if they are explicitly mentioned in the descriptions of Card 1, Card 2, or Card 3. If none of the card descriptions mention a person, figure, character, man, woman, or human, then absolutely DO NOT generate any people, human figures, or characters; instead, focus solely on the objects, symbols, landscapes, and patterns described.
 - Symmetrical & Clean Layout: Ensure the bottom area of the card is clean and logically matches the scene (e.g. rocks, cliff, grass, or simple decorative background). Do NOT generate any extra, partial, or deformed human bodies, limbs, or faces at the bottom of the card.
 - All Characters Must Be Upright: Every human figure, character, face, or person on the card must always be drawn right-side up, standing or sitting normally, with their head at the top and feet at the bottom. Absolutely DO NOT draw any character flipped, inverted, or upside-down.`;
-
-		if (isJass || isCourtCard) {
-			cleanCompositionRule += `\n- Mirrored Double-Headed Playing Card: The card uses a classic double-headed court card layout with a horizontal dividing line across the center. The top half shows the character right-side up. The bottom half is a rotated duplicate so the card looks the same when turned 180 degrees, like a standard King, Queen, or Jack in a poker deck. IMPORTANT: In the top half the character must face upward with their head at the top; the bottom half is simply the same image rotated, not an additional upside-down person. Symmetrically arrange suit symbols on both halves matching the count and layout of the base card.`;
-		}
 
 		// Find the final concatenation node (usually node 115) containing the prompt suffix, and append constraints there
 		const suffixNode = Object.values(workflow).find(
