@@ -370,7 +370,18 @@
 
 <body>
     <div class="container">
-        <a href="{{ route('hybrids.index') }}" class="back-link">← Back to All Hybrids</a>
+        <a href="{{ route('hybrids.index') }}" class="back-link" id="back-link">← Back</a>
+        <script>
+            (function () {
+                // If the user navigated here from somewhere, go back (preserves ?page=2, filters, etc.)
+                // If they arrived directly (QR code, share link, etc.) the href fallback sends them to index
+                if (document.referrer) {
+                    var link = document.getElementById('back-link');
+                    link.href = '#';
+                    link.addEventListener('click', function (e) { e.preventDefault(); history.back(); });
+                }
+            })();
+        </script>
 
         <div class="hybrid-detail">
             <div class="hybrid-header">
