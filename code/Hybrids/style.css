@@ -424,6 +424,30 @@ canvas {
 	color: #000;
 }
 
+/* Progress fill overlay inside card slots during hold-to-generate */
+.slot-progress-fill {
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	width: 100%;
+	height: 0%;
+	background: linear-gradient(180deg, rgba(76, 175, 80, 0.45) 0%, rgba(76, 175, 80, 0.15) 100%);
+	border-top: 3px solid #4caf50;
+	box-shadow: 0 -2px 15px rgba(76, 175, 80, 0.6);
+	pointer-events: none;
+	z-index: 2;
+	opacity: 0;
+	transition: height 0.05s linear, opacity 0.15s ease;
+}
+
+.slot-card.slot-charging {
+	box-shadow: inset 0 0 0 2px #4caf50, 0 0 20px rgba(76, 175, 80, 0.4);
+}
+
+.slot-card.slot-charging .slot-progress-fill {
+	opacity: 1;
+}
+
 .base-selector {
 	width: 100%;
 	order: 5;
@@ -732,10 +756,14 @@ canvas {
 
 /* Ensure the generate button is visible and aligned */
 #generate-btn {
-	display: inline-block;
+	position: relative;
+	overflow: hidden;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
 	margin-top: 8px;
 	width: 100%;
-	padding: 10px;
+	padding: 12px 16px;
 	background: #4caf50;
 	color: white;
 	border: none;
@@ -744,6 +772,25 @@ canvas {
 	font-weight: 600;
 	cursor: pointer;
 	transition: background 0.2s ease;
+	user-select: none;
+	-webkit-user-select: none;
+}
+
+#generate-progress {
+	position: absolute;
+	top: 0;
+	left: 0;
+	height: 100%;
+	width: 0%;
+	background: rgba(255, 255, 255, 0.35);
+	pointer-events: none;
+	transition: width 0.05s linear;
+}
+
+#generate-btn-text {
+	position: relative;
+	z-index: 1;
+	pointer-events: none;
 }
 
 #generate-btn:hover:not(:disabled) {
@@ -753,6 +800,10 @@ canvas {
 #generate-btn:disabled {
 	background: #ccc;
 	cursor: not-allowed;
+}
+
+#generate-btn:disabled #generate-progress {
+	width: 0% !important;
 }
 
 #p5-holder {

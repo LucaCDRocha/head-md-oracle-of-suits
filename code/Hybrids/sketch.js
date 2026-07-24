@@ -11,6 +11,7 @@ import {
   setupSerial,
   setKnobChangeCallback,
   setButtonPressCallback,
+  setButtonReleaseCallback,
   setKnobValue,
 } from "./src/hardware/Serial.js";
 import { initQRCodes, updateDownloadQR } from "./src/ui/qrCodes.js";
@@ -22,10 +23,16 @@ let canvas;
 let lastGeneratedBase64 = null;
 let loadingAnimation = null;
 
-// Debounce state for button press
+// Generation & Hold state
 let isGenerating = false;
 let lastGenerateTime = 0;
 const DEBOUNCE_DURATION = 5000; // 5 seconds minimum between generations
+const HOLD_DURATION = 2000; // 2 seconds hold required to start generation
+
+let isHolding = false;
+let holdStartTime = 0;
+let holdAnimFrame = null;
+let holdSource = null;
 
 // Add global error handler to prevent page reload on uncaught errors
 window.addEventListener("error", function (e) {
@@ -68,43 +75,76 @@ window.setup = function () {
     handleKnobChange(knobValues);
   });
 
-  // Set callback for button press
+  // Set callbacks for serial button press/release
   setButtonPressCallback(() => {
-    handleButtonPress();
+    startHold("serial");
+  });
+  setButtonReleaseCallback(() => {
+    cancelHold("serial");
   });
 
   // Apply DEBUG mode visibility
   applyDebugMode();
 
-  // wire UI
-  document.getElementById("generate-btn").addEventListener(
-    "click",
-    async (e) => {
+  // Wire screen generate button with 3-second hold logic
+  const genBtn = document.getElementById("generate-btn");
+  if (genBtn) {
+    genBtn.addEventListener("mousedown", () => startHold("mouse"));
+    genBtn.addEventListener("mouseup", () => cancelHold("mouse"));
+    genBtn.addEventListener("mouseleave", () => cancelHold("mouse"));
+    genBtn.addEventListener(
+      "touchstart",
+      (e) => {
+        e.preventDefault();
+        startHold("mouse");
+      },
+      { passive: false }
+    );
+    genBtn.addEventListener(
+      "touchend",
+      (e) => {
+        e.preventDefault();
+        cancelHold("mouse");
+      },
+      { passive: false }
+    );
+    genBtn.addEventListener(
+      "touchcancel",
+      (e) => {
+        e.preventDefault();
+        cancelHold("mouse");
+      },
+      { passive: false }
+    );
+    genBtn.addEventListener("click", (e) => {
       e.preventDefault();
       e.stopPropagation();
-      try {
-        await onGenerate();
-      } catch (error) {
-        console.error("Error in onGenerate:", error);
-        const status = document.getElementById("status");
-        if (status) status.innerText = "Error: " + error.message;
-      }
       return false;
-    },
-    false
-  );
+    });
+  }
 
   // Load cards using slot selector
   initSlotSelector();
 
-  // Add Enter key listener for hybridization
+  // Add Enter key hold listener for hybridization
   document.addEventListener("keydown", (e) => {
     if (e.key === "Enter") {
       e.preventDefault();
-      onGenerate().catch((error) => {
-        console.error("Error in Enter-key-triggered generation:", error);
-      });
+      if (!e.repeat) {
+        startHold("keyboard");
+      }
     }
+  });
+
+  document.addEventListener("keyup", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      cancelHold("keyboard");
+    }
+  });
+
+  window.addEventListener("blur", () => {
+    cancelHold(null);
   });
 };
 
@@ -148,16 +188,47 @@ function simulateSerialInput() {
   }
 }
 
-function handleButtonPress() {
-  const currentTime = Date.now();
-  const timeSinceLastGenerate = currentTime - lastGenerateTime;
+function updateSlotFills(elapsed) {
+  const progress = Math.min(1.0, elapsed / HOLD_DURATION);
+  const heightPercent = (progress * 100).toFixed(1) + "%";
 
+  for (let i = 1; i <= 3; i++) {
+    const fillEl = document.getElementById(`slot-progress-${i}`);
+    const slotCard = document.getElementById(`slot-${i}`);
+
+    if (fillEl) {
+      fillEl.style.height = heightPercent;
+    }
+
+    if (slotCard) {
+      if (progress > 0) {
+        slotCard.classList.add("slot-charging");
+      } else {
+        slotCard.classList.remove("slot-charging");
+      }
+    }
+  }
+}
+
+function startHold(source) {
   if (isGenerating) {
     const status = document.getElementById("status");
     if (status) status.innerText = "Generation in progress, please wait...";
     return;
   }
 
+  const btn = document.getElementById("generate-btn");
+  if (btn && btn.disabled) return;
+
+  const selected = getSelectedCards();
+  if (!selected || selected.length !== 3) {
+    const status = document.getElementById("status");
+    if (status) status.innerText = "Please select 3 cards before generating.";
+    return;
+  }
+
+  const currentTime = Date.now();
+  const timeSinceLastGenerate = currentTime - lastGenerateTime;
   if (timeSinceLastGenerate < DEBOUNCE_DURATION) {
     const remainingTime = Math.ceil(
       (DEBOUNCE_DURATION - timeSinceLastGenerate) / 1000
@@ -168,9 +239,64 @@ function handleButtonPress() {
     return;
   }
 
-  onGenerate().catch((error) => {
-    console.error("Error in button-triggered generation:", error);
-  });
+  if (isHolding) return;
+
+  isHolding = true;
+  holdSource = source;
+  holdStartTime = Date.now();
+
+  const statusEl = document.getElementById("status");
+  if (statusEl) statusEl.innerText = "Hold for 3 seconds to generate...";
+
+  function animateHold() {
+    if (!isHolding) return;
+
+    const elapsed = Date.now() - holdStartTime;
+    updateSlotFills(elapsed);
+
+    if (elapsed >= HOLD_DURATION) {
+      cancelHold(null, true);
+      onGenerate().catch((error) => {
+        console.error("Error in hold-triggered generation:", error);
+      });
+    } else {
+      holdAnimFrame = requestAnimationFrame(animateHold);
+    }
+  }
+
+  holdAnimFrame = requestAnimationFrame(animateHold);
+}
+
+function cancelHold(source, completed = false) {
+  if (!isHolding) return;
+  if (source !== null && holdSource !== source) return;
+
+  isHolding = false;
+  holdSource = null;
+
+  if (holdAnimFrame) {
+    cancelAnimationFrame(holdAnimFrame);
+    holdAnimFrame = null;
+  }
+
+  // Reset all 3 slot progress fills to 0%
+  for (let i = 1; i <= 3; i++) {
+    const fillEl = document.getElementById(`slot-progress-${i}`);
+    if (fillEl) {
+      fillEl.style.height = "0%";
+    }
+    const slotCard = document.getElementById(`slot-${i}`);
+    if (slotCard) {
+      slotCard.classList.remove("slot-charging");
+    }
+  }
+
+  const statusEl = document.getElementById("status");
+  if (!completed && !isGenerating) {
+    if (statusEl && statusEl.innerText.startsWith("Hold for 3 seconds")) {
+      statusEl.innerText = "";
+    }
+  }
 }
 
 async function onGenerate() {
@@ -200,12 +326,21 @@ async function onGenerate() {
 
   isGenerating = true;
   const btn = document.getElementById("generate-btn");
+  const btnText = document.getElementById("generate-btn-text");
   const status = document.getElementById("status");
   const loadingOverlay = document.getElementById("loading-overlay");
   const generatedImg = document.getElementById("generated-img");
 
-  btn.disabled = true;
-  status.innerText = "Generating...";
+  if (btn) {
+    btn.disabled = true;
+    btn.setAttribute("data-generating", "true");
+  }
+  if (btnText) {
+    btnText.textContent = "Generating...";
+  } else if (btn) {
+    btn.textContent = "Generating...";
+  }
+  if (status) status.innerText = "Generating...";
 
   soundEffects.playStartSound();
 
@@ -312,7 +447,18 @@ async function onGenerate() {
   } finally {
     isGenerating = false;
     lastGenerateTime = Date.now();
-    btn.disabled = false;
-    btn.textContent = "Generate & Upload Hybrid";
+    if (btn) {
+      btn.removeAttribute("data-generating");
+      const selected = getSelectedCards();
+      const count = selected ? selected.length : 0;
+      const isReady = count === 3;
+      btn.disabled = !isReady;
+      const btnText = document.getElementById("generate-btn-text");
+      if (btnText) {
+        btnText.textContent = isReady ? "Hold 3s to Generate" : `Select 3 cards (${count}/3)`;
+      } else {
+        btn.textContent = isReady ? "Hold 3s to Generate" : `Select 3 cards (${count}/3)`;
+      }
+    }
   }
 }

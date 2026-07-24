@@ -17,11 +17,10 @@ let isConnected = false;
 let connectionTime = 0;
 const CONNECTION_STABILIZATION_DELAY = 2000; // Wait 2 seconds after connection before accepting button presses
 
-// Callback that will be called when knob values change
+// Callback that will be called when knob values change or button is pressed/released
 let onKnobChangeCallback = null;
-
-// Callback that will be called when button is pressed
 let onButtonPressCallback = null;
+let onButtonReleaseCallback = null;
 
 export function setKnobChangeCallback(callback) {
 	onKnobChangeCallback = callback;
@@ -29,6 +28,10 @@ export function setKnobChangeCallback(callback) {
 
 export function setButtonPressCallback(callback) {
 	onButtonPressCallback = callback;
+}
+
+export function setButtonReleaseCallback(callback) {
+	onButtonReleaseCallback = callback;
 }
 
 export function setupSerial() {
@@ -101,15 +104,19 @@ function parseLine(line) {
 		}
 	}
 
-	// Check for button press (transition from HIGH to LOW)
+	// Check for button press/release (transition between HIGH and LOW)
 	if (!isNaN(newButtonState)) {
 		const timeSinceConnection = Date.now() - connectionTime;
 		const isStabilized = timeSinceConnection > CONNECTION_STABILIZATION_DELAY;
 
-		if (newButtonState === 0 && lastButtonState === 1) {
-			if (isStabilized) {
+		if (isStabilized) {
+			if (newButtonState === 0 && lastButtonState === 1) {
 				if (onButtonPressCallback) {
 					onButtonPressCallback();
+				}
+			} else if (newButtonState === 1 && lastButtonState === 0) {
+				if (onButtonReleaseCallback) {
+					onButtonReleaseCallback();
 				}
 			}
 		}

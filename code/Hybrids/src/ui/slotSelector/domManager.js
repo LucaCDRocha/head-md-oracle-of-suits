@@ -56,6 +56,12 @@ function createSlotElement(slot) {
 		slotDiv.classList.add("base-card");
 	}
 
+	// Progress fill overlay for hold-to-generate animation
+	const progressFill = document.createElement("div");
+	progressFill.className = "slot-progress-fill";
+	progressFill.id = `slot-progress-${slot.id}`;
+	slotDiv.appendChild(progressFill);
+
 	// Header (layout structure)
 	const header = document.createElement("div");
 	header.className = "slot-header";
@@ -148,7 +154,12 @@ function createSlotElement(slot) {
  */
 export function updateSlotElement(slot) {
 	const slotEl = document.getElementById(`slot-${slot.id}`);
-	if (!slotEl) return;
+	if (!slotEl.querySelector(".slot-progress-fill")) {
+		const progressFill = document.createElement("div");
+		progressFill.className = "slot-progress-fill";
+		progressFill.id = `slot-progress-${slot.id}`;
+		slotEl.appendChild(progressFill);
+	}
 
 	if (baseSlotId === slot.id) {
 		slotEl.classList.add("base-card");
@@ -511,7 +522,18 @@ export function updateSelectedArea() {
 	selectedArea.querySelector("h3").textContent = `Selected (${count}/3)`;
 
 	const btn = document.getElementById("generate-btn");
-	if (btn) btn.disabled = count !== 3;
+	const btnText = document.getElementById("generate-btn-text");
+	if (btn) {
+		if (!btn.hasAttribute("data-generating")) {
+			const isReady = count === 3;
+			btn.disabled = !isReady;
+			if (btnText) {
+				btnText.textContent = isReady ? "Generate & Upload Hybrid" : `Select 3 cards (${count}/3)`;
+			} else {
+				btn.textContent = isReady ? "Generate & Upload Hybrid" : `Select 3 cards (${count}/3)`;
+			}
+		}
+	}
 
 	const summary = selectedArea.querySelector("#selected-summary");
 	if (summary) {
