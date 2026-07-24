@@ -5,7 +5,7 @@
 import { COMFYUI_API_BASE, COMFYUI_PROMPT_NODE_ID, DEBUG } from "../../config.js";
 
 // Set to true to print the full concatenated prompt preview in the browser console
-const LOG_PROMPT_PREVIEW = true;
+const LOG_PROMPT_PREVIEW = false;
 
 // Default standard text-to-image workflow fallback (SD1.5 structure)
 const DEFAULT_WORKFLOW = {
@@ -136,26 +136,162 @@ async function uploadToComfyUI(blob, filename) {
 	return data.name; // Return filename saved in ComfyUI's input folder
 }
 
+// ── French → English translation maps (built from the database Excel) ──
+
+const SUITS_FR_TO_EN = {
+	// French standard suits
+	"pique":     "Spades",
+	"cœur":      "Hearts",
+	"coeur":     "Hearts",
+	"carreau":   "Diamonds",
+	"trèfle":    "Clubs",
+	"trefle":    "Clubs",
+	// Tarot suits
+	"atout":     "Trumps",
+	"épée":      "Swords",
+	"epée":      "Swords",
+	"epee":      "Swords",
+	"coupe":     "Cups",
+	"denier":    "Coins",
+	"bâton":     "Wands",
+	"baton":     "Wands",
+	// Swiss / Jass suits
+	"bouclier":  "Shields",
+	"gland":     "Acorns",
+	"grelot":    "Bells",
+	"rose":      "Roses",
+	"feuille":   "Leaves",
+	// Special
+	"joker":     "Joker",
+	"excuse":    "The Fool",
+	"fou":       "The Fool",
+	"mat":       "The Fool",
+};
+
+const VALUES_FR_TO_EN = {
+	// Court cards
+	"roi":       "King",
+	"dame":      "Queen",
+	"valet":     "Jack",
+	"cavalier":  "Knight",
+	"as":        "Ace",
+	// German-suited court cards
+	"ober":      "Ober",
+	"unter":     "Unter",
+	"daus":      "Deuce",
+	"könig":     "King",
+	"konig":     "King",
+	// Special cards
+	"excuse":    "The Fool",
+	"fou":       "The Fool",
+	"mat":       "The Fool",
+	"joker":     "Joker",
+	// French Revolution deck values
+	"génie":     "Genius",
+	"genie":     "Genius",
+	"liberté":   "Liberty",
+	"liberte":   "Liberty",
+	"égalité":   "Equality",
+	"egalite":   "Equality",
+};
+
+const GAMES_FR_TO_EN = {
+	// Tarot decks
+	"tarot rider-waite":     "Rider-Waite Tarot",
+	"tarot grimaud":         "Grimaud Tarot",
+	"tarot burdel":          "Burdel Tarot",
+	"tarot dondorf":         "Dondorf Tarot",
+	"tarot gassmann":        "Gassmann Tarot",
+	"tarot payen":           "Payen Tarot",
+	"tarot animalier":       "Animal Tarot",
+	"tarot autrichien":      "Austrian Tarot",
+	"tarot aux paysages":    "Landscape Tarot",
+	"tarot enluminé":        "Illuminated Tarot",
+	"tarot enlumine":        "Illuminated Tarot",
+	"tarot à 2 têtes":       "Two-Headed Tarot",
+	"tarot a 2 tetes":       "Two-Headed Tarot",
+	"grand tarrau":          "Grand Tarrau Tarot",
+	"tarocco piemontese":    "Piedmontese Tarocco",
+	"slovenski tarok":       "Slovenian Tarok",
+	"slovanski tarok":       "Slovenian Tarok",
+	// Jass decks
+	"jass classique":        "Classic Jass",
+	"jass coloré":           "Colored Jass",
+	"jass colore":           "Colored Jass",
+	"jass de luxe":          "Deluxe Jass",
+	// Regional French card sets
+	"cartes gassmann":       "Gassmann Cards",
+	"cartes gatteaux":       "Gatteaux Cards",
+	"cartes marisi":         "Marisi Cards",
+	"cartes müller":         "Müller Cards",
+	"cartes muller":         "Müller Cards",
+	"cartes western":        "Western Cards",
+	"cartes catalanes":      "Catalan Cards",
+	"cartes lyonnaises":     "Lyonnais Cards",
+	"cartes mexicaines":     "Mexican Cards",
+	"cartes saxonnes":       "Saxon Cards",
+	"cartes sévillanes":     "Sevillan Cards",
+	"cartes sevillanes":     "Sevillan Cards",
+	// Special / themed decks
+	"doubles enseignes":     "Double-Suited Cards",
+	"jeu duratone":          "Duratone Deck",
+	"jeu piatnik":           "Piatnik Deck",
+	"jeu assemblé":          "Assembled Deck",
+	"jeu assemble":          "Assembled Deck",
+	"jeu aux cantons":       "Canton Deck",
+	"jeu de munich":         "Munich Deck",
+	"jeu de nuremberg":      "Nuremberg Deck",
+	"jeu de plaisance":      "Plaisance Deck",
+	"jeu de schaffhouse":    "Schaffhausen Deck",
+	"jeu de la chance":      "Luck Deck",
+	"jeu de patience":       "Patience Deck",
+	"jeu de vaches":         "Cow Deck",
+	"jeu en russe":          "Russian Deck",
+	"jeu musical":           "Musical Deck",
+	"jeu républicain":       "Republican Deck",
+	"jeu republicain":       "Republican Deck",
+};
+
+/**
+ * Translates a French term to English using the provided map.
+ * Falls back to the original term if no translation is found.
+ */
+function translateTerm(term, map) {
+	if (!term) return "";
+	const key = String(term).toLowerCase().trim();
+	return map[key] || term;
+}
+
 /**
  * Formats a card description using its value, suits, and game name.
+ * Automatically translates French terms to English for the prompt.
  */
 function formatCardDescription(card) {
 	if (!card) return "";
-	const val = card.value || "";
-	const suit = card.suits || "";
-	const game = card.game?.name || "";
-	const isJoker = String(val).toLowerCase() === "joker";
-	
+	const rawVal  = card.value || "";
+	const rawSuit = card.suits || "";
+	const rawGame = card.game?.name || "";
+
+	const val  = translateTerm(rawVal, VALUES_FR_TO_EN);
+	const suit = translateTerm(rawSuit, SUITS_FR_TO_EN);
+	const game = translateTerm(rawGame, GAMES_FR_TO_EN);
+
+	const isJoker = val.toLowerCase() === "joker";
+	const isFool  = val.toLowerCase() === "the fool" || suit.toLowerCase() === "the fool";
+
 	if (isJoker) {
-		return `Joker card from deck "${game}"`;
+		return `Joker card from the "${game}" deck`;
+	}
+	if (isFool) {
+		return `"The Fool" card from the "${game}" deck`;
 	}
 	if (val && suit) {
-		return `"${val} of ${suit}" card from deck "${game}"`;
+		return `"${val} of ${suit}" card from the "${game}" deck`;
 	}
 	if (val) {
-		return `"${val}" card from deck "${game}"`;
+		return `"${val}" card from the "${game}" deck`;
 	}
-	return `card from deck "${game}"`;
+	return `card from the "${game}" deck`;
 }
 
 export async function generateImage(selected, baseCardId, statusCallback) {
@@ -269,33 +405,53 @@ export async function generateImage(selected, baseCardId, statusCallback) {
 		          node.inputs.value.includes("CARD LAYOUT")
 	);
 	if (promptNode) {
-		const suit = baseCard.suits || "";
-		const value = baseCard.value || "";
-		const gameName = (baseCard.game?.name || "").toLowerCase();
+		const rawSuit = baseCard.suits || "";
+		const rawValue = baseCard.value || "";
+		const rawGameName = baseCard.game?.name || "";
+		
+		// Translate French terms to English for the prompt
+		const suit = translateTerm(rawSuit, SUITS_FR_TO_EN);
+		const value = translateTerm(rawValue, VALUES_FR_TO_EN);
+		const gameName = translateTerm(rawGameName, GAMES_FR_TO_EN).toLowerCase();
 		const suitLower = suit.toLowerCase();
 		
 		// Determine if the base card is a standard playing card (Bicycle, Copag, Jass, Piquet, Ducale, etc.)
-		const isTarot = gameName.includes("tarot") || gameName.includes("marseille") || gameName.includes("waite");
+		const isTarot = gameName.includes("tarot") || gameName.includes("marseille") || gameName.includes("waite") || gameName.includes("tarocco") || gameName.includes("tarok");
 		const isJass = gameName.includes("jass");
 		const isPlayingCard = !isTarot;
 
-		const isJoker = String(value).toLowerCase() === "joker";
+		const isJoker = value.toLowerCase() === "joker";
 		
 		const suitSymbolMap = {
+			// Standard French suits
 			"spades": "♠",
 			"hearts": "♥",
 			"diamonds": "♦",
 			"clubs": "♣",
+			// Unicode symbols
 			"♠": "♠",
 			"♥": "♥",
 			"♦": "♦",
-			"♣": "♣"
+			"♣": "♣",
+			// Swiss / Jass suits (no Unicode symbol, use word)
+			"shields": "shield",
+			"acorns": "acorn",
+			"bells": "bell",
+			"roses": "rose",
+			"leaves": "leaf",
+			// Italian / Tarot suits (no Unicode symbol, use word)
+			"swords": "sword",
+			"cups": "cup",
+			"wands": "wand",
+			"coins": "coin",
+			"trumps": "trump",
+			"major arcana": "major arcana",
 		};
 		const suitSymbol = suitSymbolMap[suitLower] || suit;
 
 		let cornerMarkingsDesc = "";
 		if (isJoker) {
-			cornerMarkingsDesc = `Top-left and bottom-right corners must display strictly the word "JOKER" (rotated 180 degrees on the bottom-right corner). Keep all corners clean of other suit symbols or ranks. Absolutely IGNORE any suit symbols, rank markings, or corner numbers mentioned in Card 2 and Card 3.`;
+			cornerMarkingsDesc = `Top-left and bottom-right corners must display strictly the word "JOKER". The bottom-right corner text should be inverted so the card can be read from either end. Keep all corners clean of other suit symbols or ranks. Absolutely IGNORE any suit symbols, rank markings, or corner numbers mentioned in Card 2 and Card 3.`;
 		} else if (isPlayingCard) {
 			const rankStr = value ? `"${value}"` : "the rank";
 			const suitStr = suitSymbol ? `"${suitSymbol}"` : "the suit symbol";
@@ -308,7 +464,7 @@ export async function generateImage(selected, baseCardId, statusCallback) {
 				colorDesc = " Use black color for both the rank and the suit symbol.";
 			}
 			
-			cornerMarkingsDesc = `Top-left and bottom-right corners must display strictly the matching rank ${rankStr} and suit symbol ${suitStr} belonging strictly to the base card. Rotate the bottom-right corner indices 180 degrees upside-down.${colorDesc} Do NOT include any other suit symbols (such as hearts, diamonds, spades, clubs, cups, swords, wands, etc.) in the corners or near the indices. Only draw the single specified suit symbol ${suitStr} and nothing else. Absolutely IGNORE any suit symbols, rank markings, or corner numbers mentioned in Card 2 and Card 3.`;
+			cornerMarkingsDesc = `Top-left and bottom-right corners must display strictly the matching rank ${rankStr} and suit symbol ${suitStr} belonging strictly to the base card. The bottom-right corner text should be inverted so the card can be read from either end.${colorDesc} Do NOT include any other suit symbols (such as hearts, diamonds, spades, clubs, cups, swords, wands, etc.) in the corners or near the indices. Only draw the single specified suit symbol ${suitStr} and nothing else. Absolutely IGNORE any suit symbols, rank markings, or corner numbers mentioned in Card 2 and Card 3.`;
 		} else {
 			// For Tarot cards, they prefer not to have corner numbers, but if they are there they should be correct
 			cornerMarkingsDesc = `Preferably keep all corners clean, plain, and unprinted. However, if the generation layout includes corner markings or corner circles, they must display strictly the rank/number "${value}" of the base card (e.g., "${value}" or its Roman numeral equivalent) and absolutely nothing else. Do NOT write any other numbers (such as "4", "3", etc.) or suit symbols in the corners.`;
@@ -340,21 +496,24 @@ export async function generateImage(selected, baseCardId, statusCallback) {
 		const isCourtCard = value && (
 			value === "K" || value === "Q" || value === "J" || 
 			value === "King" || value === "Queen" || value === "Jack" || 
-			value === "Roi" || value === "Dame" || value === "Valet" || 
+			value === "Knight" || value === "Ober" || value === "Unter" ||
 			value === "Page" || value === "Cavalier" ||
+			value === "Roi" || value === "Dame" || value === "Valet" ||
 			String(value).toLowerCase().includes("king") ||
 			String(value).toLowerCase().includes("queen") ||
-			String(value).toLowerCase().includes("jack")
+			String(value).toLowerCase().includes("jack") ||
+			String(value).toLowerCase().includes("knight")
 		);
 
 		// Add strict layout and clean composition rules (no card titles/texts at the bottom, no deformed bodies/limbs)
 		let cleanCompositionRule = `\n- Absolutely No Hallucinated Text or Numbers: You must absolutely NOT write, draw, or print any numbers (such as "4", "3", "7", etc.) or words (such as "June Stwert", "Temperance", "The Star", "The Moon", etc.) that do not belong to the base card. The ONLY allowed text, words, or numbers anywhere on the generated card are: ${allowedWordsStr} (if any text/numbers are generated at all). Any other names, titles, Roman numerals, or words mentioned in the descriptions of Card 2 and Card 3 must be completely ignored and must NOT be written anywhere on the card.
 - Absolutely No Nudity: The generated card must be completely free of any nudity, nakedness, or partial nudity. All human figures or characters depicted on the card must be fully clothed in elegant robes, garments, classical armor, or attire matching the style of the cards. Ensure there is no naked skin of the torso, chest, or lower body. Absolutely no bare breasts, no exposed chests, no bare torsos, and no naked midriffs. All chest and torso skin must be completely covered with thick fabric, shirts, armor, or robes. Absolutely no sheer, translucent, or see-through clothing; all outfits must be completely opaque, high-necked, and fully closed up to the collarbone.
 - Character Generation Rule: Only draw human figures, characters, or persons if they are explicitly mentioned in the descriptions of Card 1, Card 2, or Card 3. If none of the card descriptions mention a person, figure, character, man, woman, or human, then absolutely DO NOT generate any people, human figures, or characters; instead, focus solely on the objects, symbols, landscapes, and patterns described.
-- Symmetrical & Clean Layout: Ensure the bottom area of the card is clean and logically matches the scene (e.g. rocks, cliff, grass, or simple decorative background). Do NOT generate any extra, partial, upside-down, or deformed human bodies, limbs, or faces at the bottom of the card.`;
+- Symmetrical & Clean Layout: Ensure the bottom area of the card is clean and logically matches the scene (e.g. rocks, cliff, grass, or simple decorative background). Do NOT generate any extra, partial, or deformed human bodies, limbs, or faces at the bottom of the card.
+- All Characters Must Be Upright: Every human figure, character, face, or person on the card must always be drawn right-side up, standing or sitting normally, with their head at the top and feet at the bottom. Absolutely DO NOT draw any character flipped, inverted, or upside-down.`;
 
 		if (isJass || isCourtCard) {
-			cleanCompositionRule += `\n- Mirrored Symmetrical Design: The card must be a mirrored double-headed playing card layout. Draw a clear horizontal division line across the middle of the card. Symmetrically mirror the central illustration and suit symbols between the top half and the bottom half (the bottom half must be an upside-down mirrored copy of the top half). Symmetrically arrange the suit symbols (e.g. acorns, bells, roses, shields, clubs, spades, hearts, diamonds) on the top and bottom halves matching the count and layout of the base card.`;
+			cleanCompositionRule += `\n- Mirrored Double-Headed Playing Card: The card uses a classic double-headed court card layout with a horizontal dividing line across the center. The top half shows the character right-side up. The bottom half is a rotated duplicate so the card looks the same when turned 180 degrees, like a standard King, Queen, or Jack in a poker deck. IMPORTANT: In the top half the character must face upward with their head at the top; the bottom half is simply the same image rotated, not an additional upside-down person. Symmetrically arrange suit symbols on both halves matching the count and layout of the base card.`;
 		}
 
 		// Find the final concatenation node (usually node 115) containing the prompt suffix, and append constraints there
