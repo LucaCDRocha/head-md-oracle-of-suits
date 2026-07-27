@@ -223,7 +223,7 @@
         "96",
         2
       ],
-      "regex_pattern": "(?i)\\b(The image is a (playing|tarot) card( illustration| from the [^.]+ series)?|It is a rectangular card[^.]*|The card (is rectangular|features)[^.]*|The text (on the card|reads|says|is)[^.]*|There (are|is) (text|letters|words|numbers|digits|roman numerals|captions|inscriptions|labels|banners|ribbons)[^.]*|(with|has) (a|the) (text|letter|word|number|digit|roman numeral|caption|inscription|label|banner|ribbon)[^.]*|there is a [a-z]+ border[^.]*|with a [a-z]+ background[^.]*|in a cursive font)\\b\\.?",
+      "regex_pattern": "(?i)\\b(The image is a (playing|tarot) card( illustration| from the [^.]+ series)?|It is a rectangular card[^.]*|The card (is rectangular|features)[^.]*|The text (on the card|reads|says|is)[^.]*|There (are|is) (text|letters|words|numbers|digits|roman numerals|captions|inscriptions|labels|banners|ribbons|monograms|watermarks|signatures|initials)[^.]*|(with|has|showing|featuring) (a|the|some)?\\s*(text|letter|word|number|digit|roman numeral|caption|inscription|label|banner|ribbon|monogram|watermark|signature|initials|stamp)[^.]*|(the|a|capital)?\\s*(letter|number|digit|word)\\s+[a-zA-Z0-9]+[^.]*|(a|the)?\\s*(spade|heart|diamond|club|spades|hearts|diamonds|clubs)\\s*(symbol|shape|icon|mark|in the corner|pip)?[^.]*|(a|the)?\\s*(monogram|watermark|signature|initials|printer stamp|maker stamp)[^.]*|there is a [a-z]+ border[^.]*|with a [a-z]+ background[^.]*|in a cursive font)\\b\\.?",
       "replace": "",
       "case_insensitive": true,
       "multiline": false,
@@ -241,7 +241,7 @@
         "99",
         2
       ],
-      "regex_pattern": "(?i)\\b(The image is a (playing|tarot) card( illustration| from the [^.]+ series)?|It is a rectangular card[^.]*|The card (is rectangular|features)[^.]*|The text (on the card|reads|says|is)[^.]*|There (are|is) (text|letters|words|numbers|digits|roman numerals|captions|inscriptions|labels|banners|ribbons)[^.]*|(with|has) (a|the) (text|letter|word|number|digit|roman numeral|caption|inscription|label|banner|ribbon)[^.]*|there is a [a-z]+ border[^.]*|with a [a-z]+ background[^.]*|in a cursive font)\\b\\.?",
+      "regex_pattern": "(?i)\\b(The image is a (playing|tarot) card( illustration| from the [^.]+ series)?|It is a rectangular card[^.]*|The card (is rectangular|features)[^.]*|The text (on the card|reads|says|is)[^.]*|There (are|is) (text|letters|words|numbers|digits|roman numerals|captions|inscriptions|labels|banners|ribbons|monograms|watermarks|signatures|initials)[^.]*|(with|has|showing|featuring) (a|the|some)?\\s*(text|letter|word|number|digit|roman numeral|caption|inscription|label|banner|ribbon|monogram|watermark|signature|initials|stamp)[^.]*|(the|a|capital)?\\s*(letter|number|digit|word)\\s+[a-zA-Z0-9]+[^.]*|(a|the)?\\s*(spade|heart|diamond|club|spades|hearts|diamonds|clubs)\\s*(symbol|shape|icon|mark|in the corner|pip)?[^.]*|(a|the)?\\s*(monogram|watermark|signature|initials|printer stamp|maker stamp)[^.]*|there is a [a-z]+ border[^.]*|with a [a-z]+ background[^.]*|in a cursive font)\\b\\.?",
       "replace": "",
       "case_insensitive": true,
       "multiline": false,
@@ -259,7 +259,7 @@
         "100",
         2
       ],
-      "regex_pattern": "(?i)\\b(The image is a (playing|tarot) card( illustration| from the [^.]+ series)?|It is a rectangular card[^.]*|The card (is rectangular|features)[^.]*|The text (on the card|reads|says|is)[^.]*|There (are|is) (text|letters|words|numbers|digits|roman numerals|captions|inscriptions|labels|banners|ribbons)[^.]*|(with|has) (a|the) (text|letter|word|number|digit|roman numeral|caption|inscription|label|banner|ribbon)[^.]*|there is a [a-z]+ border[^.]*|with a [a-z]+ background[^.]*|in a cursive font)\\b\\.?",
+      "regex_pattern": "(?i)\\b(The image is a (playing|tarot) card( illustration| from the [^.]+ series)?|It is a rectangular card[^.]*|The card (is rectangular|features)[^.]*|The text (on the card|reads|says|is)[^.]*|There (are|is) (text|letters|words|numbers|digits|roman numerals|captions|inscriptions|labels|banners|ribbons|monograms|watermarks|signatures|initials)[^.]*|(with|has|showing|featuring) (a|the|some)?\\s*(text|letter|word|number|digit|roman numeral|caption|inscription|label|banner|ribbon|monogram|watermark|signature|initials|stamp)[^.]*|(the|a|capital)?\\s*(letter|number|digit|word)\\s+[a-zA-Z0-9]+[^.]*|(a|the)?\\s*(spade|heart|diamond|club|spades|hearts|diamonds|clubs)\\s*(symbol|shape|icon|mark|in the corner|pip)?[^.]*|(a|the)?\\s*(monogram|watermark|signature|initials|printer stamp|maker stamp)[^.]*|there is a [a-z]+ border[^.]*|with a [a-z]+ background[^.]*|in a cursive font)\\b\\.?",
       "replace": "",
       "case_insensitive": true,
       "multiline": false,

@@ -299,7 +299,10 @@ function getExactCardTextConfig(baseCard) {
 	const rawSuit = String(baseCard.suits || "").trim();
 	const rawGame = String(baseCard.game?.name || "").toLowerCase();
 
-	const isTarot = rawGame.includes("tarot") || rawGame.includes("marseille") || rawGame.includes("waite") || rawGame.includes("tarocco") || rawGame.includes("tarok") || rawSuit.toLowerCase() === "atout" || rawSuit.toLowerCase() === "major arcana";
+	const suitLowerRaw = rawSuit.toLowerCase();
+	const isTarotAtout = suitLowerRaw === "atout" || suitLowerRaw === "major arcana" || suitLowerRaw === "trumps" || suitLowerRaw === "atouts";
+	const isTarotGame = rawGame.includes("tarot") || rawGame.includes("marseille") || rawGame.includes("waite") || rawGame.includes("tarocco") || rawGame.includes("tarok");
+	const isTarot = isTarotAtout || isTarotGame;
 	const isJass = rawGame.includes("jass") || rawGame.includes("saxon") || rawGame.includes("munich");
 	const isJoker = rawVal.toLowerCase() === "joker";
 
@@ -323,7 +326,7 @@ function getExactCardTextConfig(baseCard) {
 		"diamonds": "♦", "carreau": "♦", "♦": "♦",
 		"clubs": "♣", "trèfle": "♣", "trefle": "♣", "♣": "♣"
 	};
-	const suitSymbol = suitSymbolMap[rawSuit.toLowerCase()] || "";
+	const suitSymbol = suitSymbolMap[suitLowerRaw] || "";
 
 	let topCornerText = "";
 	let bottomTitleText = "";
@@ -331,29 +334,17 @@ function getExactCardTextConfig(baseCard) {
 
 	if (isJoker) {
 		topCornerText = "JOKER";
-	} else if (isTarot) {
+	} else if (isTarotAtout || (isTarotGame && (suitLowerRaw === "" || suitLowerRaw === "atout"))) {
+		// Major Arcana (Atout)
 		const cleanKey = valLower.replace(/^atout\s*/, "");
 		if (TAROT_FRENCH_TITLES[cleanKey]) {
 			isTarotMajor = true;
 			bottomTitleText = TAROT_FRENCH_TITLES[cleanKey];
-		} else if (rawVal && rawSuit) {
-			bottomTitleText = `${rawVal} DE ${rawSuit}`.toUpperCase();
-		}
-	} else if (isJass) {
-		if (valLower === "könig" || valLower === "king" || valLower === "roi") {
-			bottomTitleText = "KÖNIG";
-			topCornerText = suitSymbol ? `K${suitSymbol}` : "K";
-		} else if (valLower === "ober") {
-			bottomTitleText = "OBER";
-			topCornerText = suitSymbol ? `O${suitSymbol}` : "O";
-		} else if (valLower === "unter") {
-			bottomTitleText = "UNTER";
-			topCornerText = suitSymbol ? `U${suitSymbol}` : "U";
-		} else {
-			topCornerText = suitSymbol ? `${rankInitial}${suitSymbol}` : rankInitial;
+		} else if (rawVal) {
+			bottomTitleText = rawVal.toUpperCase();
 		}
 	} else {
-		// Standard Classic Playing Card (Bicycle, Copag, Piquet, Ducale, etc.)
+		// Minor Arcana or Standard Card (e.g. 3 of Diamonds / 3 de Carreau, incluso en mazos de Tarot)
 		topCornerText = suitSymbol ? `${rankInitial}${suitSymbol}` : rankInitial;
 	}
 
@@ -524,13 +515,27 @@ export async function generateImage(selected, baseCardId, statusCallback) {
 
 		let promptValue = promptNode.inputs.value;
 
-		// Construct positive natural language layout description for FLUX specifying exact circumstance, text, and placement
+		// Construct positive natural language layout description for FLUX with targeted wordless texture protection
 		const baseDesc = formatCardDescription(baseCard);
+		let textAllowanceProse = "";
+		if (textConfig.isTarotMajor) {
+			textAllowanceProse = `With the strict exception of the bottom center title panel displaying strictly the French Tarot title "${textConfig.bottomTitleText}"`;
+		} else if (textConfig.isJoker) {
+			textAllowanceProse = `With the strict exception of the top-left corner index displaying strictly "JOKER"`;
+		} else if (textConfig.topCornerText) {
+			const allowedStr = textConfig.bottomTitleText 
+				? `top-left index displaying strictly "${textConfig.topCornerText}" and bottom title panel displaying strictly "${textConfig.bottomTitleText}"`
+				: `top-left index displaying strictly "${textConfig.topCornerText}"`;
+			textAllowanceProse = `With the strict exception of the ${allowedStr}`;
+		} else {
+			textAllowanceProse = `With no exceptions, all text is forbidden and`;
+		}
+
 		let layoutProse = "";
 		if (textConfig.isTarotMajor) {
-			layoutProse = `The Primary Base Card is ${baseDesc}. All four corners are plain, clean, and unprinted. At the bottom center, a single title panel displays strictly the French Tarot title "${textConfig.bottomTitleText}". The secondary cards provide visual artwork motifs only and their card names, titles, or numbers must not appear.`;
+			layoutProse = `The Primary Base Card is ${baseDesc}. All four corners are plain, clean, and unprinted. At the bottom center, a single title panel displays strictly the French Tarot title "${textConfig.bottomTitleText}".`;
 		} else if (textConfig.isJoker) {
-			layoutProse = `The Primary Base Card is a Joker card. The top-left corner displays strictly the word "JOKER". The bottom of the card is a clean, continuous landscape artwork. All other corners are plain and unprinted. Secondary cards provide visual artwork motifs only.`;
+			layoutProse = `The Primary Base Card is a Joker card. The top-left corner displays strictly the word "JOKER". All other corners are plain and unprinted.`;
 		} else if (textConfig.topCornerText) {
 			let colorProse = "";
 			if (suitLower.includes("heart") || suitLower.includes("diamond") || suitLower.includes("♥") || suitLower.includes("♦")) {
@@ -541,14 +546,14 @@ export async function generateImage(selected, baseCardId, statusCallback) {
 
 			const bottomProse = textConfig.bottomTitleText
 				? `At the bottom center, a single title panel displays strictly "${textConfig.bottomTitleText}".`
-				: `The bottom of the card is a clean, continuous landscape artwork with no title panels, ribbons, or text.`;
+				: `The bottom area flows into continuous background scenery.`;
 
-			layoutProse = `The Primary Base Card is ${baseDesc}. The top-left corner displays strictly the single index "${textConfig.topCornerText}"${colorProse}. ${bottomProse} The top-right, bottom-left, and bottom-right corners are plain and unprinted. The secondary cards provide visual artwork motifs only and their card names, titles, or numbers must not appear.`;
+			layoutProse = `The Primary Base Card is ${baseDesc}. The top-left corner displays strictly the single index "${textConfig.topCornerText}"${colorProse}. ${bottomProse} The top-right, bottom-left, and bottom-right corners are plain and unprinted.`;
 		} else {
-			layoutProse = `The Primary Base Card is ${baseDesc}. The card features a clean artwork layout with plain, unprinted borders and no text or numbers anywhere. Secondary cards provide visual artwork motifs only.`;
+			layoutProse = `The Primary Base Card is ${baseDesc}. The card features a clean artwork layout with plain, unprinted borders.`;
 		}
 
-		const naturalProseSuffix = `\n\n${layoutProse} All human figures are fully dressed in elegant, opaque, high-necked classical robes or armor. All characters stand upright facing forward in a continuous, artistic scene with crisp outlines.`;
+		const naturalProseSuffix = `\n\n${layoutProse} A single, anatomically coherent central figure is seamlessly integrated into a rich, edge-to-edge illustrated environment. The background, clothing, props, and lower sections are filled with continuous atmospheric scenery, flowing abstract motifs, and detailed environmental elements, ensuring no floating body parts or disjointed figures disrupt the layout. ${textAllowanceProse}, all other areas, backgrounds, props, shields, and garments are purely illustrative, featuring wordless painted textures and continuous artistic brushstrokes.`;
 
 		// Find the final concatenation node (node 115) and append the natural prose suffix
 		const suffixNode = Object.values(workflow).find(
