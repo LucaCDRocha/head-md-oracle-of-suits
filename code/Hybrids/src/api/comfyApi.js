@@ -548,7 +548,11 @@ export async function generateImage(selected, baseCardId, statusCallback) {
 				? `At the bottom center, a single title panel displays strictly "${textConfig.bottomTitleText}".`
 				: `The bottom area flows into continuous background scenery.`;
 
-			layoutProse = `The Primary Base Card is ${baseDesc}. The top-left corner displays strictly the single index "${textConfig.topCornerText}"${colorProse}. ${bottomProse} The top-right, bottom-left, and bottom-right corners are plain and unprinted.`;
+			const cornerDetailProse = (textConfig.rankInitial && textConfig.suitSymbol)
+				? `rank initial "${textConfig.rankInitial}" with the suit symbol "${textConfig.suitSymbol}" placed directly underneath it`
+				: `single index "${textConfig.topCornerText}"`;
+
+			layoutProse = `The Primary Base Card is ${baseDesc}. The top-left corner displays strictly the ${cornerDetailProse}${colorProse}. ${bottomProse} The top-right, bottom-left, and bottom-right corners are plain and unprinted.`;
 		} else {
 			layoutProse = `The Primary Base Card is ${baseDesc}. The card features a clean artwork layout with plain, unprinted borders.`;
 		}
