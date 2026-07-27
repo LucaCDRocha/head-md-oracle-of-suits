@@ -1,5 +1,5 @@
 /**
- * comfyApi.js - Local generation client using ComfyUI with IPAdapter image uploads
+ * comfyApi.js - Local generation client using ComfyUI with image uploads
  */
 
 import { COMFYUI_API_BASE, COMFYUI_PROMPT_NODE_ID, DEBUG } from "../../config.js";
@@ -553,7 +553,7 @@ export async function generateImage(selected, baseCardId, statusCallback) {
 			layoutProse = `The Primary Base Card is ${baseDesc}. The card features a clean artwork layout with plain, unprinted borders.`;
 		}
 
-		const naturalProseSuffix = `\n\n${layoutProse} A single, anatomically coherent central figure is seamlessly integrated into a rich, edge-to-edge illustrated environment. The background, clothing, props, and lower sections are filled with continuous atmospheric scenery, flowing abstract motifs, and detailed environmental elements, ensuring no floating body parts or disjointed figures disrupt the layout. ${textAllowanceProse}, all other areas, backgrounds, props, shields, and garments are purely illustrative, featuring wordless painted textures and continuous artistic brushstrokes.`;
+		const naturalProseSuffix = `\n\n${layoutProse} The scene features a single, upright central figure seamlessly integrated into a rich, full-bleed illustrated environment. The background and lower sections are filled with continuous atmospheric scenery, detailed environmental elements, or flowing drapery. ${textAllowanceProse}, all other areas, backgrounds, props, and garments are purely illustrative, featuring wordless painted textures and continuous artistic brushstrokes.`;
 
 		// Find the final concatenation node (node 115) and append the natural prose suffix
 		const suffixNode = Object.values(workflow).find(
