@@ -5,7 +5,7 @@
 import { COMFYUI_API_BASE, COMFYUI_PROMPT_NODE_ID, DEBUG } from "../../config.js";
 
 // Set to true to print the full concatenated prompt preview in the browser console
-const LOG_PROMPT_PREVIEW = false;
+const LOG_PROMPT_PREVIEW = true;
 
 // Default standard text-to-image workflow fallback (SD1.5 structure)
 const DEFAULT_WORKFLOW = {
@@ -262,6 +262,112 @@ function translateTerm(term, map) {
 	return map[key] || term;
 }
 
+// ── French Tarot Major Arcana Titles ──
+const TAROT_FRENCH_TITLES = {
+	"0": "LE MAT",
+	"excuse": "LE MAT",
+	"fou": "LE MAT",
+	"mat": "LE MAT",
+	"1": "I - LE BATELEUR",
+	"2": "II - LA PAPESSE",
+	"3": "III - L'IMPÉRATRICE",
+	"4": "IV - L'EMPEREUR",
+	"5": "V - LE PAPE",
+	"6": "VI - L'AMOUREUX",
+	"7": "VII - LE CHARIOT",
+	"8": "VIII - LA JUSTICE",
+	"9": "IX - L'ERMITE",
+	"10": "X - LA ROUE DE FORTUNE",
+	"11": "XI - LA FORCE",
+	"12": "XII - LE PENDU",
+	"13": "XIII - LA MORT",
+	"14": "XIV - LA TEMPÉRANCE",
+	"15": "XV - LE DIABLE",
+	"16": "XVI - LA MAISON DIEU",
+	"17": "XVII - L'ÉTOILE",
+	"18": "XVIII - LA LUNE",
+	"19": "XIX - LE SOLEIL",
+	"20": "XX - LE JUGEMENT",
+	"21": "XXI - LE MONDE"
+};
+
+/**
+ * Computes exact allowable text and placement strings for a card.
+ */
+function getExactCardTextConfig(baseCard) {
+	const rawVal = String(baseCard.value || "").trim();
+	const rawSuit = String(baseCard.suits || "").trim();
+	const rawGame = String(baseCard.game?.name || "").toLowerCase();
+
+	const isTarot = rawGame.includes("tarot") || rawGame.includes("marseille") || rawGame.includes("waite") || rawGame.includes("tarocco") || rawGame.includes("tarok") || rawSuit.toLowerCase() === "atout" || rawSuit.toLowerCase() === "major arcana";
+	const isJass = rawGame.includes("jass") || rawGame.includes("saxon") || rawGame.includes("munich");
+	const isJoker = rawVal.toLowerCase() === "joker";
+
+	// Rank initial for court cards - ALWAYS use English initials (K, Q, J, A)
+	let rankInitial = rawVal;
+	const valLower = rawVal.toLowerCase();
+
+	if (valLower === "king" || valLower === "könig" || valLower === "konig" || valLower === "roi" || valLower === "r") rankInitial = "K";
+	else if (valLower === "queen" || valLower === "dame" || valLower === "d") rankInitial = "Q";
+	else if (valLower === "jack" || valLower === "valet" || valLower === "v") rankInitial = "J";
+	else if (valLower === "cavalier" || valLower === "knight") rankInitial = "C";
+	else if (valLower === "page") rankInitial = "P";
+	else if (valLower === "ace" || valLower === "as" || valLower === "daus") rankInitial = "A";
+	else if (valLower === "ober") rankInitial = "O";
+	else if (valLower === "unter") rankInitial = "U";
+
+	// Suit symbol mapping
+	const suitSymbolMap = {
+		"spades": "♠", "pique": "♠", "♠": "♠",
+		"hearts": "♥", "cœur": "♥", "coeur": "♥", "♥": "♥",
+		"diamonds": "♦", "carreau": "♦", "♦": "♦",
+		"clubs": "♣", "trèfle": "♣", "trefle": "♣", "♣": "♣"
+	};
+	const suitSymbol = suitSymbolMap[rawSuit.toLowerCase()] || "";
+
+	let topCornerText = "";
+	let bottomTitleText = "";
+	let isTarotMajor = false;
+
+	if (isJoker) {
+		topCornerText = "JOKER";
+	} else if (isTarot) {
+		const cleanKey = valLower.replace(/^atout\s*/, "");
+		if (TAROT_FRENCH_TITLES[cleanKey]) {
+			isTarotMajor = true;
+			bottomTitleText = TAROT_FRENCH_TITLES[cleanKey];
+		} else if (rawVal && rawSuit) {
+			bottomTitleText = `${rawVal} DE ${rawSuit}`.toUpperCase();
+		}
+	} else if (isJass) {
+		if (valLower === "könig" || valLower === "king" || valLower === "roi") {
+			bottomTitleText = "KÖNIG";
+			topCornerText = suitSymbol ? `K${suitSymbol}` : "K";
+		} else if (valLower === "ober") {
+			bottomTitleText = "OBER";
+			topCornerText = suitSymbol ? `O${suitSymbol}` : "O";
+		} else if (valLower === "unter") {
+			bottomTitleText = "UNTER";
+			topCornerText = suitSymbol ? `U${suitSymbol}` : "U";
+		} else {
+			topCornerText = suitSymbol ? `${rankInitial}${suitSymbol}` : rankInitial;
+		}
+	} else {
+		// Standard Classic Playing Card (Bicycle, Copag, Piquet, Ducale, etc.)
+		topCornerText = suitSymbol ? `${rankInitial}${suitSymbol}` : rankInitial;
+	}
+
+	return {
+		isTarot,
+		isTarotMajor,
+		isJoker,
+		rankInitial,
+		suitSymbol,
+		topCornerText,
+		bottomTitleText
+	};
+}
+
 /**
  * Formats a card description using its value, suits, and game name.
  * Automatically translates French terms to English for the prompt.
@@ -280,18 +386,18 @@ function formatCardDescription(card) {
 	const isFool  = val.toLowerCase() === "the fool" || suit.toLowerCase() === "the fool";
 
 	if (isJoker) {
-		return `Joker card from the "${game}" deck`;
+		return `Joker card from the ${game} deck`;
 	}
 	if (isFool) {
-		return `"The Fool" card from the "${game}" deck`;
+		return `The Fool card from the ${game} deck`;
 	}
 	if (val && suit) {
-		return `"${val} of ${suit}" card from the "${game}" deck`;
+		return `${val} of ${suit} card from the ${game} deck`;
 	}
 	if (val) {
-		return `"${val}" card from the "${game}" deck`;
+		return `${val} card from the ${game} deck`;
 	}
-	return `card from the "${game}" deck`;
+	return `card from the ${game} deck`;
 }
 
 export async function generateImage(selected, baseCardId, statusCallback) {
@@ -396,130 +502,74 @@ export async function generateImage(selected, baseCardId, statusCallback) {
 			workflow[nodeId].inputs.image = comfyFilename;
 		}
 	}
-
 	// 3. Inject actual suit and rank of the base card into the base prompt (node 112 / Prompt string)
 	const promptNode = Object.values(workflow).find(
 		(node) => node.class_type === "PrimitiveStringMultiline" && 
 		          node.inputs && 
 		          typeof node.inputs.value === "string" && 
-		          node.inputs.value.includes("CARD LAYOUT")
+		          node.inputs.value.includes("aspect ratio")
 	);
 	if (promptNode) {
+		const textConfig = getExactCardTextConfig(baseCard);
+		
 		const rawSuit = baseCard.suits || "";
 		const rawValue = baseCard.value || "";
 		const rawGameName = baseCard.game?.name || "";
 		
-		// Translate French terms to English for the prompt
 		const suit = translateTerm(rawSuit, SUITS_FR_TO_EN);
 		const value = translateTerm(rawValue, VALUES_FR_TO_EN);
 		const gameName = translateTerm(rawGameName, GAMES_FR_TO_EN).toLowerCase();
 		const suitLower = suit.toLowerCase();
-		
-		// Determine if the base card is a standard playing card (Bicycle, Copag, Jass, Piquet, Ducale, etc.)
-		const isTarot = gameName.includes("tarot") || gameName.includes("marseille") || gameName.includes("waite") || gameName.includes("tarocco") || gameName.includes("tarok");
-		const isJass = gameName.includes("jass");
-		const isPlayingCard = !isTarot;
+		const suitSymbol = textConfig.suitSymbol || suit;
 
-		const isJoker = value.toLowerCase() === "joker";
-		
-		const suitSymbolMap = {
-			// Standard French suits
-			"spades": "♠",
-			"hearts": "♥",
-			"diamonds": "♦",
-			"clubs": "♣",
-			// Unicode symbols
-			"♠": "♠",
-			"♥": "♥",
-			"♦": "♦",
-			"♣": "♣",
-			// Swiss / Jass suits (no Unicode symbol, use word)
-			"shields": "shield",
-			"acorns": "acorn",
-			"bells": "bell",
-			"roses": "rose",
-			"leaves": "leaf",
-			// Italian / Tarot suits (no Unicode symbol, use word)
-			"swords": "sword",
-			"cups": "cup",
-			"wands": "wand",
-			"coins": "coin",
-			"trumps": "trump",
-			"major arcana": "major arcana",
-		};
-		const suitSymbol = suitSymbolMap[suitLower] || suit;
-
-		let cornerMarkingsDesc = "";
-		if (isJoker) {
-			cornerMarkingsDesc = `Top-left and bottom-right corners must display strictly the word "JOKER". The bottom-right corner text should be inverted so the card can be read from either end. Keep all corners clean of other suit symbols or ranks. Absolutely IGNORE any suit symbols, rank markings, or corner numbers mentioned in Card 2 and Card 3.`;
-		} else if (isPlayingCard) {
-			const rankStr = value ? `"${value}"` : "the rank";
-			const suitStr = suitSymbol ? `"${suitSymbol}"` : "the suit symbol";
-			
-			// Determine color based on suit symbol
-			let colorDesc = "";
-			if (suitLower.includes("heart") || suitLower.includes("diamond") || suitLower.includes("♥") || suitLower.includes("♦")) {
-				colorDesc = " Use red color for both the rank and the suit symbol.";
-			} else if (suitLower.includes("spade") || suitLower.includes("club") || suitLower.includes("♠") || suitLower.includes("♣")) {
-				colorDesc = " Use black color for both the rank and the suit symbol.";
-			}
-			
-			cornerMarkingsDesc = `Top-left and bottom-right corners must display strictly the matching rank ${rankStr} and suit symbol ${suitStr} belonging strictly to the base card. The bottom-right corner text should be inverted so the card can be read from either end.${colorDesc} Do NOT include any other suit symbols (such as hearts, diamonds, spades, clubs, cups, swords, wands, etc.) in the corners or near the indices. Only draw the single specified suit symbol ${suitStr} and nothing else. Absolutely IGNORE any suit symbols, rank markings, or corner numbers mentioned in Card 2 and Card 3.`;
-		} else {
-			// For Tarot cards, they prefer not to have corner numbers, but if they are there they should be correct
-			cornerMarkingsDesc = `Preferably keep all corners clean, plain, and unprinted. However, if the generation layout includes corner markings or corner circles, they must display strictly the rank/number "${value}" of the base card (e.g., "${value}" or its Roman numeral equivalent) and absolutely nothing else. Do NOT write any other numbers (such as "4", "3", etc.) or suit symbols in the corners.`;
-		}
-		
 		let promptValue = promptNode.inputs.value;
-		
-		// Find the line starting with "- Corner Markings:" and replace it
-		const cornerMarkingsRegex = /- Corner Markings:.*?(?=\n\n|\n[A-Z]|$)/s;
-		if (cornerMarkingsRegex.test(promptValue)) {
-			promptValue = promptValue.replace(
-				cornerMarkingsRegex,
-				`- Corner Markings: ${cornerMarkingsDesc}`
-			);
+
+		// Construct positive natural language layout description for FLUX specifying exact circumstance, text, and placement
+		const baseDesc = formatCardDescription(baseCard);
+		let layoutProse = "";
+		if (textConfig.isTarotMajor) {
+			layoutProse = `The Primary Base Card is ${baseDesc}. All four corners are plain, clean, and unprinted. At the bottom center, a single title panel displays strictly the French Tarot title "${textConfig.bottomTitleText}". The secondary cards provide visual artwork motifs only and their card names, titles, or numbers must not appear.`;
+		} else if (textConfig.isJoker) {
+			layoutProse = `The Primary Base Card is a Joker card. The top-left corner displays strictly the word "JOKER". The bottom of the card is a clean, continuous landscape artwork. All other corners are plain and unprinted. Secondary cards provide visual artwork motifs only.`;
+		} else if (textConfig.topCornerText) {
+			let colorProse = "";
+			if (suitLower.includes("heart") || suitLower.includes("diamond") || suitLower.includes("♥") || suitLower.includes("♦")) {
+				colorProse = " in red ink";
+			} else if (suitLower.includes("spade") || suitLower.includes("club") || suitLower.includes("♠") || suitLower.includes("♣")) {
+				colorProse = " in black ink";
+			}
+
+			const bottomProse = textConfig.bottomTitleText
+				? `At the bottom center, a single title panel displays strictly "${textConfig.bottomTitleText}".`
+				: `The bottom of the card is a clean, continuous landscape artwork with no title panels, ribbons, or text.`;
+
+			layoutProse = `The Primary Base Card is ${baseDesc}. The top-left corner displays strictly the single index "${textConfig.topCornerText}"${colorProse}. ${bottomProse} The top-right, bottom-left, and bottom-right corners are plain and unprinted. The secondary cards provide visual artwork motifs only and their card names, titles, or numbers must not appear.`;
 		} else {
-			// Fallback: replace substring
-			promptValue = promptValue.replace(
-				"matching rank initial and suit symbol belonging strictly to Primary Card 1",
-				`matching rank initial ${value ? `"${value}"` : ""} and suit symbol ${suitSymbol ? `"${suitSymbol}"` : ""} belonging strictly to the base card`
-			);
+			layoutProse = `The Primary Base Card is ${baseDesc}. The card features a clean artwork layout with plain, unprinted borders and no text or numbers anywhere. Secondary cards provide visual artwork motifs only.`;
 		}
 
-		// Generate whitelist of allowed text/numbers based on the base card name, value, and suit
-		const nameClean = (baseCard.name || "").replace(/of\s+\w+/gi, ""); // Remove "of Clubs", "of Major Arcana"
-		const cardNameWords = nameClean.split(/[\s-_,.]+/).filter(w => w.length > 1 && w.toLowerCase() !== "the");
-		const allowedWords = [...new Set([value, suitSymbol, ...cardNameWords])].filter(Boolean);
-		const allowedWordsStr = allowedWords.map(w => `"${w}"`).join(", ");
+		const naturalProseSuffix = `\n\n${layoutProse} All human figures are fully dressed in elegant, opaque, high-necked classical robes or armor. All characters stand upright facing forward in a continuous, artistic scene with crisp outlines.`;
 
-		// Add strict layout and clean composition rules (no card titles/texts at the bottom, no deformed bodies/limbs)
-		let cleanCompositionRule = `\n- Absolutely No Hallucinated Text or Numbers: You must absolutely NOT write, draw, or print any numbers (such as "4", "3", "7", etc.) or words (such as "June Stwert", "Temperance", "The Star", "The Moon", etc.) that do not belong to the base card. The ONLY allowed text, words, or numbers anywhere on the generated card are: ${allowedWordsStr} (if any text/numbers are generated at all). Any other names, titles, Roman numerals, or words mentioned in the descriptions of Card 2 and Card 3 must be completely ignored and must NOT be written anywhere on the card.
-- Absolutely No Nudity: The generated card must be completely free of any nudity, nakedness, or partial nudity. All human figures or characters depicted on the card must be fully clothed in elegant robes, garments, classical armor, or attire matching the style of the cards. Ensure there is no naked skin of the torso, chest, or lower body. Absolutely no bare breasts, no exposed chests, no bare torsos, and no naked midriffs. All chest and torso skin must be completely covered with thick fabric, shirts, armor, or robes. Absolutely no sheer, translucent, or see-through clothing; all outfits must be completely opaque, high-necked, and fully closed up to the collarbone.
-- Character Generation Rule: Only draw human figures, characters, or persons if they are explicitly mentioned in the descriptions of Card 1, Card 2, or Card 3. If none of the card descriptions mention a person, figure, character, man, woman, or human, then absolutely DO NOT generate any people, human figures, or characters; instead, focus solely on the objects, symbols, landscapes, and patterns described.
-- Symmetrical & Clean Layout: Ensure the bottom area of the card is clean and logically matches the scene (e.g. rocks, cliff, grass, or simple decorative background). Do NOT generate any extra, partial, or deformed human bodies, limbs, or faces at the bottom of the card.
-- All Characters Must Be Upright: Every human figure, character, face, or person on the card must always be drawn right-side up, standing or sitting normally, with their head at the top and feet at the bottom. Absolutely DO NOT draw any character flipped, inverted, or upside-down.`;
-
-		// Find the final concatenation node (usually node 115) containing the prompt suffix, and append constraints there
+		// Find the final concatenation node (node 115) and append the natural prose suffix
 		const suffixNode = Object.values(workflow).find(
 			(node) => node.class_type === "StringConcatenate" && 
 			          typeof node.inputs?.string_b === "string" && 
-			          node.inputs.string_b.includes("ARTISTIC STYLE")
+			          (node.inputs.string_b.includes("illustration style") || node.inputs.string_b.includes("color palette"))
 		);
 
 		if (suffixNode) {
-			suffixNode.inputs.string_b = suffixNode.inputs.string_b + "\n\nCRITICAL CONSTRAINTS (MUST OVERRIDE ALL PREVIOUS DESCRIPTIONS AND CAPTIONS):" + cleanCompositionRule;
+			suffixNode.inputs.string_b = suffixNode.inputs.string_b + naturalProseSuffix;
 		}
 
-		// Inject the explicit card identity names and source decks into the delimiters of the workflow's StringConcatenate nodes
+		// Inject clean, natural delimiters between card descriptions (only base card has identity; secondary cards supply visual motifs only)
 		if (workflow["98"]) {
-			workflow["98"].inputs.delimiter = `\n\nPrimary Card 1 (Base Card: ${formatCardDescription(baseCard)}) is described as: `;
+			workflow["98"].inputs.delimiter = `. Primary Base Card (${formatCardDescription(baseCard)}): `;
 		}
 		if (workflow["101"] && otherCards[0]) {
-			workflow["101"].inputs.delimiter = `, combined with elements of Card 2 (${formatCardDescription(otherCards[0])}) described as: `;
+			workflow["101"].inputs.delimiter = `. Visual artwork elements from Secondary Card 2: `;
 		}
 		if (workflow["102"] && otherCards[1]) {
-			workflow["102"].inputs.delimiter = `, and Card 3 (${formatCardDescription(otherCards[1])}) described as: `;
+			workflow["102"].inputs.delimiter = `. Visual artwork elements from Secondary Card 3: `;
 		}
 		
 		promptNode.inputs.value = promptValue;

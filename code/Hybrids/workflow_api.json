@@ -163,7 +163,7 @@
   },
   "112": {
     "inputs": {
-      "value": "A high-quality full-bleed portrait illustration of a single playing card or tarot card in a 3:4 aspect ratio.\n\nCARD LAYOUT & CORNER INDICES RULES:\n- Frame & Contour: Inherit the outer border frame and border style from Primary Card 1. If Primary Card 1 is borderless, render the image full-bleed without extra frames.\n- Corner Markings: Top-left and bottom-right corners must display the matching rank initial and suit symbol belonging strictly to Primary Card 1. Rotate the bottom-right corner indices 180 degrees upside-down. If Primary Card 1 is a Tarot Major Arcana card or has no corner indices, keep all corners clean and unprinted. Absolutely IGNORE any suit symbols, rank markings, or corner numbers mentioned in Card 2 and Card 3.\n\nCENTRAL HYBRID ARTWORK (WILD & CREATIVE BLEND):\nIn the central artwork space, create an imaginative, dynamic, and fluid hybrid scene that creatively merges, overlaps, and reimagines the visual elements, figures, clothing, props, and motifs from these three sources:"
+      "value": "A high-quality full-bleed portrait illustration of a single playing card or tarot card in a 3:4 aspect ratio. The image seamlessly inherits the outer border frame and style from Primary Card 1. In the central artwork space, an imaginative, dynamic, and fluid hybrid scene creatively merges, overlaps, and reimagines the visual elements, figures, clothing, props, and motifs from three sources:"
     },
     "class_type": "PrimitiveStringMultiline",
     "_meta": {
@@ -176,7 +176,7 @@
         "102",
         0
       ],
-      "string_b": ".\n\nCOMPOSITION FREEDOM:\nDo NOT draw a static or monolithic central pose. Feel free to use expressive angles, overlapping limbs, surreal combinations, decorative background accents, and fluid artistic arrangements to seamlessly blend all three sources into one striking cohesive masterpiece.\n\nARTISTIC STYLE:\nRefined vintage editorial illustration style with crisp line art, detailed garment patterns, rich balanced color palette, and soft ambient lighting, capturing a sophisticated card art aesthetic.",
+      "string_b": ". Expressive angles, overlapping motifs, surreal combinations, and fluid artistic arrangements seamlessly blend all three sources into a striking cohesive masterpiece. Rendered in a refined vintage editorial illustration style with crisp line art, detailed garment patterns, a rich balanced color palette, and soft ambient lighting.",
       "delimiter": ""
     },
     "class_type": "StringConcatenate",
@@ -223,7 +223,7 @@
         "96",
         2
       ],
-      "regex_pattern": "(?i)\\b(The image is a (playing|tarot) card( illustration| from the [^.]+ series)?|It is a rectangular card[^.]*|The card (is rectangular|features)[^.]*|The text on the card reads[^.]*|there is a [a-z]+ border[^.]*|with a [a-z]+ background[^.]*|in a cursive font)\\b\\.?",
+      "regex_pattern": "(?i)\\b(The image is a (playing|tarot) card( illustration| from the [^.]+ series)?|It is a rectangular card[^.]*|The card (is rectangular|features)[^.]*|The text (on the card|reads|says|is)[^.]*|There (are|is) (text|letters|words|numbers|digits|roman numerals|captions|inscriptions|labels|banners|ribbons)[^.]*|(with|has) (a|the) (text|letter|word|number|digit|roman numeral|caption|inscription|label|banner|ribbon)[^.]*|there is a [a-z]+ border[^.]*|with a [a-z]+ background[^.]*|in a cursive font)\\b\\.?",
       "replace": "",
       "case_insensitive": true,
       "multiline": false,
@@ -241,7 +241,7 @@
         "99",
         2
       ],
-      "regex_pattern": "(?i)\\b(The image is a (playing|tarot) card( illustration| from the [^.]+ series)?|It is a rectangular card[^.]*|The card (is rectangular|features)[^.]*|The text on the card reads[^.]*|there is a [a-z]+ border[^.]*|with a [a-z]+ background[^.]*|in a cursive font)\\b\\.?",
+      "regex_pattern": "(?i)\\b(The image is a (playing|tarot) card( illustration| from the [^.]+ series)?|It is a rectangular card[^.]*|The card (is rectangular|features)[^.]*|The text (on the card|reads|says|is)[^.]*|There (are|is) (text|letters|words|numbers|digits|roman numerals|captions|inscriptions|labels|banners|ribbons)[^.]*|(with|has) (a|the) (text|letter|word|number|digit|roman numeral|caption|inscription|label|banner|ribbon)[^.]*|there is a [a-z]+ border[^.]*|with a [a-z]+ background[^.]*|in a cursive font)\\b\\.?",
       "replace": "",
       "case_insensitive": true,
       "multiline": false,
@@ -259,7 +259,7 @@
         "100",
         2
       ],
-      "regex_pattern": "(?i)\\b(The image is a (playing|tarot) card( illustration| from the [^.]+ series)?|It is a rectangular card[^.]*|The card (is rectangular|features)[^.]*|The text on the card reads[^.]*|there is a [a-z]+ border[^.]*|with a [a-z]+ background[^.]*|in a cursive font)\\b\\.?",
+      "regex_pattern": "(?i)\\b(The image is a (playing|tarot) card( illustration| from the [^.]+ series)?|It is a rectangular card[^.]*|The card (is rectangular|features)[^.]*|The text (on the card|reads|says|is)[^.]*|There (are|is) (text|letters|words|numbers|digits|roman numerals|captions|inscriptions|labels|banners|ribbons)[^.]*|(with|has) (a|the) (text|letter|word|number|digit|roman numeral|caption|inscription|label|banner|ribbon)[^.]*|there is a [a-z]+ border[^.]*|with a [a-z]+ background[^.]*|in a cursive font)\\b\\.?",
       "replace": "",
       "case_insensitive": true,
       "multiline": false,
