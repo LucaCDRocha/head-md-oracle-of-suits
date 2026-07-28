@@ -7,6 +7,7 @@ import {
 	fetchAndInitCards,
 	getSelectedCards as stateGetSelectedCards,
 	getBaseCardId as stateGetBaseCardId,
+	shuffleAllSlots as stateShuffleAllSlots,
 	getYearRanges,
 	getAvailableGames,
 	getAvailableSuits,
@@ -29,6 +30,14 @@ import { drawPreview as compositionDrawPreview } from "./canvasComposition.js";
  */
 export async function initSlotSelector() {
 	await fetchAndInitCards();
+	renderSlotUI();
+}
+
+/**
+ * Shuffle all 3 slots and update UI
+ */
+export function shuffleAllSlots() {
+	stateShuffleAllSlots();
 	renderSlotUI();
 }
 

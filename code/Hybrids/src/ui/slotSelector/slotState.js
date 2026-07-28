@@ -117,6 +117,15 @@ export function selectRandomCard(slot) {
 }
 
 /**
+ * Shuffle all 3 slots with new random cards
+ */
+export function shuffleAllSlots() {
+	slots.forEach((slot) => {
+		selectRandomCard(slot);
+	});
+}
+
+/**
  * Select a card for a slot
  */
 export function selectCardForSlot(slot, card) {

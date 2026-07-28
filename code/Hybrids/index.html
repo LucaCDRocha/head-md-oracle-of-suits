@@ -55,9 +55,15 @@
 						<h3>Selected (0/3)</h3>
 						<div id="selected-summary"></div>
 					</div>
-					<div>
+					<div style="display: flex; gap: 10px; flex-direction: column;">
 						<button id="generate-btn" type="button" disabled>
 							<span id="generate-btn-text">Select 3 cards</span>
+						</button>
+						<button id="shuffle-btn" type="button" style="display: none;">
+							🔀 Shuffle Cards
+						</button>
+						<button id="dev-batch-btn" type="button" style="display: none;">
+							⚡ Generate 10 Cards (Dev)
 						</button>
 					</div>
 					<div id="status"></div>

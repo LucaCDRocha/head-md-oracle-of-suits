@@ -806,6 +806,66 @@ canvas {
 	width: 0% !important;
 }
 
+#dev-batch-btn {
+	position: relative;
+	overflow: hidden;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	margin-top: 4px;
+	width: 100%;
+	padding: 12px 16px;
+	background: #7c4dff;
+	color: white;
+	border: none;
+	border-radius: 6px;
+	font-size: 14px;
+	font-weight: 600;
+	cursor: pointer;
+	transition: background 0.2s ease;
+	user-select: none;
+	-webkit-user-select: none;
+}
+
+#dev-batch-btn:hover:not(:disabled) {
+	background: #651fff;
+}
+
+#dev-batch-btn:disabled {
+	background: #b388ff;
+	cursor: not-allowed;
+}
+
+#shuffle-btn {
+	position: relative;
+	overflow: hidden;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	margin-top: 4px;
+	width: 100%;
+	padding: 12px 16px;
+	background: #29b6f6;
+	color: white;
+	border: none;
+	border-radius: 6px;
+	font-size: 14px;
+	font-weight: 600;
+	cursor: pointer;
+	transition: background 0.2s ease;
+	user-select: none;
+	-webkit-user-select: none;
+}
+
+#shuffle-btn:hover:not(:disabled) {
+	background: #0288d1;
+}
+
+#shuffle-btn:disabled {
+	background: #81d4fa;
+	cursor: not-allowed;
+}
+
 #p5-holder {
 	display: none;
 }

@@ -4,6 +4,7 @@ import {
   getBaseCardId,
   drawPreview,
   handleKnobChange,
+  shuffleAllSlots,
 } from "./src/ui/slotSelector/index.js";
 import { generateImage } from "./src/api/generationApi.js";
 import { uploadHybridBase64 } from "./src/api/hybridApi.js";
@@ -15,7 +16,7 @@ import {
   setKnobValue,
 } from "./src/hardware/Serial.js";
 import { initQRCodes, updateDownloadQR } from "./src/ui/qrCodes.js";
-import { DEBUG } from "./config.js";
+import { DEBUG, DEV_MODE } from "./config.js";
 import soundEffects from "./src/audio/soundEffects.js";
 import LoadingAnimation from "./src/ui/loadingAnimation.js";
 
@@ -25,6 +26,7 @@ let loadingAnimation = null;
 
 // Generation & Hold state
 let isGenerating = false;
+let isBatchGenerating = false;
 let lastGenerateTime = 0;
 const DEBOUNCE_DURATION = 5000; // 5 seconds minimum between generations
 const HOLD_DURATION = 2000; // 2 seconds hold required to start generation
@@ -83,8 +85,24 @@ window.setup = function () {
     cancelHold("serial");
   });
 
-  // Apply DEBUG mode visibility
+  // Apply DEBUG & DEV_MODE mode visibility
   applyDebugMode();
+
+  // Wire Dev Mode batch generation button
+  const devBatchBtn = document.getElementById("dev-batch-btn");
+  if (devBatchBtn) {
+    devBatchBtn.addEventListener("click", () => {
+      runDevBatchGeneration();
+    });
+  }
+
+  // Wire Shuffle Cards button
+  const shuffleBtn = document.getElementById("shuffle-btn");
+  if (shuffleBtn) {
+    shuffleBtn.addEventListener("click", () => {
+      shuffleAllSlots();
+    });
+  }
 
   // Wire screen generate button with 3-second hold logic
   const genBtn = document.getElementById("generate-btn");
@@ -149,9 +167,10 @@ window.setup = function () {
 };
 
 /**
- * Apply DEBUG mode visibility settings
+ * Apply DEBUG & DEV_MODE visibility settings
  * - Shows/hides knob values display
  * - Shows/hides selected area (generate button section)
+ * - Shows/hides Dev Mode batch generation button
  */
 function applyDebugMode() {
   const knobValuesDisplay = document.getElementById("knob-values-display");
@@ -161,7 +180,17 @@ function applyDebugMode() {
 
   const selectedArea = document.getElementById("selected-area");
   if (selectedArea) {
-    selectedArea.style.display = DEBUG ? "block" : "none";
+    selectedArea.style.display = (DEBUG || DEV_MODE) ? "block" : "none";
+  }
+
+  const devBatchBtn = document.getElementById("dev-batch-btn");
+  if (devBatchBtn) {
+    devBatchBtn.style.display = DEV_MODE ? "inline-block" : "none";
+  }
+
+  const shuffleBtn = document.getElementById("shuffle-btn");
+  if (shuffleBtn) {
+    shuffleBtn.style.display = (DEBUG || DEV_MODE) ? "inline-block" : "none";
   }
 }
 
@@ -299,29 +328,30 @@ function cancelHold(source, completed = false) {
   }
 }
 
-async function onGenerate() {
+async function onGenerate(bypassDebounce = false) {
+  let isSuccess = false;
   const selected = getSelectedCards();
   if (!selected || selected.length !== 3) {
     const status = document.getElementById("status");
     if (status) status.innerText = "Error: Please select exactly 3 cards before generating.";
-    return;
+    return false;
   }
 
   const currentTime = Date.now();
   const timeSinceLastGenerate = currentTime - lastGenerateTime;
 
   if (isGenerating) {
-    return;
+    return false;
   }
 
-  if (timeSinceLastGenerate < DEBOUNCE_DURATION) {
+  if (!bypassDebounce && timeSinceLastGenerate < DEBOUNCE_DURATION) {
     const remainingTime = Math.ceil(
       (DEBOUNCE_DURATION - timeSinceLastGenerate) / 1000
     );
     const status = document.getElementById("status");
     if (status)
       status.innerText = `Please wait ${remainingTime}s before generating again`;
-    return;
+    return false;
   }
 
   isGenerating = true;
@@ -404,6 +434,7 @@ async function onGenerate() {
 
       statusCallback("DEBUG: Prompt affiché");
       lastGeneratedBase64 = null;
+      isSuccess = true;
     } else {
       lastGeneratedBase64 = base64;
 
@@ -436,6 +467,7 @@ async function onGenerate() {
       }
 
       statusCallback("Terminé!");
+      isSuccess = true;
     }
   } catch (err) {
     clearInterval(processingLoop);
@@ -444,6 +476,7 @@ async function onGenerate() {
     if (loadingOverlay) loadingOverlay.style.display = "none";
     status.innerText = "Error: " + err.message;
     console.error(err);
+    isSuccess = false;
   } finally {
     isGenerating = false;
     lastGenerateTime = Date.now();
@@ -460,5 +493,74 @@ async function onGenerate() {
         btn.textContent = isReady ? "Hold 3s to Generate" : `Select 3 cards (${count}/3)`;
       }
     }
+  }
+
+  return isSuccess;
+}
+
+/**
+ * Dev Mode 10-card batch generation protocol:
+ * Click button -> generate one image -> once received, shuffle the 3 selected cards -> generate next.
+ * If error occurs, shuffle cards again and retry without counting towards 10 cards.
+ */
+async function runDevBatchGeneration() {
+  if (isBatchGenerating) {
+    return;
+  }
+
+  isBatchGenerating = true;
+  const devBtn = document.getElementById("dev-batch-btn");
+  const status = document.getElementById("status");
+
+  if (devBtn) {
+    devBtn.disabled = true;
+  }
+
+  const TARGET_CARDS = 10;
+  let successCount = 0;
+
+  // Make sure 3 cards are selected initially
+  let selected = getSelectedCards();
+  if (!selected || selected.length !== 3) {
+    shuffleAllSlots();
+  }
+
+  while (successCount < TARGET_CARDS) {
+    if (devBtn) {
+      devBtn.textContent = `⚡ Batch ${successCount}/${TARGET_CARDS}...`;
+    }
+    if (status) {
+      status.innerText = `[DEV MODE] Generating card ${successCount + 1}/${TARGET_CARDS}...`;
+    }
+
+    const success = await onGenerate(true);
+
+    if (success) {
+      successCount++;
+      if (status) {
+        status.innerText = `[DEV MODE] Card ${successCount}/${TARGET_CARDS} generated successfully!`;
+      }
+      if (successCount < TARGET_CARDS) {
+        // Shuffle the 3 selected cards upon success and wait briefly
+        shuffleAllSlots();
+        await new Promise((resolve) => setTimeout(resolve, 800));
+      }
+    } else {
+      if (status) {
+        status.innerText = `[DEV MODE] Error on card generation. Shuffling cards and retrying (${successCount}/${TARGET_CARDS} completed)...`;
+      }
+      // If error occurs, shuffle cards again and retry without incrementing success count
+      shuffleAllSlots();
+      await new Promise((resolve) => setTimeout(resolve, 1200));
+    }
+  }
+
+  isBatchGenerating = false;
+  if (devBtn) {
+    devBtn.disabled = false;
+    devBtn.textContent = "⚡ Generate 10 Cards (Dev)";
+  }
+  if (status) {
+    status.innerText = `[DEV MODE] Complete! ${TARGET_CARDS} cards successfully generated.`;
   }
 }
