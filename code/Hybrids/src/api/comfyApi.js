@@ -557,7 +557,19 @@ export async function generateImage(selected, baseCardId, statusCallback) {
 			layoutProse = `The Primary Base Card is ${baseDesc}. The card features a clean artwork layout with plain, unprinted borders.`;
 		}
 
-		const naturalProseSuffix = `\n\n${layoutProse} The scene features a single, upright central figure seamlessly integrated into a rich, full-bleed illustrated environment. The background and lower sections are filled with continuous atmospheric scenery, detailed environmental elements, or flowing drapery. ${textAllowanceProse}, all other areas, backgrounds, props, and garments are purely illustrative, featuring wordless painted textures and continuous artistic brushstrokes.`;
+		// Detect if any selected card is a court card or character card
+		const hasCharacterCard = [baseCard, ...otherCards].some(c => {
+			const val = String(c?.value || "").toLowerCase();
+			const suit = String(c?.suits || "").toLowerCase();
+			const game = String(c?.game?.name || "").toLowerCase();
+			return ["king", "queen", "jack", "valet", "roi", "dame", "ober", "unter", "knight", "cavalier", "page", "joker", "fool", "empress", "emperor", "pope", "papesse", "magician", "hermit", "devil", "chariot", "justice", "hanged", "world", "sun", "star", "moon", "atout"].some(k => val.includes(k) || suit.includes(k) || game.includes(k));
+		});
+
+		const subjectProse = hasCharacterCard
+			? "The scene features a single, upright central figure seamlessly integrated into a rich, full-bleed illustrated environment."
+			: "The scene features a harmonious, balanced central composition of objects and motifs seamlessly integrated into a rich, full-bleed illustrated environment.";
+
+		const naturalProseSuffix = `\n\n${layoutProse} ${subjectProse} The background and lower sections are filled with continuous atmospheric scenery, detailed environmental elements, or flowing decorative patterns. ${textAllowanceProse}, all other areas, backgrounds, props, and garments are purely illustrative, featuring wordless painted textures and continuous artistic brushstrokes.`;
 
 		// Find the final concatenation node (node 115) and append the natural prose suffix
 		const suffixNode = Object.values(workflow).find(
