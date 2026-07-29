@@ -4,8 +4,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ $hybrid->name ?? 'Hybrid #' . $hybrid->id }} - Oracle of Suits</title>
+
+    <!-- Favicon -->
+    @if(($lang ?? 'fr') === 'en')
+        <link rel="icon" type="image/png" href="{{ asset('img/logos/favicon-en.png') }}">
+    @else
+        <link rel="icon" type="image/png" href="{{ asset('img/logos/favicon-fr.png') }}">
+    @endif
 
     <!-- Fonts: Nippo (Fontshare) & Libre Franklin (Google Fonts) -->
     <link href="https://api.fontshare.com/css?f[]=nippo" rel="stylesheet" />
