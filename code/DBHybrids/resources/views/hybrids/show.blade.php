@@ -14,7 +14,16 @@
     <link href="https://fonts.googleapis.com/css2?family=Libre+Franklin:ital,wght@0,300..900;1,300..900&display=swap" rel="stylesheet">
 
     <!-- Material Symbols Rounded -->
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block" />
+
+    <!-- Font loading FOUT detection -->
+    <script>
+        if ('fonts' in document) {
+            document.fonts.ready.then(() => document.documentElement.classList.add('fonts-loaded'));
+        } else {
+            document.documentElement.classList.add('fonts-loaded');
+        }
+    </script>
 
     <!-- Hybrids Stylesheet -->
     <link rel="stylesheet" href="{{ asset('css/hybrids.css') }}">
@@ -41,14 +50,17 @@
             <!-- Title -->
             <h1 class="hybrid-title">Hybrid #{{ $hybrid->id }}</h1>
 
-            <!-- Hybrid Main Showcase (Image directly on background) -->
+            <!-- Hybrid Main Showcase (Image directly on background with Skeleton Loader) -->
             <div class="hybrid-main-box">
-                <div class="hybrid-img-wrapper">
+                <div class="hybrid-img-wrapper skeleton-loader">
                     @if ($hybrid->img_src)
                         <img src="{{ preg_match('/^https?:\/\//', $hybrid->img_src)
                             ? $hybrid->img_src
                             : asset('storage/' . ltrim($hybrid->img_src, '/')) }}"
-                            alt="{{ $hybrid->name }}" class="hybrid-image">
+                            alt="{{ $hybrid->name }}" 
+                            class="hybrid-image img-loading"
+                            onload="this.classList.remove('img-loading'); this.classList.add('img-loaded'); if(this.parentElement) this.parentElement.classList.remove('skeleton-loader');"
+                            onerror="if(this.parentElement) this.parentElement.classList.remove('skeleton-loader');">
                     @else
                         <p style="color: #666; padding: 60px;">Aucune image disponible</p>
                     @endif
@@ -112,10 +124,15 @@
                                 @endif
 
                                 @if ($card->img_src)
-                                    <img src="{{ preg_match('/^https?:\/\//', $card->img_src)
-                                        ? $card->img_src
-                                        : asset('storage/' . ltrim($card->img_src, '/')) }}"
-                                        alt="{{ $card->name }}" class="source-card-img">
+                                    <div class="source-card-img-wrapper skeleton-loader" style="width:100%; border-radius: 8px; margin-bottom: 14px;">
+                                        <img src="{{ preg_match('/^https?:\/\//', $card->img_src)
+                                            ? $card->img_src
+                                            : asset('storage/' . ltrim($card->img_src, '/')) }}"
+                                            alt="{{ $card->name }}" 
+                                            class="source-card-img img-loading"
+                                            onload="this.classList.remove('img-loading'); this.classList.add('img-loaded'); if(this.parentElement) this.parentElement.classList.remove('skeleton-loader');"
+                                            onerror="if(this.parentElement) this.parentElement.classList.remove('skeleton-loader');">
+                                    </div>
                                 @endif
 
                                 <div class="source-card-title">{{ $card->name }}</div>
@@ -171,6 +188,15 @@
 
     <!-- Scripts -->
     <script>
+        // Instant check for cached images
+        document.querySelectorAll('.hybrid-image, .source-card-img').forEach(img => {
+            if (img.complete && img.naturalHeight !== 0) {
+                img.classList.remove('img-loading');
+                img.classList.add('img-loaded');
+                if (img.parentElement) img.parentElement.classList.remove('skeleton-loader');
+            }
+        });
+
         // Like Button Functionality
         const likeButton = document.getElementById('like-button');
         const likeCount = document.getElementById('like-count');

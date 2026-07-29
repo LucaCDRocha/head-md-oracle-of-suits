@@ -1254,3 +1254,89 @@ body {
         padding: 12px 12px;
     }
 }
+
+/* ==========================================================================
+   FONT LOADING & SKELETON UTILITIES
+   ========================================================================== */
+
+/* Square Skeleton Loader for Icons before Material Symbols font finishes loading */
+html:not(.fonts-loaded) .material-symbols-rounded {
+    color: transparent !important;
+    user-select: none;
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    line-height: 1;
+    border-radius: 6px;
+    vertical-align: middle;
+    background: linear-gradient(
+        90deg,
+        rgba(114, 20, 34, 0.1) 25%,
+        rgba(114, 20, 34, 0.22) 50%,
+        rgba(114, 20, 34, 0.1) 75%
+    ) !important;
+    background-size: 200% 100% !important;
+    animation: skeleton-shimmer 1.5s infinite linear !important;
+}
+
+/* Skeleton shimmer animation for images */
+.skeleton-loader {
+    position: relative;
+    background: linear-gradient(
+        90deg,
+        rgba(235, 225, 208, 0.5) 25%,
+        rgba(254, 251, 245, 0.85) 50%,
+        rgba(235, 225, 208, 0.5) 75%
+    ) !important;
+    background-size: 200% 100% !important;
+    animation: skeleton-shimmer 1.5s infinite linear !important;
+}
+
+@keyframes skeleton-shimmer {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+/* Image Skeleton Placeholders matching exact 752 x 1040 card aspect ratio */
+.hybrid-card-img-link.skeleton-loader {
+    width: 100%;
+    aspect-ratio: 752 / 1040;
+    height: auto;
+    border-radius: 18px 18px 0 0;
+    display: block;
+}
+
+.hybrid-img-wrapper.skeleton-loader {
+    width: 100%;
+    max-width: 420px;
+    aspect-ratio: 752 / 1040;
+    height: auto;
+    max-height: 580px;
+    border-radius: 16px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.source-card-img-wrapper.skeleton-loader {
+    width: 100%;
+    aspect-ratio: 752 / 1040;
+    height: auto;
+    border-radius: 8px;
+    display: block;
+}
+
+/* Smooth Image Fade-In */
+.img-loading {
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+}
+
+.img-loaded {
+    opacity: 1;
+}

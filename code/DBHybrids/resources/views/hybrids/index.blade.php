@@ -14,7 +14,16 @@
     <link href="https://fonts.googleapis.com/css2?family=Libre+Franklin:ital,wght@0,300..900;1,300..900&display=swap" rel="stylesheet">
 
     <!-- Material Symbols Rounded -->
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block" />
+
+    <!-- Font loading FOUT detection -->
+    <script>
+        if ('fonts' in document) {
+            document.fonts.ready.then(() => document.documentElement.classList.add('fonts-loaded'));
+        } else {
+            document.documentElement.classList.add('fonts-loaded');
+        }
+    </script>
 
     <!-- Hybrids Stylesheet -->
     <link rel="stylesheet" href="{{ asset('css/hybrids.css') }}">
@@ -77,13 +86,16 @@
                         $expandedCards = getExpandedCards($hybrid);
                     @endphp
                     <div class="hybrid-card-item" onclick="if(!event.target.closest('.index-like-btn')) window.location.href='{{ route('hybrids.show', $hybrid->id) }}';">
-                        <!-- Top Image Link -->
-                        <div class="hybrid-card-img-link">
+                        <!-- Top Image Link with Skeleton Loader -->
+                        <div class="hybrid-card-img-link skeleton-loader">
                             @if ($hybrid->img_src)
                                 <img src="{{ preg_match('/^https?:\/\//', $hybrid->img_src)
                                     ? $hybrid->img_src
                                     : asset('storage/' . ltrim($hybrid->img_src, '/')) }}"
-                                    alt="{{ $hybrid->name }}" class="hybrid-card-img">
+                                    alt="{{ $hybrid->name }}" 
+                                    class="hybrid-card-img img-loading"
+                                    onload="this.classList.remove('img-loading'); this.classList.add('img-loaded'); if(this.parentElement) this.parentElement.classList.remove('skeleton-loader');"
+                                    onerror="if(this.parentElement) this.parentElement.classList.remove('skeleton-loader');">
                             @else
                                 <div style="height: 280px; display: flex; align-items: center; justify-content: center; color: #888; font-size: 0.85rem;">
                                     Image indisponible
@@ -309,6 +321,15 @@
                     this.disabled = false;
                 }
             });
+        });
+
+        // Instant check for cached images
+        document.querySelectorAll('.hybrid-card-img').forEach(img => {
+            if (img.complete && img.naturalHeight !== 0) {
+                img.classList.remove('img-loading');
+                img.classList.add('img-loaded');
+                if (img.parentElement) img.parentElement.classList.remove('skeleton-loader');
+            }
         });
     </script>
 </body>
