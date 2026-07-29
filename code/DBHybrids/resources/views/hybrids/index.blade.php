@@ -34,7 +34,7 @@
             <p class="index-subtitle">{{ $t['explore'] }}</p>
         </header>
 
-        <!-- Top Controls Bar Above Grid (Sort By Right, Date Tag Left if Active) -->
+        <!-- Top Controls Bar Above Grid -->
         <div class="grid-controls-bar">
             <div class="grid-count-info">
                 @if($filterDate)
@@ -48,18 +48,20 @@
 
             <div class="grid-sort-group">
                 <span class="sort-label">{{ $t['sort_by'] }} :</span>
-                <a href="{{ route('hybrids.index', ['sort' => 'date']) }}"
-                    class="sort-chip {{ $sortBy === 'date' ? 'active' : '' }}">
-                    {{ $t['most_recent'] }}
-                </a>
-                <a href="{{ route('hybrids.index', ['sort' => 'date_asc']) }}"
-                    class="sort-chip {{ $sortBy === 'date_asc' || $sortBy === 'oldest' ? 'active' : '' }}">
-                    {{ $t['oldest'] }}
-                </a>
-                <a href="{{ route('hybrids.index', ['sort' => 'likes']) }}"
-                    class="sort-chip {{ $sortBy === 'likes' ? 'active' : '' }}">
-                    {{ $t['most_liked'] }}
-                </a>
+                <div class="grid-sort-pills-row">
+                    <a href="{{ route('hybrids.index', ['sort' => 'date']) }}"
+                        class="sort-chip {{ $sortBy === 'date' ? 'active' : '' }}">
+                        {{ $t['most_recent'] }}
+                    </a>
+                    <a href="{{ route('hybrids.index', ['sort' => 'date_asc']) }}"
+                        class="sort-chip {{ $sortBy === 'date_asc' || $sortBy === 'oldest' ? 'active' : '' }}">
+                        {{ $t['oldest'] }}
+                    </a>
+                    <a href="{{ route('hybrids.index', ['sort' => 'likes']) }}"
+                        class="sort-chip {{ $sortBy === 'likes' ? 'active' : '' }}">
+                        {{ $t['most_liked'] }}
+                    </a>
+                </div>
             </div>
         </div>
 
