@@ -1,590 +1,308 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ $lang ?? 'fr' }}">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{{ $hybrid->name }} - Oracle of Suits</title>
-    <style>
-        :root {
-            --color-bg: #FFEDCC;
-            --color-accent-green: #83F6BD;
-            --color-accent-pink: #FF6398;
-            --color-dark: #060606;
-            --color-white: #ffffff;
-            --color-accent-green-hover: #70e0aa;
-            --color-accent-pink-hover: #ff4d8a;
-        }
+    <title>{{ $hybrid->name ?? 'Hybrid #' . $hybrid->id }} - Oracle of Suits</title>
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+    <!-- Fonts: Nippo (Fontshare) & Libre Franklin (Google Fonts) -->
+    <link href="https://api.fontshare.com/css?f[]=nippo" rel="stylesheet" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Libre+Franklin:ital,wght@0,300..900;1,300..900&display=swap" rel="stylesheet">
 
-        body {
-            font-family: system-ui, -apple-system, sans-serif;
-            background: var(--color-dark);
-            padding: 20px;
-            min-height: 100vh;
-        }
+    <!-- Material Symbols Rounded -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
+    <!-- Hybrids Stylesheet -->
+    <link rel="stylesheet" href="{{ asset('css/hybrids.css') }}">
 
-        .back-link {
-            display: inline-block;
-            margin-bottom: 20px;
-            padding: 10px 20px;
-            background: var(--color-bg);
-            color: var(--color-dark);
-            text-decoration: none;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(255, 237, 204, 0.3);
-            transition: all 0.2s ease;
-        }
-
-        .back-link:hover {
-            background: var(--color-white);
-            color: var(--color-dark);
-        }
-
-        .download-button {
-            display: inline-block;
-            margin-top: 20px;
-            padding: 12px 30px;
-            background: var(--color-accent-green);
-            color: var(--color-dark);
-            text-decoration: none;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(131, 246, 189, 0.3);
-            transition: all 0.3s ease;
-            font-weight: 600;
-            font-size: 1rem;
-            cursor: pointer;
-            border: none;
-        }
-
-        .download-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(131, 246, 189, 0.4);
-            background: var(--color-accent-green-hover);
-        }
-
-        .download-button:active {
-            transform: translateY(0);
-        }
-
-        .like-button {
-            display: inline-block;
-            margin-top: 20px;
-            margin-left: 15px;
-            padding: 12px 30px;
-            background: var(--color-accent-pink);
-            color: var(--color-white);
-            text-decoration: none;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(255, 99, 152, 0.3);
-            transition: all 0.3s ease;
-            font-weight: 600;
-            font-size: 1rem;
-            cursor: pointer;
-            border: none;
-        }
-
-        .like-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(255, 99, 152, 0.4);
-            background: var(--color-accent-pink-hover);
-        }
-
-        .like-button:active {
-            transform: scale(0.95);
-        }
-
-        .like-button.liked {
-            background: var(--color-accent-green);
-            color: var(--color-dark);
-            box-shadow: 0 4px 12px rgba(131, 246, 189, 0.3);
-        }
-
-        .like-button.liked:hover {
-            box-shadow: 0 6px 16px rgba(131, 246, 189, 0.4);
-            background: var(--color-accent-green-hover);
-        }
-
-        .button-group {
-            display: flex;
-            gap: 15px;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
-
-        .hybrid-detail {
-            background: var(--color-bg);
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 4px 12px rgba(255, 237, 204, 0.2);
-        }
-
-        .hybrid-header {
-            border-radius: 12px 12px 0 0;
-            padding: 30px;
-            background: var(--color-dark);
-            color: var(--color-bg);
-            border: 3px solid var(--color-bg);
-            border-bottom: none;
-        }
-
-        .hybrid-title {
-            font-size: 2.5rem;
-            margin-bottom: 10px;
-        }
-
-        .hybrid-meta {
-            display: flex;
-            gap: 30px;
-            font-size: 1.1rem;
-            opacity: 0.95;
-        }
-
-        .meta-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .hybrid-content {
-            padding: 40px;
-        }
-
-        .hybrid-image-container {
-            text-align: center;
-            margin-bottom: 40px;
-        }
-
-        .hybrid-image {
-            max-width: 100%;
-            max-height: 600px;
-            border-radius: 12px;
-            box-shadow: 0 8px 24px rgba(6, 6, 6, 0.15);
-        }
-
-        .source-cards-section {
-            margin-top: 40px;
-            padding-top: 40px;
-            border-top: 2px solid var(--color-dark);
-        }
-
-        .section-title {
-            font-size: 1.8rem;
-            color: var(--color-dark);
-            margin-bottom: 25px;
-            text-align: center;
-        }
-
-        .source-cards {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 30px;
-            margin-top: 20px;
-        }
-
-        .source-card {
-            background: var(--color-white);
-            border-radius: 12px;
-            padding: 20px;
-            text-align: center;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-            box-shadow: 0 2px 8px rgba(6, 6, 6, 0.05);
-        }
-
-        .source-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 6px 16px rgba(6, 6, 6, 0.1);
-        }
-
-        .source-card.base {
-            background: var(--color-accent-green);
-            border: 3px solid var(--color-accent-green-hover);
-            position: relative;
-        }
-
-        .source-card.base::before {
-            content: "★ BASE CARD";
-            position: absolute;
-            top: -12px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: var(--color-dark);
-            color: var(--color-accent-green);
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: bold;
-            letter-spacing: 0.5px;
-        }
-
-        .source-card-image {
-            width: 100%;
-            max-width: 200px;
-            height: auto;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            box-shadow: 0 4px 12px rgba(6, 6, 6, 0.1);
-        }
-
-        .source-card-name {
-            font-size: 1.2rem;
-            font-weight: 700;
-            color: var(--color-dark);
-            margin-bottom: 8px;
-        }
-
-        .source-card-game {
-            font-size: 0.95rem;
-            color: var(--color-dark);
-            opacity: 1;
-            font-style: italic;
-        }
-
-        .source-card-suits {
-            font-size: 0.9rem;
-            color: var(--color-dark);
-            opacity: 1;
-            margin-top: 5px;
-        }
-
-        .info-icon {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            background: var(--color-accent-pink);
-            color: var(--color-white);
-            border-radius: 50%;
-            text-align: center;
-            line-height: 20px;
-            font-size: 14px;
-            font-weight: bold;
-            cursor: help;
-            margin-left: 5px;
-            position: relative;
-            transition: all 0.2s ease;
-        }
-
-        .info-icon:hover {
-            background: var(--color-accent-pink-hover);
-            transform: scale(1.1);
-        }
-
-        .info-icon .tooltip {
-            visibility: hidden;
-            opacity: 0;
-            width: 250px;
-            background-color: var(--color-dark);
-            color: var(--color-bg);
-            text-align: left;
-            border-radius: 8px;
-            padding: 12px;
-            position: absolute;
-            z-index: 1000;
-            bottom: 125%;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 0.85rem;
-            line-height: 1.4;
-            font-weight: normal;
-            box-shadow: 0 4px 12px rgba(6, 6, 6, 0.3);
-            transition: opacity 0.3s, visibility 0.3s;
-        }
-
-        .info-icon .tooltip::after {
-            content: "";
-            position: absolute;
-            top: 100%;
-            left: 50%;
-            transform: translateX(-50%);
-            border-width: 6px;
-            border-style: solid;
-            border-color: var(--color-dark) transparent transparent transparent;
-        }
-
-        .info-icon:hover .tooltip {
-            visibility: visible;
-            opacity: 1;
-        }
-
-        .game-name-with-info {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 5px;
-        }
-
-        .qr-section {
-            margin-top: 40px;
-            padding: 30px;
-            background: var(--color-white);
-            border-radius: 12px;
-            text-align: center;
-        }
-
-        .qr-section h3 {
-            font-size: 1.3rem;
-            color: var(--color-dark);
-            margin-bottom: 15px;
-        }
-
-        .qr-code-display {
-            display: inline-block;
-            padding: 20px;
-            background: var(--color-white);
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(6, 6, 6, 0.1);
-        }
-
-        @media (max-width: 768px) {
-            .hybrid-title {
-                font-size: 1.8rem;
-            }
-
-            .hybrid-meta {
-                flex-direction: column;
-                gap: 10px;
-            }
-
-            .source-cards {
-                grid-template-columns: 1fr;
-            }
-
-            .hybrid-content {
-                padding: 20px;
-            }
-        }
-    </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 
 <body>
-    <div class="container">
-        <a href="{{ route('hybrids.index') }}" class="back-link" id="back-link">← Back</a>
-        <script>
-            (function () {
-                // If the user navigated here from somewhere, go back (preserves ?page=2, filters, etc.)
-                // If they arrived directly (QR code, share link, etc.) the href fallback sends them to index
-                if (document.referrer) {
-                    var link = document.getElementById('back-link');
-                    link.href = '#';
-                    link.addEventListener('click', function (e) { e.preventDefault(); history.back(); });
-                }
-            })();
-        </script>
+    <!-- Navigation Header -->
+    <header class="top-navbar">
+        <a href="{{ route('hybrids.index') }}" class="back-link" id="back-link">
+            <span class="material-symbols-rounded">arrow_back</span>
+            <span class="back-text">{{ $t['back_link'] }}</span>
+        </a>
+        <div class="lang-switch">
+            <a href="{{ request()->fullUrlWithQuery(['lang' => 'fr']) }}" class="lang-opt {{ $lang === 'fr' ? 'active-lang' : '' }}">FR</a>
+            /
+            <a href="{{ request()->fullUrlWithQuery(['lang' => 'en']) }}" class="lang-opt {{ $lang === 'en' ? 'active-lang' : '' }}">EN</a>
+        </div>
+    </header>
 
-        <div class="hybrid-detail">
-            <div class="hybrid-header">
-                <h1 class="hybrid-title">{{ $hybrid->name }}</h1>
-                <div class="hybrid-meta">
-                    <div class="meta-item">
-                        <span>❤️</span>
-                        <span>{{ $hybrid->nb_like }} {{ Str::plural('like', $hybrid->nb_like) }}</span>
-                    </div>
-                    <div class="meta-item">
-                        <span>📅</span>
-                        <span>{{ $hybrid->created_at->format('F d, Y') }}</span>
-                    </div>
-                    <div class="meta-item">
-                        <span>🆔</span>
-                        <span>Hybrid #{{ $hybrid->id }}</span>
-                    </div>
-                </div>
-            </div>
+    <main class="main-container">
+        <div class="hybrid-show-card">
+            <!-- Title -->
+            <h1 class="hybrid-title">Hybrid #{{ $hybrid->id }}</h1>
 
-            <div class="hybrid-content">
-                <div class="hybrid-image-container">
+            <!-- Hybrid Main Showcase (Image directly on background) -->
+            <div class="hybrid-main-box">
+                <div class="hybrid-img-wrapper">
                     @if ($hybrid->img_src)
                         <img src="{{ preg_match('/^https?:\/\//', $hybrid->img_src)
                             ? $hybrid->img_src
                             : asset('storage/' . ltrim($hybrid->img_src, '/')) }}"
                             alt="{{ $hybrid->name }}" class="hybrid-image">
-                        <div class="button-group">
-                            <a href="{{ route('hybrids.download', $hybrid->id) }}" class="download-button">
-                                📥 Download Image
-                            </a>
-                            <button id="like-button" class="like-button" data-hybrid-id="{{ $hybrid->id }}">
-                                ❤️ Like (<span id="like-count">{{ $hybrid->nb_like }}</span>)
-                            </button>
-                        </div>
                     @else
-                        <p style="color: #999; padding: 60px;">No image available</p>
+                        <p style="color: #666; padding: 60px;">Aucune image disponible</p>
                     @endif
                 </div>
+            </div>
 
-                @if ($hybrid->cards->isNotEmpty())
-                    <div class="source-cards-section">
-                        <h2 class="section-title">Source Cards</h2>
-                        <div class="source-cards">
-                            @foreach ($hybrid->cards as $card)
-                                <div class="source-card {{ $card->pivot->is_base ? 'base' : '' }}">
-                                    @if ($card->img_src)
-                                        <img src="{{ preg_match('/^https?:\/\//', $card->img_src)
-                                            ? $card->img_src
-                                            : asset('storage/' . ltrim($card->img_src, '/')) }}"
-                                            alt="{{ $card->name }}" class="source-card-image">
-                                    @endif
-                                    <div class="source-card-name">{{ $card->name }}</div>
-                                    @if ($card->game)
-                                        <div class="source-card-game">
-                                            <div class="game-name-with-info">
-                                                <span>{{ $card->game->name }}</span>
-                                                @if ($card->game->description)
-                                                    <span class="info-icon">
-                                                        i
-                                                        <span class="tooltip">{{ $card->game->description }}</span>
-                                                    </span>
-                                                @endif
-                                            </div>
-                                        </div>
-                                    @endif
-                                    @if ($card->suits)
-                                        <div class="source-card-suits">{{ $card->suits }}</div>
-                                    @endif
-                                </div>
-                            @endforeach
-                        </div>
-                    </div>
-                @endif
+            <!-- Metadata Row -->
+            @php
+                if ($lang === 'en') {
+                    $dateFormatted = $hybrid->created_at->format('M d, Y');
+                } else {
+                    $monthsFr = [
+                        1 => 'Janvier', 2 => 'Février', 3 => 'Mars', 4 => 'Avril',
+                        5 => 'Mai', 6 => 'Juin', 7 => 'Juillet', 8 => 'Août',
+                        9 => 'Septembre', 10 => 'Octobre', 11 => 'Novembre', 12 => 'Décembre'
+                    ];
+                    $dateFormatted = $hybrid->created_at->format('j') . ' ' . ($monthsFr[(int)$hybrid->created_at->format('n')] ?? $hybrid->created_at->format('F')) . ' ' . $hybrid->created_at->format('Y');
+                }
+            @endphp
 
-                <div class="qr-section">
-                    <h3>🔗 Share this Hybrid</h3>
-                    <p style="color: #666; margin-bottom: 20px;">Scan to view this hybrid</p>
-                    <div class="qr-code-display">
-                        <div id="qrcode"></div>
+            <div class="hybrid-meta-row">
+                <button id="like-button" class="like-meta-btn" data-hybrid-id="{{ $hybrid->id }}" aria-label="J'aime">
+                    <span class="material-symbols-rounded" id="heart-icon">favorite</span>
+                    <span><span id="like-count">{{ $hybrid->nb_like }}</span> {{ Str::plural('like', $hybrid->nb_like) }}</span>
+                </button>
+
+                <div class="date-meta">
+                    <span class="material-symbols-rounded">calendar_today</span>
+                    <span>{{ $dateFormatted }}</span>
+                </div>
+            </div>
+
+            <!-- Action Buttons Group -->
+            <div class="action-buttons-group">
+                <button id="share-btn" class="btn-action btn-share">
+                    <span class="material-symbols-rounded">share</span>
+                    <span>{{ $t['share'] }}</span>
+                </button>
+
+                <a href="{{ route('hybrids.download', $hybrid->id) }}" class="btn-action btn-download">
+                    <span class="material-symbols-rounded">download</span>
+                    <span>{{ $t['download'] }}</span>
+                </a>
+            </div>
+
+            <hr class="section-divider">
+
+            <!-- Cartes Sources Section -->
+            @if ($hybrid->cards && $hybrid->cards->isNotEmpty())
+                <div class="source-cards-section">
+                    <h2 class="section-title">{{ $t['source_cards'] }}</h2>
+                    <div class="source-cards-grid">
+                        @foreach ($hybrid->cards as $card)
+                            <div class="source-card-item {{ $card->pivot->is_base ? 'is-base-card' : '' }}">
+                                @if ($card->pivot->is_base)
+                                    <div class="base-card-badge">{{ $t['base_card'] }}</div>
+                                @endif
+
+                                @if ($card->img_src)
+                                    <img src="{{ preg_match('/^https?:\/\//', $card->img_src)
+                                        ? $card->img_src
+                                        : asset('storage/' . ltrim($card->img_src, '/')) }}"
+                                        alt="{{ $card->name }}" class="source-card-img">
+                                @endif
+
+                                <div class="source-card-title">{{ $card->name }}</div>
+
+                                @if ($card->game)
+                                    @php
+                                        $gameDesc = ($lang === 'en' && !empty($card->game->description_eng)) 
+                                            ? $card->game->description_eng 
+                                            : $card->game->description;
+                                    @endphp
+                                    <div class="source-card-deck">
+                                        <span>{{ $card->game->name }}</span>
+                                        @if ($gameDesc)
+                                            <span class="info-icon-badge">
+                                                i
+                                                <span class="tooltip-box">{{ $gameDesc }}</span>
+                                            </span>
+                                        @endif
+                                    </div>
+                                @endif
+                            </div>
+                        @endforeach
                     </div>
                 </div>
+            @endif
+        </div>
+    </main>
+
+    <!-- Custom Share Modal -->
+    <div id="share-modal" class="modal-overlay" aria-hidden="true">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 class="modal-title">{{ $t['share_title'] }}</h3>
+                <button id="close-modal-btn" class="modal-close-btn" aria-label="Fermer">
+                    <span class="material-symbols-rounded">close</span>
+                </button>
+            </div>
+            <div class="modal-subtext">
+                {{ $t['share_subtext'] }}
+            </div>
+            <div class="modal-qr-wrapper">
+                <div id="modal-qrcode"></div>
+            </div>
+            <div class="copy-url-group">
+                <input type="text" id="share-url-input" class="copy-url-input" readonly>
+                <button id="copy-url-btn" class="copy-url-btn">
+                    <span class="material-symbols-rounded" id="copy-icon">content_copy</span>
+                    <span id="copy-btn-text">{{ $t['copy'] }}</span>
+                </button>
             </div>
         </div>
     </div>
 
+    <!-- Scripts -->
     <script>
-        // Generate QR code for current page URL
-        new QRCode(document.getElementById("qrcode"), {
-            text: window.location.href,
-            width: 200,
-            height: 200,
-            colorDark: "#000000",
-            colorLight: "#ffffff",
-            correctLevel: QRCode.CorrectLevel.H
-        });
-
-        // Like button functionality
+        // Like Button Functionality
         const likeButton = document.getElementById('like-button');
         const likeCount = document.getElementById('like-count');
-
-        // Check if user has already liked this hybrid
         const hybridId = likeButton.dataset.hybridId;
         const likedKey = `hybrid_liked_${hybridId}`;
 
         let isLiked = localStorage.getItem(likedKey) === 'true';
 
-        // Set initial button state
         if (isLiked) {
             likeButton.classList.add('liked');
-            likeButton.innerHTML = '✓ Liked (<span id="like-count">' + likeCount.textContent + '</span>)';
         }
 
         likeButton.addEventListener('click', async function() {
-            // Prevent multiple clicks while processing
             if (this.disabled) return;
             this.disabled = true;
 
             try {
                 const action = isLiked ? 'unlike' : 'like';
+                const endpoint = window.location.pathname.endsWith('/like') 
+                    ? window.location.pathname 
+                    : `${window.location.pathname.replace(/\/$/, '')}/like`;
 
-                const response = await fetch(`/${hybridId}/like`, {
+                const response = await fetch(endpoint, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': '{{ csrf_token() }}'
                     },
-                    body: JSON.stringify({
-                        action: action
-                    })
+                    body: JSON.stringify({ action: action })
                 });
 
                 if (response.ok) {
                     const data = await response.json();
-
-                    // Update the like count
-                    document.getElementById('like-count').textContent = data.nb_like;
-
-                    // Toggle liked state
+                    likeCount.textContent = data.nb_like;
                     isLiked = data.liked;
 
                     if (isLiked) {
-                        // Mark as liked
                         this.classList.add('liked');
-                        this.innerHTML = '✓ Liked (<span id="like-count">' + data.nb_like + '</span>)';
                         localStorage.setItem(likedKey, 'true');
                     } else {
-                        // Mark as unliked
                         this.classList.remove('liked');
-                        this.innerHTML = '❤️ Like (<span id="like-count">' + data.nb_like + '</span>)';
                         localStorage.removeItem(likedKey);
                     }
 
-                    // Add animation
-                    this.style.transform = 'scale(1.1)';
+                    this.style.transform = 'scale(1.15)';
                     setTimeout(() => {
                         this.style.transform = '';
                         this.disabled = false;
                     }, 200);
                 } else {
-                    console.error('Failed to like/unlike');
                     this.disabled = false;
                 }
             } catch (error) {
-                console.error('Error:', error);
+                console.error('Error liking hybrid:', error);
                 this.disabled = false;
             }
         });
-    </script>
-    <script src="https://cdn.jsdelivr.net/npm/utif@3.1.0/UTIF.min.js"></script>
-    <script>
-        function replaceTiffImages() {
-            if (typeof UTIF === 'undefined') return;
-            const tiffImages = document.querySelectorAll('img[src$=".tif"], img[src$=".tiff"], img[data-src$=".tif"], img[data-src$=".tiff"]');
-            tiffImages.forEach(img => {
-                let src = img.src || img.getAttribute('data-src');
-                if (!src || src.startsWith('data:')) return;
-                
-                fetch(src)
-                    .then(response => response.arrayBuffer())
-                    .then(buffer => {
-                        const ifds = UTIF.decode(buffer);
-                        UTIF.decodeImage(buffer, ifds[0]);
-                        const rgba = UTIF.toRGBA8(ifds[0]);
-                        
-                        const canvas = document.createElement('canvas');
-                        canvas.width = ifds[0].width;
-                        canvas.height = ifds[0].height;
-                        const ctx = canvas.getContext('2d');
-                        
-                        const imgData = ctx.createImageData(canvas.width, canvas.height);
-                        imgData.data.set(rgba);
-                        ctx.putImageData(imgData, 0, 0);
-                        
-                        img.src = canvas.toDataURL('image/png');
-                    })
-                    .catch(err => console.error('Error decoding TIFF image:', src, err));
+
+        // Custom Share Modal Functionality
+        const shareBtn = document.getElementById('share-btn');
+        const shareModal = document.getElementById('share-modal');
+        const closeModalBtn = document.getElementById('close-modal-btn');
+        const copyUrlBtn = document.getElementById('copy-url-btn');
+        const shareUrlInput = document.getElementById('share-url-input');
+        let qrGenerated = false;
+
+        if (shareBtn && shareModal) {
+            shareBtn.addEventListener('click', () => {
+                shareModal.classList.add('active');
+                shareModal.setAttribute('aria-hidden', 'false');
+                document.body.style.overflow = 'hidden';
+
+                shareUrlInput.value = window.location.href;
+
+                if (!qrGenerated) {
+                    new QRCode(document.getElementById("modal-qrcode"), {
+                        text: window.location.href,
+                        width: 180,
+                        height: 180,
+                        colorDark: "#000000",
+                        colorLight: "#FEFBF5",
+                        correctLevel: QRCode.CorrectLevel.H
+                    });
+                    qrGenerated = true;
+                }
+            });
+
+            const closeModal = () => {
+                shareModal.classList.remove('active');
+                shareModal.setAttribute('aria-hidden', 'true');
+                document.body.style.overflow = '';
+            };
+
+            closeModalBtn.addEventListener('click', closeModal);
+            shareModal.addEventListener('click', (e) => {
+                if (e.target === shareModal) closeModal();
+            });
+
+            copyUrlBtn.addEventListener('click', function() {
+                const textToCopy = shareUrlInput.value || window.location.href;
+                const copiedLabel = "{{ $t['copied'] }}";
+                const copyLabel = "{{ $t['copy'] }}";
+
+                const setCopiedUI = () => {
+                    const copyIcon = document.getElementById('copy-icon');
+                    const copyText = document.getElementById('copy-btn-text');
+                    if (copyIcon) copyIcon.textContent = 'check';
+                    if (copyText) copyText.textContent = copiedLabel;
+                    copyUrlBtn.classList.add('copied');
+
+                    setTimeout(() => {
+                        if (copyIcon) copyIcon.textContent = 'content_copy';
+                        if (copyText) copyText.textContent = copyLabel;
+                        copyUrlBtn.classList.remove('copied');
+                    }, 2000);
+                };
+
+                if (navigator.clipboard && window.isSecureContext) {
+                    navigator.clipboard.writeText(textToCopy).then(setCopiedUI).catch(err => {
+                        console.error('Clipboard API error:', err);
+                        shareUrlInput.select();
+                        document.execCommand('copy');
+                        setCopiedUI();
+                    });
+                } else {
+                    shareUrlInput.select();
+                    shareUrlInput.setSelectionRange(0, 99999);
+                    try {
+                        document.execCommand('copy');
+                    } catch (e) {
+                        console.error('execCommand error:', e);
+                    }
+                    setCopiedUI();
+                }
             });
         }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            replaceTiffImages();
-        });
     </script>
 </body>
 
