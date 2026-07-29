@@ -42,6 +42,9 @@
         @else
             <div class="hybrids-grid">
                 @foreach ($hybrids as $hybrid)
+                    @php
+                        $expandedCards = getExpandedCards($hybrid);
+                    @endphp
                     <div class="hybrid-card-item" onclick="if(!event.target.closest('.index-like-btn')) window.location.href='{{ route('hybrids.show', $hybrid->id) }}';">
                         <!-- Top Image Link -->
                         <div class="hybrid-card-img-link">
@@ -71,13 +74,13 @@
 
                             <hr class="card-inner-divider">
 
-                            <!-- CARDS USED section -->
-                            @if ($hybrid->cards && $hybrid->cards->isNotEmpty())
+                            <!-- CARDS USED section (Includes all 3 cards even if duplicate) -->
+                            @if ($expandedCards->isNotEmpty())
                                 <div class="cards-used-section">
                                     <div class="cards-used-title">{{ $t['cards_used'] }}</div>
                                     <ul class="cards-used-list">
-                                        @foreach ($hybrid->cards as $card)
-                                            <li class="cards-used-item {{ $card->pivot->is_base ? 'is-base' : '' }}">
+                                        @foreach ($expandedCards as $card)
+                                            <li class="cards-used-item {{ isset($card->pivot) && $card->pivot->is_base ? 'is-base' : '' }}">
                                                 {{ $card->name }}
                                                 @if ($card->game)
                                                     <span class="game-name">({{ $card->game->name }})</span>
@@ -98,48 +101,53 @@
     <div class="sticky-controls-bar">
         <!-- Controls Dropdown Pop-up Panel -->
         <div id="dropdown-panel" class="controls-dropdown-panel">
-            <div>
-                <div class="dropdown-section-title">{{ $t['language'] }}</div>
-                <div class="lang-switch dropdown-lang-switch">
-                    <a href="{{ route('hybrids.index', ['lang' => 'fr']) }}" class="lang-opt {{ $lang === 'fr' ? 'active-lang' : '' }}">FR</a>
-                    /
-                    <a href="{{ route('hybrids.index', ['lang' => 'en']) }}" class="lang-opt {{ $lang === 'en' ? 'active-lang' : '' }}">EN</a>
-                </div>
-            </div>
-
-            <div>
-                <div class="dropdown-section-title">{{ $t['sort_by'] }}</div>
-                <div class="dropdown-options-group">
-                    <a href="{{ route('hybrids.index', ['sort' => 'date']) }}"
-                        class="dropdown-opt-btn {{ $sortBy === 'date' ? 'active' : '' }}">
-                        <span class="material-symbols-rounded">calendar_today</span>
-                        <span>{{ $t['most_recent'] }}</span>
-                    </a>
-                    <a href="{{ route('hybrids.index', ['sort' => 'date_asc']) }}"
-                        class="dropdown-opt-btn {{ $sortBy === 'date_asc' || $sortBy === 'oldest' ? 'active' : '' }}">
-                        <span class="material-symbols-rounded">event</span>
-                        <span>{{ $t['oldest'] }}</span>
-                    </a>
-                    <a href="{{ route('hybrids.index', ['sort' => 'likes']) }}"
-                        class="dropdown-opt-btn {{ $sortBy === 'likes' ? 'active' : '' }}">
-                        <span class="material-symbols-rounded">favorite</span>
-                        <span>{{ $t['most_liked'] }}</span>
-                    </a>
-                </div>
-            </div>
-
-            <div>
-                <div class="dropdown-section-title">{{ $t['filter_by_date'] }}</div>
-                <form action="{{ route('hybrids.index') }}" method="GET" class="dropdown-date-filter">
-                    <input type="date" name="date" class="dropdown-date-input" value="{{ $filterDate }}">
-                    <div class="dropdown-filter-actions">
-                        <button type="submit" class="btn-filter-submit">{{ $t['apply'] }}</button>
-                        @if($filterDate)
-                            <a href="{{ route('hybrids.index', ['reset_date' => 1]) }}" class="btn-filter-reset">{{ $t['reset'] }}</a>
-                        @endif
+            <form action="{{ route('hybrids.index') }}" method="GET" style="display: flex; flex-direction: column; gap: 16px;">
+                <!-- Language Switcher Section -->
+                <div>
+                    <div class="dropdown-section-title">{{ $t['language'] }}</div>
+                    <div class="lang-switch dropdown-lang-switch">
+                        <a href="{{ route('hybrids.index', ['lang' => 'fr']) }}" class="lang-opt {{ $lang === 'fr' ? 'active-lang' : '' }}">FR</a>
+                        /
+                        <a href="{{ route('hybrids.index', ['lang' => 'en']) }}" class="lang-opt {{ $lang === 'en' ? 'active-lang' : '' }}">EN</a>
                     </div>
-                </form>
-            </div>
+                </div>
+
+                <!-- Sort By Section -->
+                <div>
+                    <div class="dropdown-section-title">{{ $t['sort_by'] }}</div>
+                    <div class="dropdown-options-group">
+                        <label class="dropdown-radio-opt {{ $sortBy === 'date' ? 'active' : '' }}">
+                            <input type="radio" name="sort" value="date" {{ $sortBy === 'date' ? 'checked' : '' }} onchange="this.form.querySelectorAll('.dropdown-radio-opt').forEach(r => r.classList.remove('active')); this.parentElement.classList.add('active');">
+                            <span class="material-symbols-rounded">calendar_today</span>
+                            <span>{{ $t['most_recent'] }}</span>
+                        </label>
+                        <label class="dropdown-radio-opt {{ $sortBy === 'date_asc' || $sortBy === 'oldest' ? 'active' : '' }}">
+                            <input type="radio" name="sort" value="date_asc" {{ $sortBy === 'date_asc' || $sortBy === 'oldest' ? 'checked' : '' }} onchange="this.form.querySelectorAll('.dropdown-radio-opt').forEach(r => r.classList.remove('active')); this.parentElement.classList.add('active');">
+                            <span class="material-symbols-rounded">event</span>
+                            <span>{{ $t['oldest'] }}</span>
+                        </label>
+                        <label class="dropdown-radio-opt {{ $sortBy === 'likes' ? 'active' : '' }}">
+                            <input type="radio" name="sort" value="likes" {{ $sortBy === 'likes' ? 'checked' : '' }} onchange="this.form.querySelectorAll('.dropdown-radio-opt').forEach(r => r.classList.remove('active')); this.parentElement.classList.add('active');">
+                            <span class="material-symbols-rounded">favorite</span>
+                            <span>{{ $t['most_liked'] }}</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Filter By Date Section -->
+                <div>
+                    <div class="dropdown-section-title">{{ $t['filter_by_date'] }}</div>
+                    <input type="date" name="date" class="dropdown-date-input" value="{{ $filterDate }}">
+                </div>
+
+                <!-- Action Buttons: Appliquer & Réinitialiser (Appears only when non-default filters are active) -->
+                <div class="dropdown-filter-actions">
+                    <button type="submit" class="btn-filter-submit">{{ $t['apply'] }}</button>
+                    @if ($filterDate || ($sortBy && $sortBy !== 'date'))
+                        <a href="{{ route('hybrids.index', ['reset_all' => 1]) }}" class="btn-filter-reset">{{ $t['reset'] }}</a>
+                    @endif
+                </div>
+            </form>
         </div>
 
         <!-- Top Header Row (Centered counter + Right discover_tune button) -->

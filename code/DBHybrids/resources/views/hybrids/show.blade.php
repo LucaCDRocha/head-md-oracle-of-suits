@@ -67,6 +67,7 @@
                     ];
                     $dateFormatted = $hybrid->created_at->format('j') . ' ' . ($monthsFr[(int)$hybrid->created_at->format('n')] ?? $hybrid->created_at->format('F')) . ' ' . $hybrid->created_at->format('Y');
                 }
+                $expandedCards = getExpandedCards($hybrid);
             @endphp
 
             <div class="hybrid-meta-row">
@@ -96,14 +97,17 @@
 
             <hr class="section-divider">
 
-            <!-- Cartes Sources Section -->
-            @if ($hybrid->cards && $hybrid->cards->isNotEmpty())
+            <!-- Cartes Sources Section (Renders all 3 cards even if duplicate) -->
+            @if ($expandedCards->isNotEmpty())
                 <div class="source-cards-section">
                     <h2 class="section-title">{{ $t['source_cards'] }}</h2>
                     <div class="source-cards-grid">
-                        @foreach ($hybrid->cards as $card)
-                            <div class="source-card-item {{ $card->pivot->is_base ? 'is-base-card' : '' }}">
-                                @if ($card->pivot->is_base)
+                        @foreach ($expandedCards as $card)
+                            @php
+                                $isBase = isset($card->pivot) && $card->pivot->is_base;
+                            @endphp
+                            <div class="source-card-item {{ $isBase ? 'is-base-card' : '' }}">
+                                @if ($isBase)
                                     <div class="base-card-badge">{{ $t['base_card'] }}</div>
                                 @endif
 

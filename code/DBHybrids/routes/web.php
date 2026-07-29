@@ -72,6 +72,46 @@ function getTranslations($lang) {
     ];
 }
 
+function getExpandedCards($hybrid) {
+    if (!$hybrid || !$hybrid->cards) return collect([]);
+    
+    $cardNames = explode(' + ', $hybrid->name);
+    if (count($cardNames) < 2) {
+        return $hybrid->cards;
+    }
+
+    $cardMap = [];
+    foreach ($hybrid->cards as $c) {
+        $cardMap[trim($c->name)] = $c;
+    }
+
+    $expanded = collect([]);
+    $baseCardSeen = false;
+
+    foreach ($cardNames as $name) {
+        $trimmed = trim($name);
+        if (isset($cardMap[$trimmed])) {
+            $cloned = clone $cardMap[$trimmed];
+            
+            if (isset($cloned->pivot)) {
+                if ($cloned->pivot->is_base) {
+                    if ($baseCardSeen) {
+                        $pivotClone = clone $cloned->pivot;
+                        $pivotClone->is_base = 0;
+                        $cloned->pivot = $pivotClone;
+                    } else {
+                        $baseCardSeen = true;
+                    }
+                }
+            }
+
+            $expanded->push($cloned);
+        }
+    }
+
+    return $expanded->isNotEmpty() ? $expanded : $hybrid->cards;
+}
+
 Route::get('/', function () {
     // 1. Language session persistence
     if (request()->has('lang')) {
@@ -81,27 +121,35 @@ Route::get('/', function () {
         $lang = session('locale', 'fr');
     }
 
-    // 2. Sort session persistence
-    if (request()->has('sort')) {
-        $sortBy = request('sort');
-        session(['sort' => $sortBy]);
-    } else {
-        $sortBy = session('sort', 'date');
-    }
-
-    // 3. Date filter session persistence
-    if (request()->has('reset_date')) {
+    // Handle reset_all
+    if (request()->has('reset_all')) {
+        session()->forget('sort');
         session()->forget('date');
+        $sortBy = 'date';
         $filterDate = null;
-    } elseif (request()->has('date')) {
-        $filterDate = request('date');
-        if ($filterDate) {
-            session(['date' => $filterDate]);
-        } else {
-            session()->forget('date');
-        }
     } else {
-        $filterDate = session('date', null);
+        // 2. Sort session persistence
+        if (request()->has('sort')) {
+            $sortBy = request('sort');
+            session(['sort' => $sortBy]);
+        } else {
+            $sortBy = session('sort', 'date');
+        }
+
+        // 3. Date filter session persistence
+        if (request()->has('reset_date')) {
+            session()->forget('date');
+            $filterDate = null;
+        } elseif (request()->has('date')) {
+            $filterDate = request('date');
+            if ($filterDate) {
+                session(['date' => $filterDate]);
+            } else {
+                session()->forget('date');
+            }
+        } else {
+            $filterDate = session('date', null);
+        }
     }
 
     $t = getTranslations($lang);
