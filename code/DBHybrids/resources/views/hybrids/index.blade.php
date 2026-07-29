@@ -37,8 +37,11 @@
         <!-- Header -->
         <header class="index-header">
             <div class="title-wrapper">
-                <h1 class="index-main-title">{{ $t['hybrids'] }}</h1>
-                <span class="index-gallery-sub">{{ $t['gallery'] }}</span>
+                @if(($lang ?? 'fr') === 'en')
+                    <img src="{{ asset('img/logos/SF-Hybrids-Gallery.png') }}" alt="Hybrids Gallery" class="header-logo-img">
+                @else
+                    <img src="{{ asset('img/logos/SF-Hybrids-Galerie.png') }}" alt="Hybrids Galerie" class="header-logo-img">
+                @endif
             </div>
             <p class="index-subtitle">{{ $t['explore'] }}</p>
         </header>
