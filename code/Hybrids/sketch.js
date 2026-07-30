@@ -181,6 +181,15 @@ window.setup = function () {
   window.addEventListener("blur", () => {
     cancelHold(null);
   });
+
+  // Reset 60-second inactivity timer on any screen interaction
+  ["pointerdown", "touchstart", "keydown"].forEach((evt) => {
+    window.addEventListener(evt, () => {
+      if (userHasInteracted) {
+        resetInactivityTimer();
+      }
+    });
+  });
 };
 
 /**
@@ -596,11 +605,43 @@ async function runDevBatchGeneration() {
 
 let currentApp1State = "IDLE";
 let userHasInteracted = false;
+let inactivityTimer = null;
+const PHASE_TIMEOUT_MS = 60000; // 1 minute per phase
+
+export function resetInactivityTimer() {
+  if (inactivityTimer) {
+    clearTimeout(inactivityTimer);
+    inactivityTimer = null;
+  }
+
+  // Do not run inactivity timers during active generation or in IDLE
+  if (isGenerating || currentApp1State === "IDLE") {
+    return;
+  }
+
+  if (currentApp1State === "RESULT") {
+    // 1 Minute in RESULT -> Auto-transition to EXPLORE
+    inactivityTimer = setTimeout(() => {
+      console.log("[App1 Controller] 1 minute in RESULT. Auto-transitioning to EXPLORE.");
+      syncBrainState("EXPLORE");
+    }, PHASE_TIMEOUT_MS);
+  } else if (currentApp1State === "EXPLORE") {
+    // 1 Minute in EXPLORE -> Auto-transition to IDLE
+    inactivityTimer = setTimeout(() => {
+      console.log("[App1 Controller] 1 minute in EXPLORE. Auto-returning to IDLE.");
+      userHasInteracted = false;
+      syncBrainState("IDLE");
+    }, PHASE_TIMEOUT_MS);
+  }
+}
 
 export function markUserInteracted() {
-  if (!userHasInteracted) {
+  if (!userHasInteracted || currentApp1State === "RESULT") {
     userHasInteracted = true;
-    console.log("[App1 Controller] User interaction detected! Transitioning from IDLE to EXPLORE.");
+    console.log("[App1 Controller] User interaction detected! Transitioning to EXPLORE.");
+    syncBrainState("EXPLORE");
+  } else {
+    resetInactivityTimer();
   }
 }
 
@@ -624,6 +665,7 @@ export function syncBrainState(forcedState = null) {
 
   currentApp1State = state;
   updateApp1State(state);
+  resetInactivityTimer();
 
   wsClient.sendCardsUpdated(selected, baseId);
   wsClient.sendStateChange(state, {
