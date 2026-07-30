@@ -93,8 +93,9 @@
                 @foreach ($hybrids as $hybrid)
                     @php
                         $expandedCards = getExpandedCards($hybrid);
+                        $hybridUrl = route('hybrids.show', $hybrid->id);
                     @endphp
-                    <div class="hybrid-card-item" onclick="if(!event.target.closest('.index-like-btn')) window.location.href='{{ route('hybrids.show', $hybrid->id) }}';">
+                    <div class="hybrid-card-item" onclick="if(!event.target.closest('.index-like-btn')) window.location.href='{{ $hybridUrl }}';">
                         <!-- Top Image Link with Skeleton Loader -->
                         <div class="hybrid-card-img-link skeleton-loader">
                             @if ($hybrid->img_src)
