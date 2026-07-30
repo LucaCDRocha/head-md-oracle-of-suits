@@ -27,8 +27,8 @@ export function initQRCodes() {
 			text: viewAllURL,
 			width: 150,
 			height: 150,
-			colorDark: "#000000",
-			colorLight: "#ffffff",
+			colorDark: "#721422",
+			colorLight: "#fefbf5",
 			correctLevel: QRCode.CorrectLevel.H,
 		});
 	}
@@ -59,8 +59,8 @@ export function updateDownloadQR(hybridId) {
 		text: downloadURL,
 		width: 150,
 		height: 150,
-		colorDark: "#000000",
-		colorLight: "#ffffff",
+		colorDark: "#721422",
+		colorLight: "#fefbf5",
 		correctLevel: QRCode.CorrectLevel.H,
 	});
 

@@ -1,5 +1,5 @@
-@import url('https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;600;700;800&display=swap');
-@import url('https://api.fontshare.com/css?f[]=nippo');
+@import url("https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;600;700;800&display=swap");
+@import url("https://api.fontshare.com/css?f[]=nippo");
 
 /* ==========================================================================
    DESIGN TOKENS & GLOBAL RESET
@@ -16,13 +16,16 @@
 	--font-body: "Libre Franklin", sans-serif;
 }
 
-*, *::before, *::after {
+*,
+*::before,
+*::after {
 	box-sizing: border-box;
 	margin: 0;
 	padding: 0;
 }
 
-html, body {
+html,
+body {
 	width: 100vw;
 	height: 100vh;
 	overflow: hidden;
@@ -118,7 +121,9 @@ canvas {
 	padding: 2vh 2vw;
 	width: 100vw;
 	height: calc(100vh - 80px);
-	transition: filter 0.4s ease, opacity 0.4s ease;
+	transition:
+		filter 0.4s ease,
+		opacity 0.4s ease;
 }
 
 #app1-cards-container.blurred {
@@ -130,36 +135,42 @@ canvas {
 	pointer-events: none;
 }
 
-/* 3 Card Slots Row Container */
+/* 3 Card Slots Row Container (Matching hybrid-test layout flow) */
 .slots-container {
 	display: flex;
 	flex-direction: row;
-	align-items: center;
+	gap: 4.5rem;
 	justify-content: center;
-	gap: 2.5vw;
+	align-items: center;
+	flex-wrap: nowrap;
 	width: 100%;
-	height: 100%;
-	max-width: 1350px;
+	max-width: 100vw;
 	margin: 0;
+	padding: 0 2rem;
+	box-sizing: border-box;
+	height: 100%;
 }
 
 /* Individual Slot Card */
 .slot-card {
 	background: var(--color-cream);
-	border-radius: 20px;
-	flex: 1;
-	width: 30%;
-	max-width: 390px;
-	height: 82vh;
-	max-height: 780px;
+	border: none;
+	border-radius: 1.2rem;
+	padding: 18px 16px;
+	box-shadow: 0 16px 45px rgba(0, 0, 0, 0.5);
+	width: 33.333%;
+	max-width: 33.333vw;
+	height: 100%;
+	flex-shrink: 1;
+	flex-grow: 0;
 	display: flex;
 	flex-direction: column;
-	justify-content: space-between;
 	align-items: center;
-	padding: 24px 20px;
-	box-shadow: 0 16px 45px rgba(0, 0, 0, 0.6);
+	justify-content: flex-start;
 	position: relative;
+	box-sizing: border-box;
 	overflow: hidden;
+	gap: 12px;
 }
 
 /* Hide unused filter controls on main presentation card */
@@ -169,24 +180,28 @@ canvas {
 	display: none;
 }
 
-/* Card Preview Area (Top/Center) */
+/* Card Preview Area (Occupies all remaining vertical space above slot-info) */
 .slot-preview {
 	flex: 1;
+	width: 100%;
+	max-width: 100%;
 	display: flex;
+	flex-direction: column;
 	align-items: center;
 	justify-content: center;
-	width: 100%;
-	padding: 10px 0;
+	min-height: 120px;
+	order: 1;
+	box-sizing: border-box;
 }
 
 .slot-preview img {
-	max-height: 48vh;
-	max-width: 88%;
+	max-width: 80%;
+	max-height: 80%;
 	width: auto;
 	height: auto;
 	object-fit: contain;
 	border-radius: 12px;
-	box-shadow: 0 12px 30px rgba(0, 0, 0, 0.22);
+	box-shadow: 0 10px 28px rgba(0, 0, 0, 0.2);
 	display: block;
 	margin: 0 auto;
 }
@@ -198,13 +213,13 @@ canvas {
 	text-align: center;
 }
 
-/* Card Metadata & Information (Fixed Bottom) */
+/* Card Metadata & Information (Always Pinned at Bottom) */
 .slot-info {
 	width: 100%;
 	margin-top: auto;
+	order: 2;
 	flex-shrink: 0;
-	min-height: 185px;
-	padding-top: 10px;
+	padding: 0 4px;
 }
 
 .card-info-columns {
@@ -229,7 +244,7 @@ canvas {
 
 .info-col strong {
 	display: block;
-	font-family: var(--font-body);
+	font-family: var(--font-title);
 	font-weight: 800;
 	font-size: 0.8rem;
 	margin-bottom: 4px;
@@ -262,16 +277,23 @@ canvas {
 
 .tag-box {
 	width: 100%;
+	height: 44px;
+	min-height: 44px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
 	background: #ffffff;
 	border: 2px solid var(--color-pearl-ruby);
 	color: var(--color-black);
-	font-family: var(--font-body);
-	font-size: 0.95rem;
+	font-family: var(--font-title);
+	font-size: 0.85rem;
 	font-weight: 800;
-	padding: 7px 2px;
+	line-height: 1.15;
+	padding: 4px 2px;
 	border-radius: 8px;
 	text-align: center;
 	text-transform: capitalize;
+	word-break: break-word;
 	box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
 }
 
@@ -335,7 +357,9 @@ canvas {
 	border-radius: 8px;
 	padding: 14px 32px;
 	cursor: pointer;
-	transition: background 0.2s ease, transform 0.1s ease;
+	transition:
+		background 0.2s ease,
+		transform 0.1s ease;
 }
 
 #generate-btn:hover:not(:disabled) {
@@ -370,13 +394,25 @@ canvas {
 	color: var(--color-black);
 }
 
-/* Floating Top-Liked Hybrids Animation Background */
+/* Floating Top-Liked Hybrids Pass-Through Animation (Inside display-content-card) */
+#view-idle {
+	position: relative;
+	width: 100%;
+	height: 100%;
+}
+
+#view-idle .idle-text-container,
+#view-idle .display-qr-block {
+	position: relative;
+	z-index: 10;
+}
+
 #floating-hybrids-container {
 	position: absolute;
 	top: 0;
 	left: 0;
-	width: 100vw;
-	height: 100vh;
+	width: 100%;
+	height: 100%;
 	z-index: 1;
 	overflow: hidden;
 	pointer-events: none;
@@ -384,24 +420,32 @@ canvas {
 
 .floating-card {
 	position: absolute;
-	width: 180px;
-	height: 270px;
-	border-radius: 12px;
+	width: 135px;
+	height: 200px;
+	border-radius: 10px;
 	background-size: cover;
 	background-position: center;
-	box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
-	opacity: 0.85;
+	box-shadow: 0 10px 25px rgba(0, 0, 0, 0.22);
+	opacity: 0.2;
+	left: 0;
+	will-change: transform;
 }
 
-@keyframes floatDrift {
+@keyframes passLeftToRight {
 	0% {
-		transform: translateY(0px) rotate(-10deg);
-	}
-	50% {
-		transform: translateY(-40px) rotate(10deg);
+		transform: translate(-200px, 0) rotate(var(--card-rot, 0deg));
 	}
 	100% {
-		transform: translateY(0px) rotate(-10deg);
+		transform: translate(1150px, 0) rotate(var(--card-rot, 0deg));
+	}
+}
+
+@keyframes passRightToLeft {
+	0% {
+		transform: translate(1150px, 0) rotate(var(--card-rot, 0deg));
+	}
+	100% {
+		transform: translate(-200px, 0) rotate(var(--card-rot, 0deg));
 	}
 }
 
@@ -445,7 +489,6 @@ canvas {
 	flex-direction: column;
 	align-items: center;
 	justify-content: center;
-	padding: 3rem;
 	position: relative;
 	overflow: hidden;
 }
@@ -519,27 +562,24 @@ canvas {
 	display: flex;
 	align-items: center;
 	gap: 1.2rem;
-	background: var(--color-white-cream);
 	padding: 12px 20px;
-	border-radius: 12px;
-	box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
 }
 
 .qr-icon-box {
-	background: var(--color-pearl-ruby);
+	background: var(--color-white-cream);
 	padding: 8px;
 	border-radius: 8px;
 }
 
 .qr-fr-label {
-	font-family: var(--font-body);
+	font-family: var(--font-title);
 	font-size: 0.95rem;
 	font-weight: 700;
 	color: var(--color-black);
 }
 
 .qr-en-label {
-	font-family: var(--font-body);
+	font-family: var(--font-title);
 	font-size: 0.8rem;
 	font-weight: 600;
 	color: var(--color-grey-black);
