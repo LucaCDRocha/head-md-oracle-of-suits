@@ -65,7 +65,7 @@ function getTranslations($lang) {
         'download' => 'Télécharger l\'image',
         'source_cards' => 'Cartes sources',
         'base_card' => '★ CARTE DE BASE',
-        'share_title' => 'Partager ce Hybrid',
+        'share_title' => 'Partager cet Hybrid',
         'share_subtext' => 'Scannez le QR Code ou copiez le lien ci-dessous pour partager cet hybrid.',
         'copy' => 'Copier',
         'copied' => 'Copié !',
