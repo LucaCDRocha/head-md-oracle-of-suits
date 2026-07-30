@@ -601,6 +601,7 @@ async function runDevBatchGeneration() {
   if (status) {
     status.innerText = `[DEV MODE] Complete! ${TARGET_CARDS} cards successfully generated.`;
   }
+  resetInactivityTimer();
 }
 
 let currentApp1State = "IDLE";
@@ -614,8 +615,8 @@ export function resetInactivityTimer() {
     inactivityTimer = null;
   }
 
-  // Do not run inactivity timers during active generation or in IDLE
-  if (isGenerating || currentApp1State === "IDLE") {
+  // Do not run inactivity timers during active generation, dev batch generation, or in IDLE
+  if (isGenerating || isBatchGenerating || currentApp1State === "IDLE") {
     return;
   }
 
