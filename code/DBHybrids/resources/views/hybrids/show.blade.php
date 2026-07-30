@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ $hybrid->name ?? 'Hybrid #' . $hybrid->id }} - Oracle of Suits</title>
+    <title>{{ 'Hybrid #' . $hybrid->id }} - Oracle of Suits</title>
 
     <!-- Favicon -->
     @if(($lang ?? 'fr') === 'en')
