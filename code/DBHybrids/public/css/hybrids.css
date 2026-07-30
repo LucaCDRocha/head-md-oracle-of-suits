@@ -1021,7 +1021,6 @@ body {
 
 .modal-card {
     background-color: var(--color-cream);
-    border: 2px solid var(--color-pearl-ruby);
     border-radius: 20px;
     width: 100%;
     max-width: 440px;
