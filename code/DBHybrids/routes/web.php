@@ -77,39 +77,58 @@ function getExpandedCards($hybrid) {
     
     $cardNames = explode(' + ', $hybrid->name);
     if (count($cardNames) < 2) {
-        return $hybrid->cards;
-    }
+        $result = $hybrid->cards;
+    } else {
+        $cardMap = [];
+        foreach ($hybrid->cards as $c) {
+            $cardMap[trim($c->name)] = $c;
+        }
 
-    $cardMap = [];
-    foreach ($hybrid->cards as $c) {
-        $cardMap[trim($c->name)] = $c;
-    }
+        $expanded = collect([]);
+        $baseCardSeen = false;
 
-    $expanded = collect([]);
-    $baseCardSeen = false;
-
-    foreach ($cardNames as $name) {
-        $trimmed = trim($name);
-        if (isset($cardMap[$trimmed])) {
-            $cloned = clone $cardMap[$trimmed];
-            
-            if (isset($cloned->pivot)) {
-                if ($cloned->pivot->is_base) {
-                    if ($baseCardSeen) {
-                        $pivotClone = clone $cloned->pivot;
-                        $pivotClone->is_base = 0;
-                        $cloned->pivot = $pivotClone;
-                    } else {
-                        $baseCardSeen = true;
+        foreach ($cardNames as $name) {
+            $trimmed = trim($name);
+            if (isset($cardMap[$trimmed])) {
+                $cloned = clone $cardMap[$trimmed];
+                
+                if (isset($cloned->pivot)) {
+                    if ($cloned->pivot->is_base) {
+                        if ($baseCardSeen) {
+                            $pivotClone = clone $cloned->pivot;
+                            $pivotClone->is_base = 0;
+                            $cloned->pivot = $pivotClone;
+                        } else {
+                            $baseCardSeen = true;
+                        }
                     }
                 }
-            }
 
-            $expanded->push($cloned);
+                $expanded->push($cloned);
+            }
+        }
+        $result = $expanded->isNotEmpty() ? $expanded : $hybrid->cards;
+    }
+
+    // Always position the Base Card in the CENTER (index 1) if there are 3 cards
+    if ($result->count() === 3) {
+        $baseIndex = null;
+        foreach ($result->values() as $idx => $card) {
+            if (isset($card->pivot) && $card->pivot->is_base) {
+                $baseIndex = $idx;
+                break;
+            }
+        }
+
+        if ($baseIndex !== null && $baseIndex !== 1) {
+            $items = $result->values()->all();
+            $baseCard = array_splice($items, $baseIndex, 1)[0];
+            array_splice($items, 1, 0, [$baseCard]);
+            $result = collect($items);
         }
     }
 
-    return $expanded->isNotEmpty() ? $expanded : $hybrid->cards;
+    return $result;
 }
 
 Route::get('/', function () {
