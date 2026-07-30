@@ -19,6 +19,7 @@ import { initQRCodes, updateDownloadQR } from "./src/ui/qrCodes.js";
 import { DEBUG, DEV_MODE } from "./config.js";
 import soundEffects from "./src/audio/soundEffects.js";
 import LoadingAnimation from "./src/ui/loadingAnimation.js";
+import wsClient from "./src/network/wsClient.js";
 
 let canvas;
 let lastGeneratedBase64 = null;
@@ -69,16 +70,27 @@ window.setup = function () {
     { once: true }
   );
 
+  // Initialize WebSocket connection as Controller / Brain & sync state on connection
+  wsClient.connect("brain");
+  wsClient.on("connection_change", ({ connected }) => {
+    if (connected) {
+      syncBrainState();
+    }
+  });
+
   // Setup Arduino serial connection
   setupSerial();
 
   // Set callback for knob changes
   setKnobChangeCallback((knobValues) => {
     handleKnobChange(knobValues);
+    markUserInteracted();
+    syncBrainState();
   });
 
   // Set callbacks for serial button press/release
   setButtonPressCallback(() => {
+    markUserInteracted();
     startHold("serial");
   });
   setButtonReleaseCallback(() => {
@@ -92,6 +104,7 @@ window.setup = function () {
   const devBatchBtn = document.getElementById("dev-batch-btn");
   if (devBatchBtn) {
     devBatchBtn.addEventListener("click", () => {
+      markUserInteracted();
       runDevBatchGeneration();
     });
   }
@@ -100,7 +113,9 @@ window.setup = function () {
   const shuffleBtn = document.getElementById("shuffle-btn");
   if (shuffleBtn) {
     shuffleBtn.addEventListener("click", () => {
+      markUserInteracted();
       shuffleAllSlots();
+      syncBrainState();
     });
   }
 
@@ -141,8 +156,10 @@ window.setup = function () {
     });
   }
 
-  // Load cards using slot selector
-  initSlotSelector();
+  // Load cards using slot selector and sync initial state
+  initSlotSelector().then(() => {
+    syncBrainState();
+  });
 
   // Add Enter key hold listener for hybridization
   document.addEventListener("keydown", (e) => {
@@ -355,6 +372,9 @@ async function onGenerate(bypassDebounce = false) {
   }
 
   isGenerating = true;
+  wsClient.sendStateChange("GENERATING");
+  updateApp1State("GENERATING");
+
   const btn = document.getElementById("generate-btn");
   const btnText = document.getElementById("generate-btn-text");
   const status = document.getElementById("status");
@@ -424,10 +444,10 @@ async function onGenerate(bypassDebounce = false) {
 					font-family: monospace;
 					font-size: 14px;
 					line-height: 1.6;
-					white-space: pre-wrap;
 					text-align: left;
 				`;
-        document.getElementById("app2-content").appendChild(promptDisplay);
+        const targetParent = document.getElementById("app2-content") || document.getElementById("app1-wrapper") || document.body;
+        targetParent.appendChild(promptDisplay);
       }
       promptDisplay.textContent = prompt;
       promptDisplay.style.display = "block";
@@ -462,9 +482,18 @@ async function onGenerate(bypassDebounce = false) {
         statusCallback
       );
 
-      if (uploadResult && uploadResult.data && uploadResult.data.id) {
-        updateDownloadQR(uploadResult.data.id);
+      const hybridId = uploadResult && uploadResult.data && uploadResult.data.id ? uploadResult.data.id : null;
+      if (hybridId) {
+        updateDownloadQR(hybridId);
       }
+
+      wsClient.sendHybridGenerated({
+        base64: base64,
+        id: hybridId,
+        cards: selected,
+        baseCardId: baseCardId,
+      });
+      updateApp1State("RESULT");
 
       statusCallback("Terminé!");
       isSuccess = true;
@@ -564,3 +593,65 @@ async function runDevBatchGeneration() {
     status.innerText = `[DEV MODE] Complete! ${TARGET_CARDS} cards successfully generated.`;
   }
 }
+
+let currentApp1State = "IDLE";
+let userHasInteracted = false;
+
+export function markUserInteracted() {
+  if (!userHasInteracted) {
+    userHasInteracted = true;
+    console.log("[App1 Controller] User interaction detected! Transitioning from IDLE to EXPLORE.");
+  }
+}
+
+/**
+ * Synchronize App 1 state and selected cards to WebSocket server & App 2
+ */
+export function syncBrainState(forcedState = null) {
+  const selected = getSelectedCards();
+  const baseId = getBaseCardId();
+
+  let state = forcedState;
+  if (!state) {
+    if (isGenerating) {
+      state = "GENERATING";
+    } else if (!userHasInteracted) {
+      state = "IDLE";
+    } else {
+      state = "EXPLORE";
+    }
+  }
+
+  currentApp1State = state;
+  updateApp1State(state);
+
+  wsClient.sendCardsUpdated(selected, baseId);
+  wsClient.sendStateChange(state, {
+    selectedCards: selected,
+    baseCardId: baseId,
+  });
+}
+
+/**
+ * Manage App 1 state views (IDLE overlay vs EXPLORE / GENERATING / RESULT)
+ */
+function updateApp1State(newState) {
+  currentApp1State = newState;
+  const idleOverlay = document.getElementById("app1-idle-overlay");
+  const cardsContainer = document.getElementById("app1-cards-container");
+
+  if (newState === "IDLE") {
+    if (idleOverlay) idleOverlay.classList.add("active");
+    if (cardsContainer) cardsContainer.classList.add("blurred");
+  } else {
+    if (idleOverlay) idleOverlay.classList.remove("active");
+    if (cardsContainer) cardsContainer.classList.remove("blurred");
+  }
+
+  if (newState === "GENERATING") {
+    if (cardsContainer) cardsContainer.classList.add("dimmed");
+  } else {
+    if (cardsContainer) cardsContainer.classList.remove("dimmed");
+  }
+}
+

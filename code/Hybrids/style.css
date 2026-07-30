@@ -1,62 +1,555 @@
-html,
-body {
-	margin: 0;
-	padding: 0;
-	background: #f5e6d3;
-	overflow-x: hidden;
-	width: 100%;
-	height: 100vh;
-	font-family: "Nippo", sans-serif;
+@import url('https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;600;700;800&display=swap');
+@import url('https://api.fontshare.com/css?f[]=nippo');
+
+/* ==========================================================================
+   DESIGN TOKENS & GLOBAL RESET
+   ========================================================================== */
+
+:root {
+	--color-pearl-ruby: #721422;
+	--color-grey-black: #555555;
+	--color-black: #000000;
+	--color-white-cream: #fefbf5;
+	--color-cream: #fdf4e3;
+
+	--font-title: "Nippo", sans-serif;
+	--font-body: "Libre Franklin", sans-serif;
 }
 
-* {
-	font-family: "Nippo", sans-serif;
+*, *::before, *::after {
+	box-sizing: border-box;
+	margin: 0;
+	padding: 0;
+}
+
+html, body {
+	width: 100vw;
+	height: 100vh;
+	overflow: hidden;
+	background: var(--color-black);
+	color: var(--color-black);
+	font-family: var(--font-body);
 }
 
 canvas {
 	display: block;
 }
 
-/* === KNOB CONTROL PANEL === */
-#knob-control-panel {
-	background: #fff;
-	padding: 12px 20px;
+/* ==========================================================================
+   TYPOGRAPHY
+   ========================================================================== */
+
+.text-fr-title {
+	font-family: var(--font-title);
+	font-size: 3.2rem;
+	font-weight: 800;
+	letter-spacing: 0.05em;
+	color: var(--color-black);
+}
+
+.text-en-sub {
+	font-family: var(--font-body);
+	font-size: 1.6rem;
+	font-weight: 600;
+	margin-top: 8px;
+	color: var(--color-grey-black);
+}
+
+/* ==========================================================================
+   APP 1 (CONTROLLER / BRAIN) STYLING
+   ========================================================================== */
+
+.app1-body {
+	background: var(--color-black);
+	color: var(--color-white-cream);
+}
+
+#app1-wrapper {
+	position: relative;
+	width: 100vw;
+	height: 100vh;
+	display: flex;
+	flex-direction: column;
+	background: var(--color-black);
+	overflow: hidden;
+}
+
+/* App 1 Idle Overlay */
+#app1-idle-overlay {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	z-index: 20;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: rgba(0, 0, 0, 0.75);
+	backdrop-filter: blur(12px);
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity 0.4s ease;
+}
+
+#app1-idle-overlay.active {
+	opacity: 1;
+	pointer-events: auto;
+}
+
+.app1-idle-message {
+	text-align: center;
+}
+
+#app1-idle-overlay .text-fr-title {
+	color: var(--color-white-cream);
+}
+
+#app1-idle-overlay .text-en-sub {
+	color: rgba(254, 251, 245, 0.7);
+}
+
+/* App 1 Main Cards Layout */
+#app1-cards-container {
+	flex: 1;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 2vh 2vw;
+	width: 100vw;
+	height: calc(100vh - 80px);
+	transition: filter 0.4s ease, opacity 0.4s ease;
+}
+
+#app1-cards-container.blurred {
+	filter: blur(18px);
+}
+
+#app1-cards-container.dimmed {
+	opacity: 0.4;
+	pointer-events: none;
+}
+
+/* 3 Card Slots Row Container */
+.slots-container {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: center;
+	gap: 2.5vw;
+	width: 100%;
+	height: 100%;
+	max-width: 1350px;
+	margin: 0;
+}
+
+/* Individual Slot Card */
+.slot-card {
+	background: var(--color-cream);
+	border-radius: 20px;
+	flex: 1;
+	width: 30%;
+	max-width: 390px;
+	height: 82vh;
+	max-height: 780px;
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+	align-items: center;
+	padding: 24px 20px;
+	box-shadow: 0 16px 45px rgba(0, 0, 0, 0.6);
+	position: relative;
+	overflow: hidden;
+}
+
+/* Hide unused filter controls on main presentation card */
+.slot-header,
+.slot-filters,
+.base-selector {
+	display: none;
+}
+
+/* Card Preview Area (Top/Center) */
+.slot-preview {
+	flex: 1;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	padding: 10px 0;
+}
+
+.slot-preview img {
+	max-height: 48vh;
+	max-width: 88%;
+	width: auto;
+	height: auto;
+	object-fit: contain;
+	border-radius: 12px;
+	box-shadow: 0 12px 30px rgba(0, 0, 0, 0.22);
+	display: block;
+	margin: 0 auto;
+}
+
+.slot-preview .no-card {
+	color: var(--color-grey-black);
+	font-style: italic;
+	font-size: 0.9rem;
+	text-align: center;
+}
+
+/* Card Metadata & Information (Fixed Bottom) */
+.slot-info {
+	width: 100%;
+	margin-top: auto;
+	flex-shrink: 0;
+	min-height: 185px;
+	padding-top: 10px;
+}
+
+.card-info-columns {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 12px;
+	margin-bottom: 16px;
+	text-align: left;
+	width: 100%;
+}
+
+.info-col {
+	background: var(--color-white-cream);
+	border-radius: 10px;
+	padding: 10px 12px;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+	min-height: 85px;
+	display: flex;
+	flex-direction: column;
+	justify-content: flex-start;
+}
+
+.info-col strong {
+	display: block;
+	font-family: var(--font-body);
+	font-weight: 800;
+	font-size: 0.8rem;
+	margin-bottom: 4px;
+	color: var(--color-black);
+}
+
+.info-col p {
+	margin: 0;
+	font-family: var(--font-body);
+	font-size: 0.7rem;
+	line-height: 1.35;
+	color: var(--color-grey-black);
+}
+
+/* Metadata Tag Boxes & Labels */
+.card-meta-tags {
+	display: flex;
+	gap: 8px;
+	justify-content: space-between;
+	width: 100%;
+}
+
+.tag-group {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	flex: 1;
+	text-align: center;
+}
+
+.tag-box {
+	width: 100%;
+	background: #ffffff;
+	border: 2px solid var(--color-pearl-ruby);
+	color: var(--color-black);
+	font-family: var(--font-body);
+	font-size: 0.95rem;
+	font-weight: 800;
+	padding: 7px 2px;
 	border-radius: 8px;
-	margin: 10px 0;
-	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+	text-align: center;
+	text-transform: capitalize;
+	box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
 }
 
-#knob-status {
-	display: flex;
-	align-items: center;
-	gap: 20px;
-	font-size: 14px;
-}
-
-#knob-indicator {
+.tag-label {
+	font-family: var(--font-body);
+	font-size: 0.72rem;
 	font-weight: 700;
-	color: #333;
+	color: var(--color-black);
+	margin-top: 5px;
+	text-transform: capitalize;
 }
 
-#knob-status label {
+/* Knob Pagination Dots */
+.tag-group .knob-pagination {
+	display: flex;
+	gap: 4px;
+	align-items: center;
+	justify-content: center;
+	min-height: 10px;
+	margin-top: 6px;
+}
+
+.knob-pagination-dot {
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+	background: rgba(0, 0, 0, 0.2);
+	transition: all 0.2s ease;
+}
+
+.knob-pagination-dot.near {
+	background: rgba(0, 0, 0, 0.4);
+}
+
+.knob-pagination-dot.far {
+	background: rgba(0, 0, 0, 0.1);
+}
+
+.knob-pagination-dot.active {
+	background: var(--color-pearl-ruby);
+	width: 8px;
+	height: 8px;
+}
+
+/* App 1 Footer & Generate Action */
+#app1-footer-controls {
+	padding: 15px 30px;
+	background: var(--color-black);
 	display: flex;
 	align-items: center;
-	gap: 6px;
+	justify-content: center;
+}
+
+#generate-btn {
+	background: var(--color-pearl-ruby);
+	color: var(--color-white-cream);
+	font-family: var(--font-title);
+	font-size: 1.1rem;
+	font-weight: 700;
+	border: none;
+	border-radius: 8px;
+	padding: 14px 32px;
 	cursor: pointer;
-	padding: 4px 12px;
-	border-radius: 4px;
-	transition: background 0.2s ease;
+	transition: background 0.2s ease, transform 0.1s ease;
 }
 
-#knob-status label:hover {
-	background: #f0f0f0;
+#generate-btn:hover:not(:disabled) {
+	background: #8b182a;
+	transform: scale(1.02);
 }
 
-#knob-status input[type="radio"] {
+#generate-btn:disabled {
+	background: var(--color-grey-black);
+	opacity: 0.6;
+	cursor: not-allowed;
+}
+
+.dev-control-btn {
+	background: var(--color-grey-black);
+	color: var(--color-white-cream);
+	border: none;
+	border-radius: 6px;
+	padding: 12px 18px;
+	font-family: var(--font-body);
+	font-size: 0.9rem;
+	font-weight: 700;
 	cursor: pointer;
 }
 
-/* === KNOB VALUES DISPLAY === */
+/* ==========================================================================
+   APP 2 (EXHIBITION DISPLAY SCREEN) STYLING
+   ========================================================================== */
+
+.app2-standalone-body {
+	background: var(--color-black);
+	color: var(--color-black);
+}
+
+/* Floating Top-Liked Hybrids Animation Background */
+#floating-hybrids-container {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100vw;
+	height: 100vh;
+	z-index: 1;
+	overflow: hidden;
+	pointer-events: none;
+}
+
+.floating-card {
+	position: absolute;
+	width: 180px;
+	height: 270px;
+	border-radius: 12px;
+	background-size: cover;
+	background-position: center;
+	box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+	opacity: 0.85;
+}
+
+@keyframes floatDrift {
+	0% {
+		transform: translateY(0px) rotate(-10deg);
+	}
+	50% {
+		transform: translateY(-40px) rotate(10deg);
+	}
+	100% {
+		transform: translateY(0px) rotate(-10deg);
+	}
+}
+
+/* App 2 Main Viewport Wrapper */
+#display-app-wrapper {
+	position: relative;
+	z-index: 10;
+	width: 100vw;
+	height: 100vh;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: space-between;
+	padding: 2.5rem 4rem 3rem 4rem;
+}
+
+/* Header with SF-Hybrids.png Logo */
+#display-header {
+	width: 100%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	margin-bottom: 1.5rem;
+}
+
+#display-logo {
+	max-height: 140px;
+	width: auto;
+	object-fit: contain;
+}
+
+/* Central Cream Card Container */
+#display-content-card {
+	flex: 1;
+	width: 100%;
+	max-width: 960px;
+	background: var(--color-cream);
+	border-radius: 24px;
+	box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	padding: 3rem;
+	position: relative;
+	overflow: hidden;
+}
+
+/* State Views inside Central Box */
+.display-state-view {
+	display: none;
+	width: 100%;
+	height: 100%;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	text-align: center;
+}
+
+.display-state-view.active {
+	display: flex;
+}
+
+.idle-text-container,
+.instruction-text-container,
+.generating-text-container {
+	margin-bottom: 2.5rem;
+}
+
+/* Smart 15s Progress Bar Styling */
+.progress-bar-wrapper {
+	width: 80%;
+	max-width: 500px;
+	margin-top: 1.5rem;
+}
+
+.progress-bar-track {
+	width: 100%;
+	height: 16px;
+	background: rgba(114, 20, 34, 0.15);
+	border: 2px solid var(--color-pearl-ruby);
+	border-radius: 12px;
+	overflow: hidden;
+	padding: 2px;
+}
+
+.progress-bar-fill {
+	height: 100%;
+	width: 0%;
+	background: var(--color-pearl-ruby);
+	border-radius: 8px;
+	transition: width 0.1s linear;
+}
+
+/* Result View Container */
+.result-card-container {
+	flex: 1;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	max-height: 65vh;
+	margin-bottom: 1.5rem;
+}
+
+#result-hybrid-img {
+	max-height: 100%;
+	max-width: 100%;
+	object-fit: contain;
+	border-radius: 12px;
+	box-shadow: 0 12px 35px rgba(0, 0, 0, 0.25);
+}
+
+/* Display QR Code Block */
+.display-qr-block {
+	display: flex;
+	align-items: center;
+	gap: 1.2rem;
+	background: var(--color-white-cream);
+	padding: 12px 20px;
+	border-radius: 12px;
+	box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+}
+
+.qr-icon-box {
+	background: var(--color-pearl-ruby);
+	padding: 8px;
+	border-radius: 8px;
+}
+
+.qr-fr-label {
+	font-family: var(--font-body);
+	font-size: 0.95rem;
+	font-weight: 700;
+	color: var(--color-black);
+}
+
+.qr-en-label {
+	font-family: var(--font-body);
+	font-size: 0.8rem;
+	font-weight: 600;
+	color: var(--color-grey-black);
+	margin-top: 2px;
+}
+
+/* ==========================================================================
+   DEV_MODE DEBUG OVERLAYS
+   ========================================================================== */
+
 #knob-values-display {
 	position: absolute;
 	top: 10px;
@@ -65,12 +558,11 @@ canvas {
 	color: #0f0;
 	padding: 12px 16px;
 	border-radius: 8px;
-	font-family: "Courier New", monospace;
+	font-family: monospace;
 	font-size: 14px;
 	font-weight: bold;
 	z-index: 1000;
 	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-	min-width: 120px;
 	display: flex;
 	gap: 20px;
 }
@@ -102,1142 +594,4 @@ canvas {
 .knob-value-item > span {
 	color: #00ff00;
 	font-weight: bold;
-	min-width: 50px;
-}
-
-/* Pagination dots */
-.knob-pagination {
-	display: flex;
-	gap: 4px;
-	align-items: center;
-	justify-content: flex-start;
-	min-height: 8px;
-}
-
-.knob-pagination-dot {
-	width: 6px;
-	height: 6px;
-	border-radius: 50%;
-	background: rgba(0, 0, 0, 0.2);
-	transition: all 0.2s ease;
-}
-
-.knob-pagination-dot.near {
-	background: rgba(0, 0, 0, 0.4);
-}
-
-.knob-pagination-dot.far {
-	background: rgba(0, 0, 0, 0.1);
-}
-
-.knob-pagination-dot.active {
-	background: rgba(0, 0, 0, 1);
-	width: 8px;
-	height: 8px;
-}
-
-#app {
-	position: absolute;
-	top: 63.8vh;
-	left: 0;
-	right: 0;
-	height: 36.2vh;
-	display: flex;
-	flex-direction: column;
-	gap: 0;
-	background: #000; /* Black background for separation */
-	width: 100vw;
-	max-width: 100vw;
-	box-sizing: border-box;
-	overflow: hidden;
-	padding-top: 10.3rem;
-}
-
-#app2 {
-	position: absolute;
-	top: 0;
-	left: 0;
-	right: 0;
-	height: 63.8vh;
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	justify-content: space-between;
-	padding: 0 3.5rem 3.3rem 3.5rem;
-	background: #000;
-	width: 56.3vw;
-	max-width: 100vw;
-	box-sizing: border-box;
-	overflow: hidden;
-}
-
-#app2-header {
-	width: 100%;
-	background: #000;
-	padding: 40px 20px;
-	text-align: center;
-	box-sizing: border-box;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-}
-
-#app2-header #logo {
-	width: 60%;
-	height: 430px;
-	object-fit: cover;
-}
-
-#app2-content {
-	flex: 1;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	background: #f5e6d3;
-	padding: 40px;
-	width: 100%;
-	box-sizing: border-box;
-	border-radius: 1rem 1rem 0 0;
-}
-
-#app2-actions {
-	width: 100%;
-	display: flex;
-	gap: 40px;
-	padding: 30px;
-	background: #f5e6d3;
-	box-sizing: border-box;
-	justify-content: space-between;
-	align-items: flex-start;
-	position: relative;
-	border-radius: 0 0 1rem 1rem;
-}
-
-.qr-code-container {
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	gap: 12px;
-}
-
-.qr-code-container:first-child {
-	align-self: flex-start;
-	margin-left: 20px;
-}
-
-.qr-code-container:last-child {
-	align-self: flex-start;
-	margin-right: 20px;
-}
-
-.qr-code {
-	background: white;
-	padding: 10px;
-	border-radius: 8px;
-	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.qr-code canvas {
-	display: block;
-}
-
-.qr-label {
-	margin: 0;
-	font-size: 0.9rem;
-	font-weight: 700;
-	color: #000;
-	text-align: center;
-	max-width: 200px;
-}
-
-/* === DISPLAY CARD STYLES === */
-.display-card {
-	flex: 1;
-	display: flex;
-	flex-direction: column;
-	background: #f5e6d3; /* Beige background for cards */
-	padding: 30px 20px 20px 20px;
-	box-sizing: border-box;
-	gap: 20px;
-}
-
-.card-display {
-	flex: 1;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	background: #f5e6d3;
-	padding: 20px;
-}
-
-.display-card-img {
-	max-width: 100%;
-	max-height: 100%;
-	object-fit: contain;
-	box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-	border-radius: 8px;
-	display: none; /* Hidden until card is selected */
-}
-
-.display-card-img[src]:not([src=""]) {
-	display: block;
-}
-
-.card-meta {
-	display: flex;
-	flex-direction: column;
-	gap: 12px;
-	padding: 0 10px;
-}
-
-.meta-title {
-	font-size: 14px;
-	font-weight: 700;
-	margin: 0;
-	text-transform: none;
-	letter-spacing: 0;
-}
-
-.meta-description {
-	font-size: 11px;
-	line-height: 1.5;
-	margin: 0;
-	color: #333;
-}
-
-.meta-tags {
-	display: flex;
-	gap: 8px;
-	flex-wrap: wrap;
-}
-
-.meta-tag {
-	background: #fff;
-	border: 2px solid #000;
-	border-radius: 6px;
-	padding: 8px 16px;
-	font-size: 12px;
-	font-weight: 700;
-	cursor: pointer;
-	transition: all 0.2s ease;
-	flex: 1;
-	min-width: 60px;
-	text-align: center;
-}
-
-.meta-tag:hover {
-	background: #f0f0f0;
-	transform: translateY(-2px);
-}
-
-.meta-labels {
-	display: flex;
-	gap: 8px;
-	margin-top: -8px;
-}
-
-.meta-labels span {
-	flex: 1;
-	font-size: 9px;
-	font-weight: 700;
-	text-align: center;
-	color: #000;
-	text-transform: capitalize;
-}
-
-#controls {
-	background: transparent;
-	padding: 0;
-	border-radius: 0;
-	max-height: none;
-	overflow-y: visible;
-	flex: 1;
-	display: flex;
-	flex-direction: column;
-	height: 100%;
-}
-
-/* === SLOT-BASED UI STYLES === */
-.slots-container {
-	display: flex;
-	flex-direction: row;
-	gap: 4.5rem;
-	justify-content: center;
-	align-items: center;
-	flex-wrap: nowrap;
-	width: 100%;
-	max-width: 100vw;
-	margin: 0;
-	padding: 0 2rem;
-	box-sizing: border-box;
-	height: 100%;
-}
-
-.slot-card {
-	background: #f5e6d3;
-	border: none;
-	border-radius: 1rem;
-	padding: 15px 15px 15px 15px;
-	box-shadow: none;
-	width: 33.333%;
-	max-width: 33.333vw;
-	height: 100%;
-	flex-shrink: 1;
-	flex-grow: 0;
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	justify-content: flex-start;
-	position: relative;
-	box-sizing: border-box;
-	overflow: hidden;
-	transition: background 0.3s ease, box-shadow 0.3s ease;
-	gap: 10px;
-}
-
-.slot-card.active-knob-control {
-	background: #fff5e6;
-	box-shadow: inset 0 0 0 3px #ff9800;
-}
-
-.slot-card.active-knob-control::after {
-	content: "🎛️";
-	position: absolute;
-	top: 5px;
-	left: 5px;
-	background: #ff9800;
-	color: white;
-	padding: 2px 6px;
-	border-radius: 8px;
-	font-size: 10px;
-	font-weight: 700;
-	z-index: 10;
-	box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-}
-
-.slot-card.base-card::before {
-	content: "★";
-	position: absolute;
-	top: 5px;
-	right: 5px;
-	font-size: 18px;
-	color: #000;
-}
-
-/* Progress fill overlay inside card slots during hold-to-generate */
-.slot-progress-fill {
-	position: absolute;
-	bottom: 0;
-	left: 0;
-	width: 100%;
-	height: 0%;
-	background: linear-gradient(180deg, rgba(76, 175, 80, 0.45) 0%, rgba(76, 175, 80, 0.15) 100%);
-	border-top: 3px solid #4caf50;
-	box-shadow: 0 -2px 15px rgba(76, 175, 80, 0.6);
-	pointer-events: none;
-	z-index: 2;
-	opacity: 0;
-	transition: height 0.05s linear, opacity 0.15s ease;
-}
-
-.slot-card.slot-charging {
-	box-shadow: inset 0 0 0 2px #4caf50, 0 0 20px rgba(76, 175, 80, 0.4);
-}
-
-.slot-card.slot-charging .slot-progress-fill {
-	opacity: 1;
-}
-
-.base-selector {
-	width: 100%;
-	order: 5;
-	margin-top: auto;
-	text-align: center;
-	display: none;
-}
-
-.base-selector label {
-	cursor: pointer;
-	user-select: none;
-	font-size: 10px;
-}
-
-.slot-header {
-	width: 100%;
-	order: 2;
-	padding: 0 5px;
-}
-
-.slot-header h3 {
-	font-size: 12px;
-	font-weight: 700;
-	margin: 0 0 8px 0;
-	text-transform: none;
-	letter-spacing: 0;
-}
-
-.slot-header p {
-	font-size: 9px;
-	line-height: 1.4;
-	margin: 0;
-	color: #333;
-	text-align: left;
-}
-
-.slot-filters {
-	display: flex;
-	gap: 6px;
-	width: 100%;
-	order: 3;
-	margin-top: auto;
-	padding: 0 5px;
-}
-
-.filter-group {
-	display: flex;
-	flex-direction: column;
-	gap: 2px;
-	min-width: 0;
-	flex: 1;
-	align-items: center;
-}
-
-.filter-group label {
-	font-size: 0.85rem;
-	font-weight: 700;
-	color: #000;
-	text-transform: capitalize;
-	text-align: center;
-	margin-bottom: 0;
-	order: 2;
-}
-
-.filter-select {
-	padding: 6px 4px;
-	border: 2px solid #000;
-	border-radius: 6px;
-	font-size: 1.2rem;
-	font-weight: 700;
-	background: #fff5e6;
-	cursor: pointer;
-	text-align: center;
-	height: auto;
-	min-height: 32px;
-	white-space: nowrap;
-	line-height: 1.1;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	width: 100%;
-	box-sizing: border-box;
-	order: 1;
-	transition: all 0.2s ease;
-	appearance: none;
-	-webkit-appearance: none;
-	-moz-appearance: none;
-}
-
-/* Pagination dots within filter groups */
-.filter-group .knob-pagination {
-	display: flex;
-	gap: 4px;
-	align-items: center;
-	justify-content: center;
-	min-height: 10px;
-	order: 3;
-	margin-top: 4px;
-}
-
-.filter-select:hover {
-	background: #f0f0f0;
-	transform: translateY(-1px);
-}
-
-.filter-select option {
-	white-space: normal;
-	word-wrap: break-word;
-	padding: 4px;
-}
-
-.filter-select:disabled {
-	background: #e0e0e0;
-	cursor: not-allowed;
-	opacity: 0.5;
-}
-
-.slot-preview {
-	background: transparent;
-	border: none;
-	padding: 0;
-	margin-bottom: 0;
-	min-height: 120px;
-	flex: 1;
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	justify-content: center;
-	order: 1;
-	width: 100%;
-	max-width: 100%;
-	box-sizing: border-box;
-}
-
-.slot-preview img {
-	width: auto;
-	height: auto;
-	object-fit: contain;
-	border-radius: 4rem;
-	box-shadow: 0 20px 60px rgba(0, 0, 0, 0.22), 0 8px 24px rgba(0, 0, 0, 0.12);
-	transition: box-shadow 300ms cubic-bezier(0.22, 0.8, 0.2, 1), transform 300ms cubic-bezier(0.22, 0.8, 0.2, 1);
-	transform: scale(0.3);
-	transform-origin: center;
-}
-
-.slot-preview .card-info {
-	margin-top: 6px;
-	font-size: 8px;
-	font-weight: 700;
-	text-align: center;
-	color: #000;
-	text-transform: uppercase;
-	letter-spacing: 0.3px;
-	display: none;
-}
-
-.slot-preview .no-card {
-	color: #666;
-	font-style: italic;
-	font-size: 13px;
-	text-align: center;
-}
-
-.filtered-cards-grid {
-	display: grid;
-	grid-template-columns: repeat(4, 1fr);
-	gap: 6px;
-	max-height: 200px;
-	overflow-y: auto;
-	padding: 8px;
-	background: #fafafa;
-	border-radius: 4px;
-}
-
-.mini-card {
-	background: white;
-	border: 2px solid #e0e0e0;
-	border-radius: 4px;
-	padding: 4px;
-	cursor: pointer;
-	text-align: center;
-	transition: all 0.2s ease;
-}
-
-.mini-card:hover {
-	border-color: #4caf50;
-	transform: scale(1.05);
-	box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-}
-
-.mini-card.selected {
-	border-color: #2196f3;
-	background: #e3f2fd;
-	box-shadow: 0 0 0 2px #2196f3;
-}
-
-.mini-card img {
-	width: 100%;
-	height: 60px;
-	object-fit: cover;
-	border-radius: 2px;
-}
-
-.mini-card-label {
-	font-size: 10px;
-	margin-top: 4px;
-	color: #555;
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
-}
-
-.no-cards {
-	grid-column: 1 / -1;
-	text-align: center;
-	padding: 20px;
-	color: #999;
-	font-style: italic;
-}
-
-.more-cards {
-	grid-column: 1 / -1;
-	text-align: center;
-	padding: 8px;
-	background: #e8f5e9;
-	color: #2e7d32;
-	font-size: 11px;
-	border-radius: 4px;
-	font-weight: 600;
-}
-
-/* === LEGACY STYLES (kept for compatibility) === */
-.cards-grid {
-	display: grid;
-	grid-template-columns: repeat(3, 1fr);
-	gap: 8px;
-}
-.card {
-	background: white;
-	border: 1px solid #ddd;
-	padding: 6px;
-	cursor: pointer;
-	text-align: center;
-}
-.card img {
-	width: 100%;
-	height: 80px;
-	object-fit: cover;
-}
-.card-label {
-	font-size: 12px;
-	margin-top: 4px;
-}
-
-/* === SELECTED AREA (FLOATING BOTTOM RIGHT) === */
-#selected-area {
-	position: absolute;
-	top: 10px;
-	right: 10px;
-	width: auto;
-	max-width: 350px;
-	margin: 0;
-	background: rgba(255, 255, 255, 0.95);
-	border-radius: 12px;
-	padding: 20px;
-	box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
-	z-index: 100;
-}
-
-#selected-area h3 {
-	margin: 0 0 15px 0;
-	font-size: 18px;
-	text-align: center;
-	font-weight: 700;
-	text-transform: uppercase;
-}
-
-#selected-summary {
-	margin-bottom: 15px;
-}
-
-.summary-item {
-	background: #f0f0f0;
-	padding: 10px;
-	border-radius: 4px;
-	margin-bottom: 8px;
-	font-size: 13px;
-	line-height: 1.4;
-}
-
-.summary-item strong {
-	display: block;
-	color: #000;
-	margin-bottom: 4px;
-	font-weight: 700;
-}
-
-.selected-item {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	background: #fff;
-	padding: 6px 8px;
-	border: 1px solid #eee;
-	margin-bottom: 8px;
-}
-
-/* Ensure the generate button is visible and aligned */
-#generate-btn {
-	position: relative;
-	overflow: hidden;
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	margin-top: 8px;
-	width: 100%;
-	padding: 12px 16px;
-	background: #4caf50;
-	color: white;
-	border: none;
-	border-radius: 6px;
-	font-size: 14px;
-	font-weight: 600;
-	cursor: pointer;
-	transition: background 0.2s ease;
-	user-select: none;
-	-webkit-user-select: none;
-}
-
-#generate-progress {
-	position: absolute;
-	top: 0;
-	left: 0;
-	height: 100%;
-	width: 0%;
-	background: rgba(255, 255, 255, 0.35);
-	pointer-events: none;
-	transition: width 0.05s linear;
-}
-
-#generate-btn-text {
-	position: relative;
-	z-index: 1;
-	pointer-events: none;
-}
-
-#generate-btn:hover:not(:disabled) {
-	background: #45a049;
-}
-
-#generate-btn:disabled {
-	background: #ccc;
-	cursor: not-allowed;
-}
-
-#generate-btn:disabled #generate-progress {
-	width: 0% !important;
-}
-
-#dev-batch-btn {
-	position: relative;
-	overflow: hidden;
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	margin-top: 4px;
-	width: 100%;
-	padding: 12px 16px;
-	background: #7c4dff;
-	color: white;
-	border: none;
-	border-radius: 6px;
-	font-size: 14px;
-	font-weight: 600;
-	cursor: pointer;
-	transition: background 0.2s ease;
-	user-select: none;
-	-webkit-user-select: none;
-}
-
-#dev-batch-btn:hover:not(:disabled) {
-	background: #651fff;
-}
-
-#dev-batch-btn:disabled {
-	background: #b388ff;
-	cursor: not-allowed;
-}
-
-#shuffle-btn {
-	position: relative;
-	overflow: hidden;
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	margin-top: 4px;
-	width: 100%;
-	padding: 12px 16px;
-	background: #29b6f6;
-	color: white;
-	border: none;
-	border-radius: 6px;
-	font-size: 14px;
-	font-weight: 600;
-	cursor: pointer;
-	transition: background 0.2s ease;
-	user-select: none;
-	-webkit-user-select: none;
-}
-
-#shuffle-btn:hover:not(:disabled) {
-	background: #0288d1;
-}
-
-#shuffle-btn:disabled {
-	background: #81d4fa;
-	cursor: not-allowed;
-}
-
-#p5-holder {
-	display: none;
-}
-
-#generated-img {
-	max-width: 65%;
-	max-height: 100%;
-	object-fit: contain;
-	border-radius: 12px;
-	box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
-	display: block;
-}
-
-/* === LOADING OVERLAY === */
-#loading-overlay {
-	position: absolute;
-	top: 0;
-	left: 0;
-	right: 0;
-	bottom: 0;
-	background: rgba(0, 0, 0, 0.95);
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	justify-content: center;
-	z-index: 1000;
-	border-radius: 1rem 1rem 0 0;
-}
-
-#loading-canvas {
-	width: 100%;
-	height: 100%;
-	display: block;
-}
-
-#status {
-	margin-top: 8px;
-	font-size: 13px;
-	padding: 8px;
-	background: rgba(255, 255, 255, 0.5);
-	border-radius: 4px;
-	min-height: 20px;
-}
-
-/* Slot information section */
-.slot-info {
-	padding: 12px;
-	margin: 12px 0 0 0;
-	background: rgba(255, 255, 255, 0.5);
-	border-radius: 6px;
-	order: 2;
-}
-
-.slot-info h4 {
-	margin: 0 0 8px 0;
-	font-size: 0.9rem;
-	font-weight: 700;
-	color: #000;
-	text-transform: capitalize;
-}
-
-.slot-info p {
-	margin: 0;
-	font-size: 0.75rem;
-	line-height: 1.4;
-	color: #333;
-	text-align: justify;
-}
-
-/* Slot pagination section - between info and filters */
-.slot-pagination-section {
-	padding: 12px;
-	margin: 8px 0;
-	background: rgba(255, 255, 255, 0.3);
-	border-radius: 6px;
-	order: 2.5;
-	display: flex;
-	flex-direction: column;
-	gap: 8px;
-}
-
-.pagination-item {
-	display: flex;
-	align-items: center;
-	gap: 10px;
-}
-
-.pagination-label {
-	font-size: 0.75rem;
-	font-weight: 600;
-	color: #000;
-	min-width: 50px;
-}
-
-.slot-info h4 {
-	margin: 0 0 8px 0;
-	font-size: 0.9rem;
-	font-weight: 700;
-	color: #000;
-	text-transform: capitalize;
-}
-
-.slot-info p {
-	margin: 0;
-	font-size: 0.75rem;
-	line-height: 1.4;
-	color: #333;
-	text-align: justify;
-}
-
-/* === LANDSCAPE / DESKTOP LAYOUT OVERRIDES === */
-@media screen and (min-aspect-ratio: 1.1/1) {
-	html, body {
-		height: 100vh;
-		overflow: hidden;
-		background: #000;
-	}
-
-	#app2 {
-		position: absolute;
-		top: 0;
-		left: 60vw; /* Positioned on the right side */
-		width: 40vw;
-		height: 100vh;
-		border-left: 2px solid #222; /* Divider on the left */
-		border-right: none;
-		padding: 2rem;
-		box-sizing: border-box;
-		display: flex;
-		flex-direction: column;
-		justify-content: space-between;
-		align-items: center;
-		background: #000;
-	}
-
-	#app {
-		position: absolute;
-		top: 0;
-		left: 0; /* Positioned on the left side */
-		width: 60vw;
-		height: 100vh;
-		padding: 2rem 3rem;
-		box-sizing: border-box;
-		background: #0d0d0d;
-		overflow-y: auto;
-		display: flex;
-		flex-direction: column;
-		justify-content: center;
-	}
-
-	#app2-header {
-		padding: 10px 0;
-	}
-
-	#app2-header #logo {
-		width: auto;
-		height: 90px;
-		max-height: 12vh;
-		object-fit: contain;
-	}
-
-	#app2-content {
-		flex: 1; /* Stretch container to take all available space between logo and QR code actions */
-		margin: 15px 0;
-		padding: 20px;
-		border-radius: 1rem;
-		width: 100%;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		background: #f5e6d3;
-		box-sizing: border-box;
-	}
-
-	#generated-img {
-		max-height: 60vh; /* Make the generated card image much larger */
-		max-width: 100%;
-		object-fit: contain;
-	}
-
-	#app2-actions {
-		padding: 15px 30px;
-		gap: 20px;
-		border-radius: 1rem;
-		width: 100%;
-	}
-
-	.qr-code-container {
-		gap: 8px;
-	}
-
-	.qr-label {
-		font-size: 0.75rem;
-		max-width: 140px;
-	}
-
-	/* Controls panel on the left */
-	#controls {
-		width: 100%;
-		height: 100%; /* Take full vertical height of parent */
-		display: flex;
-		flex-direction: column;
-		justify-content: space-between;
-		gap: 20px;
-	}
-
-	.slots-container {
-		flex-direction: column; /* Stack slots vertically */
-		gap: 1.2rem;
-		padding: 0;
-		flex: 1; /* Stretch container to take up all available vertical space */
-		width: 100%;
-		max-width: 100%;
-		display: flex;
-	}
-
-	.slot-card {
-		flex: 1; /* Make each card grow to occupy equal portions of the vertical space */
-		width: 100%;
-		max-width: 100%;
-		height: auto;
-		display: grid !important;
-		grid-template-columns: 180px 140px 1fr 110px; /* Image, Header, Center Content, Radio selector */
-		grid-template-rows: 1fr auto; /* Description on top, Filters on bottom */
-		align-items: center;
-		padding: 15px;
-		gap: 20px;
-		border-radius: 1rem;
-		box-sizing: border-box;
-	}
-
-	/* Mini preview inside slot card - now on the far left, spanning both rows */
-	.slot-preview {
-		grid-column: 1;
-		grid-row: 1 / span 2;
-		width: 100%;
-		min-height: auto;
-		height: 100%;
-		margin: 0;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		flex-shrink: 0;
-	}
-
-	.slot-preview img {
-		height: 96%; /* Scale up thumbnail to take almost full slot-card height */
-		max-height: 230px; /* Allow it to get much larger */
-		width: auto;
-		transform: none; /* Reset 0.3 scale */
-		border-radius: 6px;
-		box-shadow: 0 6px 15px rgba(0,0,0,0.2);
-	}
-
-	.slot-preview .no-card {
-		font-size: 0.8rem;
-		line-height: 1.3;
-		text-align: center;
-		color: #666;
-		font-style: italic;
-	}
-
-	/* Slot Header - Column 2, spanning both rows */
-	.slot-header {
-		grid-column: 2;
-		grid-row: 1 / span 2;
-		width: 100%;
-		margin: 0;
-		padding: 0;
-		display: flex;
-		flex-direction: column;
-		justify-content: center;
-	}
-
-	.slot-header h3 {
-		font-size: 1.2rem;
-		margin: 0 0 6px 0;
-	}
-
-	.slot-header p {
-		font-size: 0.8rem;
-	}
-
-	/* Card / Game Description - Column 3, Top Row */
-	.slot-info {
-		grid-column: 3;
-		grid-row: 1;
-		display: block !important; /* Show description in desktop view */
-		width: 100%;
-		margin: 0;
-		padding: 0 0 10px 0; /* Add space between description and selectors */
-		background: transparent;
-		box-shadow: none;
-		align-self: end; /* Position closer to bottom filters */
-	}
-
-	.slot-info h4 {
-		display: none; /* Hide the "Informations" header to save space */
-	}
-
-	.slot-info p {
-		font-size: 0.75rem;
-		line-height: 1.4;
-		color: #333;
-		text-align: left;
-		margin: 0;
-	}
-
-	/* Compact filters list - Column 3, Bottom Row */
-	.slot-filters {
-		grid-column: 3;
-		grid-row: 2;
-		width: 100%;
-		margin: 0;
-		padding: 0;
-		gap: 10px;
-		display: flex;
-		align-self: start;
-	}
-
-	.filter-group {
-		gap: 4px;
-	}
-
-	.filter-group label {
-		font-size: 0.75rem;
-	}
-
-	.filter-select {
-		padding: 6px 8px;
-		font-size: 0.95rem;
-		border-radius: 6px;
-		border: 1px solid #000;
-	}
-
-	/* Base card checkbox selector - Column 4, spanning both rows */
-	.base-selector {
-		grid-column: 4;
-		grid-row: 1 / span 2;
-		width: 100%;
-		margin: 0;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-	}
-
-	/* Hide pagination indicators in desktop view */
-	.slot-pagination-section {
-		display: none !important;
-	}
-
-	/* Selected area / generate button */
-	#selected-area {
-		width: 100%;
-		margin-top: 15px;
-		display: flex;
-		flex-direction: row;
-		justify-content: space-between;
-		align-items: center;
-		padding: 0;
-	}
-
-	#generate-btn {
-		width: auto;
-		min-width: 250px;
-		padding: 12px 24px;
-		font-size: 1rem;
-		border-radius: 6px;
-	}
-
-	#status {
-		font-size: 0.9rem;
-		margin: 0;
-	}
 }

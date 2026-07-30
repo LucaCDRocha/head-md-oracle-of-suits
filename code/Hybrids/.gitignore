@@ -1,2 +1,10 @@
 # Environment variables
 config.js
+
+# Node dependencies
+node_modules/
+package-lock.json
+
+# Operating System files
+.DS_Store
+Thumbs.db

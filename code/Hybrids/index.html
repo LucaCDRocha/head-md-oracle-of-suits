@@ -1,79 +1,63 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-		<title>Hybrid Builder - Oracle of Suits</title>
+		<title>Oracle of Suits - Hybrids Controller</title>
 
 		<link rel="stylesheet" type="text/css" href="style.css" />
+
+		<!-- Load Nippo & Libre Franklin fonts -->
+		<link href="https://api.fontshare.com/css?f[]=nippo" rel="stylesheet" />
+		<link rel="preconnect" href="https://fonts.googleapis.com">
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+		<link href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;600;700;800&display=swap" rel="stylesheet">
 
 		<!-- Load p5.js and dependencies -->
 		<script src="libraries/p5.min.js"></script>
 		<script src="libraries/p5.sound.min.js"></script>
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 		<script src="https://cdn.jsdelivr.net/npm/utif@3.1.0/UTIF.min.js"></script>
-		<link href="https://api.fontshare.com/css?f[]=nippo" rel="stylesheet" />
 	</head>
 
-	<body>
-		<!-- Top half - Installation display area -->
-		<div id="app2">
-			<div id="app2-header">
-				<img src="assets/logo.png" alt="Hybrids" id="logo" />
-			</div>
-			<div id="app2-content">
-				<!-- Loading overlay with animation canvas -->
-				<div id="loading-overlay" style="display: none">
-					<canvas id="loading-canvas"></canvas>
-				</div>
-				<!-- image returned by generative API will be shown here -->
-				<img id="generated-img" alt="Generated hybrid card" style="display: none" />
-			</div>
-			<div id="app2-actions">
-				<div class="qr-code-container">
-					<div id="qr-view-all" class="qr-code"></div>
-					<p class="qr-label">See all the hybrids created</p>
-				</div>
-				<div class="qr-code-container">
-					<div id="qr-download" class="qr-code"></div>
-					<p class="qr-label">Take your hybrid with you</p>
+	<body class="app1-body">
+		<!-- App 1 Main Controller Interface -->
+		<div id="app1-wrapper">
+			<!-- Canvas holder for P5 composing (hidden or off-screen) -->
+			<div id="p5-holder" style="display: none;"></div>
+
+			<!-- Idle State Overlay for App 1 -->
+			<div id="app1-idle-overlay" class="app1-overlay active">
+				<div class="app1-idle-message">
+					<h1 class="text-fr-title">Choisissez 3 cartes</h1>
+					<p class="text-en-sub">Choose 3 cards</p>
 				</div>
 			</div>
-		</div>
 
-		<!-- Bottom half - Card selection interface -->
-		<div id="app">
-			<!-- p5 canvas holder -->
-			<div id="p5-holder"></div>
+			<!-- Main 3-Card Slot Selection Interface -->
+			<main id="app1-cards-container">
+				<div id="cards-list">Loading historical cards…</div>
+			</main>
 
-			<section id="controls">
-				<div id="cards-list">Loading cards…</div>
-
+			<!-- Controller Footer Actions & Status -->
+			<footer id="app1-footer-controls">
 				<div id="selected-area">
-					<div style="display: none">
-						<h3>Selected (0/3)</h3>
-						<div id="selected-summary"></div>
-					</div>
-					<div style="display: flex; gap: 10px; flex-direction: column;">
+					<div style="display: flex; gap: 10px; flex-direction: row; justify-content: center; align-items: center;">
 						<button id="generate-btn" type="button" disabled>
-							<span id="generate-btn-text">Select 3 cards</span>
+							<span id="generate-btn-text">Choisissez 3 cartes</span>
 						</button>
-						<button id="shuffle-btn" type="button" style="display: none;">
+						
+						<!-- Strictly DEV_MODE & Debug Buttons -->
+						<button id="shuffle-btn" type="button" class="dev-control-btn" style="display: none;">
 							🔀 Shuffle Cards
 						</button>
-						<button id="dev-batch-btn" type="button" style="display: none;">
+						<button id="dev-batch-btn" type="button" class="dev-control-btn" style="display: none;">
 							⚡ Generate 10 Cards (Dev)
 						</button>
 					</div>
 					<div id="status"></div>
 				</div>
-			</section>
-
-			<header style="display: none">
-				<h1>Hybrid builder</h1>
-				<p>Select 3 cards, pick a base card, generate a hybrid image and upload it to the DB.</p>
-			</header>
+			</footer>
 
 			<!-- Arduino Knob Control Panel (hidden) -->
 			<div id="knob-control-panel" style="display: none">
@@ -82,76 +66,28 @@
 				</div>
 			</div>
 
-			<!-- Knob Values Display (top right) -->
-			<div id="knob-values-display">
+			<!-- Strictly DEV_MODE Knob Values Debug Display -->
+			<div id="knob-values-display" style="display: none;">
 				<div class="knob-card-group">
 					<div class="knob-card-label">Card 1</div>
-					<div class="knob-value-item">
-						<span>K1:</span>
-						<span id="knob-1-value">0</span>
-						<div class="knob-pagination" id="knob-1-pagination"></div>
-					</div>
-					<div class="knob-value-item">
-						<span>K2:</span>
-						<span id="knob-2-value">0</span>
-						<div class="knob-pagination" id="knob-2-pagination"></div>
-					</div>
-					<div class="knob-value-item">
-						<span>K3:</span>
-						<span id="knob-3-value">0</span>
-						<div class="knob-pagination" id="knob-3-pagination"></div>
-					</div>
-					<div class="knob-value-item">
-						<span>K4:</span>
-						<span id="knob-4-value">0</span>
-						<div class="knob-pagination" id="knob-4-pagination"></div>
-					</div>
+					<div class="knob-value-item"><span>K1:</span> <span id="knob-1-value">0</span><div class="knob-pagination" id="knob-1-pagination"></div></div>
+					<div class="knob-value-item"><span>K2:</span> <span id="knob-2-value">0</span><div class="knob-pagination" id="knob-2-pagination"></div></div>
+					<div class="knob-value-item"><span>K3:</span> <span id="knob-3-value">0</span><div class="knob-pagination" id="knob-3-pagination"></div></div>
+					<div class="knob-value-item"><span>K4:</span> <span id="knob-4-value">0</span><div class="knob-pagination" id="knob-4-pagination"></div></div>
 				</div>
 				<div class="knob-card-group">
 					<div class="knob-card-label">Card 2</div>
-					<div class="knob-value-item">
-						<span>K5:</span>
-						<span id="knob-5-value">0</span>
-						<div class="knob-pagination" id="knob-5-pagination"></div>
-					</div>
-					<div class="knob-value-item">
-						<span>K6:</span>
-						<span id="knob-6-value">0</span>
-						<div class="knob-pagination" id="knob-6-pagination"></div>
-					</div>
-					<div class="knob-value-item">
-						<span>K7:</span>
-						<span id="knob-7-value">0</span>
-						<div class="knob-pagination" id="knob-7-pagination"></div>
-					</div>
-					<div class="knob-value-item">
-						<span>K8:</span>
-						<span id="knob-8-value">0</span>
-						<div class="knob-pagination" id="knob-8-pagination"></div>
-					</div>
+					<div class="knob-value-item"><span>K5:</span> <span id="knob-5-value">0</span><div class="knob-pagination" id="knob-5-pagination"></div></div>
+					<div class="knob-value-item"><span>K6:</span> <span id="knob-6-value">0</span><div class="knob-pagination" id="knob-6-pagination"></div></div>
+					<div class="knob-value-item"><span>K7:</span> <span id="knob-7-value">0</span><div class="knob-pagination" id="knob-7-pagination"></div></div>
+					<div class="knob-value-item"><span>K8:</span> <span id="knob-8-value">0</span><div class="knob-pagination" id="knob-8-pagination"></div></div>
 				</div>
 				<div class="knob-card-group">
 					<div class="knob-card-label">Card 3</div>
-					<div class="knob-value-item">
-						<span>K9:</span>
-						<span id="knob-9-value">0</span>
-						<div class="knob-pagination" id="knob-9-pagination"></div>
-					</div>
-					<div class="knob-value-item">
-						<span>K10:</span>
-						<span id="knob-10-value">0</span>
-						<div class="knob-pagination" id="knob-10-pagination"></div>
-					</div>
-					<div class="knob-value-item">
-						<span>K11:</span>
-						<span id="knob-11-value">0</span>
-						<div class="knob-pagination" id="knob-11-pagination"></div>
-					</div>
-					<div class="knob-value-item">
-						<span>K12:</span>
-						<span id="knob-12-value">0</span>
-						<div class="knob-pagination" id="knob-12-pagination"></div>
-					</div>
+					<div class="knob-value-item"><span>K9:</span> <span id="knob-9-value">0</span><div class="knob-pagination" id="knob-9-pagination"></div></div>
+					<div class="knob-value-item"><span>K10:</span> <span id="knob-10-value">0</span><div class="knob-pagination" id="knob-10-pagination"></div></div>
+					<div class="knob-value-item"><span>K11:</span> <span id="knob-11-value">0</span><div class="knob-pagination" id="knob-11-pagination"></div></div>
+					<div class="knob-value-item"><span>K12:</span> <span id="knob-12-value">0</span><div class="knob-pagination" id="knob-12-pagination"></div></div>
 				</div>
 			</div>
 		</div>

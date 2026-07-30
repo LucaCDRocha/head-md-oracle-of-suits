@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="fr">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Oracle of Suits - Exhibition Display</title>
+
+		<link rel="stylesheet" type="text/css" href="style.css" />
+
+		<!-- Load Fontshare Nippo & Google Fonts Libre Franklin -->
+		<link href="https://api.fontshare.com/css?f[]=nippo" rel="stylesheet" />
+		<link rel="preconnect" href="https://fonts.googleapis.com">
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+		<link href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+		<!-- Load dependencies -->
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+	</head>
+
+	<body class="app2-standalone-body">
+		<!-- Floating cards background container for Idle state -->
+		<div id="floating-hybrids-container"></div>
+
+		<div id="display-app-wrapper">
+			<!-- Header with SF-Hybrids.png logo -->
+			<header id="display-header">
+				<img src="assets/SF-Hybrids.png" alt="Hybrids" id="display-logo" />
+			</header>
+
+			<!-- Main central cream card container -->
+			<main id="display-content-card">
+				<!-- State 1: IDLE VIEW -->
+				<section id="view-idle" class="display-state-view active">
+					<div class="idle-text-container">
+						<h1 class="text-fr-title">Bienvenue</h1>
+						<p class="text-en-sub">Welcome</p>
+					</div>
+					
+					<div class="display-qr-block">
+						<div class="qr-icon-box">
+							<div id="qr-explore-idle"></div>
+						</div>
+						<div class="qr-text-group">
+							<p class="qr-fr-label">Explorez ce qui a été réalisé</p>
+							<p class="qr-en-label">Explore what has been done</p>
+						</div>
+					</div>
+				</section>
+
+				<!-- State 2: EXPLORE VIEW -->
+				<section id="view-explore" class="display-state-view">
+					<div class="instruction-text-container">
+						<h2 class="text-fr-title">Maintenez le bouton pour mélanger les cartes</h2>
+						<p class="text-en-sub">Hold the button to merge the cards</p>
+					</div>
+				</section>
+
+				<!-- State 3: GENERATING VIEW -->
+				<section id="view-generating" class="display-state-view">
+					<div class="generating-text-container">
+						<h2 class="text-fr-title">Hybridation en progression...</h2>
+						<p class="text-en-sub">Hybridization in progress...</p>
+					</div>
+
+					<div class="progress-bar-wrapper">
+						<div class="progress-bar-track">
+							<div id="progress-bar-fill" class="progress-bar-fill"></div>
+						</div>
+					</div>
+				</section>
+
+				<!-- State 4: RESULT VIEW -->
+				<section id="view-result" class="display-state-view">
+					<div class="result-card-container">
+						<img id="result-hybrid-img" alt="Hybrid Card Result" />
+					</div>
+
+					<div class="display-qr-block result-qr-block">
+						<div class="qr-icon-box">
+							<div id="qr-download-result"></div>
+						</div>
+						<div class="qr-text-group">
+							<p class="qr-fr-label">Prenez votre hybride avec vous</p>
+							<p class="qr-en-label">Take your hybrid with you</p>
+						</div>
+					</div>
+				</section>
+			</main>
+		</div>
+
+		<!-- Load config as ES6 module -->
+		<script type="module" src="config.js"></script>
+
+		<!-- Load display script as ES6 module -->
+		<script type="module" src="display.js"></script>
+	</body>
+</html>

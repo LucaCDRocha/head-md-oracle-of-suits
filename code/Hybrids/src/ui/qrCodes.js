@@ -12,23 +12,32 @@ let currentHybridId = null;
  * Initialize QR codes with default URLs
  */
 export function initQRCodes() {
-	const viewAllURL = API_BASE + "/hybrids";
+	const viewAllURL = API_BASE ? (API_BASE.replace(/\/$/, "") + "/hybrids") : location.origin;
 
-	document.getElementById("qr-download").innerHTML = "";
-	document.getElementById("qr-view-all").innerHTML = "";
+	const qrDownloadEl = document.getElementById("qr-download");
+	const qrViewAllEl = document.getElementById("qr-view-all");
 
-	viewAllQRCode = new QRCode(document.getElementById("qr-view-all"), {
-		text: viewAllURL,
-		width: 150,
-		height: 150,
-		colorDark: "#000000",
-		colorLight: "#ffffff",
-		correctLevel: QRCode.CorrectLevel.H,
-	});
+	if (qrDownloadEl) {
+		qrDownloadEl.innerHTML = "";
+	}
 
-	const downloadContainer = document.getElementById("qr-download").closest(".qr-code-container");
-	if (downloadContainer) {
-		downloadContainer.style.visibility = "hidden";
+	if (qrViewAllEl) {
+		qrViewAllEl.innerHTML = "";
+		viewAllQRCode = new QRCode(qrViewAllEl, {
+			text: viewAllURL,
+			width: 150,
+			height: 150,
+			colorDark: "#000000",
+			colorLight: "#ffffff",
+			correctLevel: QRCode.CorrectLevel.H,
+		});
+	}
+
+	if (qrDownloadEl) {
+		const downloadContainer = qrDownloadEl.closest(".qr-code-container");
+		if (downloadContainer) {
+			downloadContainer.style.visibility = "hidden";
+		}
 	}
 }
 
@@ -40,10 +49,13 @@ export function updateDownloadQR(hybridId) {
 	if (!hybridId) return;
 
 	currentHybridId = hybridId;
-	const downloadURL = API_BASE + `/hybrids/${hybridId}`;
+	const downloadURL = API_BASE ? `${API_BASE.replace(/\/$/, "")}/hybrids/${hybridId}` : `${location.origin}/hybrids/${hybridId}`;
 
-	document.getElementById("qr-download").innerHTML = "";
-	downloadQRCode = new QRCode(document.getElementById("qr-download"), {
+	const qrDownloadEl = document.getElementById("qr-download");
+	if (!qrDownloadEl) return;
+
+	qrDownloadEl.innerHTML = "";
+	downloadQRCode = new QRCode(qrDownloadEl, {
 		text: downloadURL,
 		width: 150,
 		height: 150,
@@ -52,7 +64,7 @@ export function updateDownloadQR(hybridId) {
 		correctLevel: QRCode.CorrectLevel.H,
 	});
 
-	const downloadContainer = document.getElementById("qr-download").closest(".qr-code-container");
+	const downloadContainer = qrDownloadEl.closest(".qr-code-container");
 	if (downloadContainer) {
 		downloadContainer.style.visibility = "visible";
 	}

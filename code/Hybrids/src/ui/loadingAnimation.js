@@ -226,7 +226,7 @@ class LoadingAnimation {
 		this.startTime = Date.now();
 		this.isRunning = true;
 
-		if (!this.canvas.parentElement) {
+		if (this.container && !this.canvas.parentElement) {
 			while (this.container.firstChild) {
 				this.container.removeChild(this.container.firstChild);
 			}

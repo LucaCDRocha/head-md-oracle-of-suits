@@ -42,6 +42,7 @@ export function renderSlotUI() {
 	}
 
 	updateSelectedArea();
+	updateAllSlotPaginations();
 }
 
 /**
@@ -73,38 +74,17 @@ function createSlotElement(slot) {
 	previewDiv.id = `preview-${slot.id}`;
 
 	if (slot.selectedCard) {
-		const gameName = slot.selectedCard.game?.name || "";
-		const gameDescription = slot.selectedCard.game?.description || "";
-		previewDiv.innerHTML = `
-			<img src="${slot.selectedCard.img_src}" alt="${slot.selectedCard.name}" />
-			<div class="card-info">
-				<div class="card-name">${slot.selectedCard.name}</div>
-				${gameName ? `<div class="game-name">${gameName}</div>` : ""}
-				${gameDescription ? `<div class="game-description">${gameDescription}</div>` : ""}
-			</div>
-		`;
+		previewDiv.innerHTML = `<img src="${slot.selectedCard.img_src}" alt="${slot.selectedCard.name}" />`;
 	} else {
 		previewDiv.innerHTML = '<div class="no-card">Select filters to choose a card</div>';
 	}
 	slotDiv.appendChild(previewDiv);
 
-	// Information section
 	const infoSection = document.createElement("div");
 	infoSection.className = "slot-info";
 	infoSection.id = `info-${slot.id}`;
 
-	if (slot.selectedCard) {
-		const gameDescription = slot.selectedCard.game?.description || "No description available";
-		infoSection.innerHTML = `
-			<h4>Informations</h4>
-			<p>${gameDescription}</p>
-		`;
-	} else {
-		infoSection.innerHTML = `
-			<h4>Informations</h4>
-			<p>Select a card to view information</p>
-		`;
-	}
+	renderSlotInfoHTML(infoSection, slot);
 	slotDiv.appendChild(infoSection);
 
 	// Filters section
@@ -170,16 +150,7 @@ export function updateSlotElement(slot) {
 	const previewDiv = document.getElementById(`preview-${slot.id}`);
 	if (previewDiv) {
 		if (slot.selectedCard) {
-			const gameName = slot.selectedCard.game?.name || "";
-			const gameDescription = slot.selectedCard.game?.description || "";
-			previewDiv.innerHTML = `
-				<img src="${slot.selectedCard.img_src}" alt="${slot.selectedCard.name}" />
-				<div class="card-info">
-					<div class="card-name">${slot.selectedCard.name}</div>
-					${gameName ? `<div class="game-name">${gameName}</div>` : ""}
-					${gameDescription ? `<div class="game-description">${gameDescription}</div>` : ""}
-				</div>
-			`;
+			previewDiv.innerHTML = `<img src="${slot.selectedCard.img_src}" alt="${slot.selectedCard.name}" />`;
 		} else {
 			previewDiv.innerHTML = '<div class="no-card">Select filters to choose a card</div>';
 		}
@@ -187,18 +158,7 @@ export function updateSlotElement(slot) {
 
 	const infoDiv = document.getElementById(`info-${slot.id}`);
 	if (infoDiv) {
-		if (slot.selectedCard) {
-			const gameDescription = slot.selectedCard.game?.description || "No description available";
-			infoDiv.innerHTML = `
-				<h4>Informations</h4>
-				<p>${gameDescription}</p>
-			`;
-		} else {
-			infoDiv.innerHTML = `
-				<h4>Informations</h4>
-				<p>Select a card to view information</p>
-			`;
-		}
+		renderSlotInfoHTML(infoDiv, slot);
 	}
 
 	updateFilterSelects(slot);
@@ -519,7 +479,10 @@ export function updateSelectedArea() {
 	const selectedCards = getSelectedCards();
 	const count = selectedCards.length;
 
-	selectedArea.querySelector("h3").textContent = `Selected (${count}/3)`;
+	const h3 = selectedArea.querySelector("h3");
+	if (h3) {
+		h3.textContent = `Selected (${count}/3)`;
+	}
 
 	const btn = document.getElementById("generate-btn");
 	const btnText = document.getElementById("generate-btn-text");
@@ -630,3 +593,110 @@ export function updateKnobPagination(slotId, knobIndex, currentIndex, totalOptio
 
 	paginationEl.dataset.currentIndex = currentIndex;
 }
+
+/**
+ * Render card info & tags (Années, Jeu, Enseigne, Valeur) matching DBHybrids design
+ */
+function renderSlotInfoHTML(container, slot) {
+	if (!container) return;
+	const card = slot.selectedCard;
+
+	if (!card) {
+		container.innerHTML = `
+			<div class="card-info-columns">
+				<div class="info-col">
+					<strong>Informations - FR</strong>
+					<p>Sélectionnez une carte</p>
+				</div>
+				<div class="info-col">
+					<strong>Informations - EN</strong>
+					<p>Select a card</p>
+				</div>
+			</div>
+			<div class="card-meta-tags">
+				<div class="tag-group">
+					<div class="tag-box">-</div>
+					<span class="tag-label">Années</span>
+					<div class="knob-pagination" id="slot-${slot.id}-knob-0-pagination"></div>
+				</div>
+				<div class="tag-group">
+					<div class="tag-box">-</div>
+					<span class="tag-label">Jeu</span>
+					<div class="knob-pagination" id="slot-${slot.id}-knob-1-pagination"></div>
+				</div>
+				<div class="tag-group">
+					<div class="tag-box">-</div>
+					<span class="tag-label">Enseigne</span>
+					<div class="knob-pagination" id="slot-${slot.id}-knob-2-pagination"></div>
+				</div>
+				<div class="tag-group">
+					<div class="tag-box">-</div>
+					<span class="tag-label">Valeur</span>
+					<div class="knob-pagination" id="slot-${slot.id}-knob-3-pagination"></div>
+				</div>
+			</div>
+		`;
+		return;
+	}
+
+	const gameName = card.game?.name || "Standard";
+	const gameDesc = card.game?.description || "Tarot / Jeu traditionnel.";
+	const yearVal = slot.selectedYear || card.year || "1990";
+	const suitVal = card.suits || card.suit || "Cups";
+	const valueVal = card.value || "Queen";
+
+	container.innerHTML = `
+		<div class="card-info-columns">
+			<div class="info-col">
+				<strong>Informations - FR</strong>
+				<p>${gameDesc}</p>
+			</div>
+			<div class="info-col">
+				<strong>Informations - EN</strong>
+				<p>${gameDesc}</p>
+			</div>
+		</div>
+		<div class="card-meta-tags">
+			<div class="tag-group">
+				<div class="tag-box">${yearVal}</div>
+				<span class="tag-label">Années</span>
+				<div class="knob-pagination" id="slot-${slot.id}-knob-0-pagination"></div>
+			</div>
+			<div class="tag-group">
+				<div class="tag-box">${gameName}</div>
+				<span class="tag-label">Jeu</span>
+				<div class="knob-pagination" id="slot-${slot.id}-knob-1-pagination"></div>
+			</div>
+			<div class="tag-group">
+				<div class="tag-box">${suitVal}</div>
+				<span class="tag-label">Enseigne</span>
+				<div class="knob-pagination" id="slot-${slot.id}-knob-2-pagination"></div>
+			</div>
+			<div class="tag-group">
+				<div class="tag-box">${valueVal}</div>
+				<span class="tag-label">Valeur</span>
+				<div class="knob-pagination" id="slot-${slot.id}-knob-3-pagination"></div>
+			</div>
+		</div>
+	`;
+}
+
+export function updateAllSlotPaginations() {
+	slots.forEach((slot) => {
+		const yearRangeOptions = getYearRanges();
+		const gameOptions = getAvailableGames(slot);
+		const suitsOptions = getAvailableSuits(slot.filters);
+		const valueOptions = getAvailableValues(slot.filters);
+
+		const yearRangeIdx = yearRangeOptions.findIndex((r) => r.key === slot.filters.yearRange);
+		const gameIdx = gameOptions.indexOf(slot.filters.game);
+		const suitsIdx = suitsOptions.indexOf(slot.filters.suits);
+		const valueIdx = valueOptions.indexOf(slot.filters.value);
+
+		updateKnobPaginationIfChanged(slot.id, 0, yearRangeIdx >= 0 ? yearRangeIdx : 0, yearRangeOptions.length);
+		updateKnobPaginationIfChanged(slot.id, 1, gameIdx >= 0 ? gameIdx : 0, gameOptions.length);
+		updateKnobPaginationIfChanged(slot.id, 2, suitsIdx >= 0 ? suitsIdx : 0, suitsOptions.length);
+		updateKnobPaginationIfChanged(slot.id, 3, valueIdx >= 0 ? valueIdx : 0, valueOptions.length);
+	});
+}
+
