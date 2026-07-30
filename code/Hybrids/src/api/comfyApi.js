@@ -533,9 +533,9 @@ export async function generateImage(selected, baseCardId, statusCallback) {
 
 		let layoutProse = "";
 		if (textConfig.isTarotMajor) {
-			layoutProse = `The Primary Base Card is ${baseDesc}. All four corners are plain, clean, and unprinted. At the bottom center, a single title panel displays strictly the French Tarot title "${textConfig.bottomTitleText}".`;
+			layoutProse = `The primary card is ${baseDesc}. All four corners are plain, clean, and unprinted. At the bottom center, a single title panel displays strictly the French Tarot title "${textConfig.bottomTitleText}".`;
 		} else if (textConfig.isJoker) {
-			layoutProse = `The Primary Base Card is a Joker card. The top-left corner displays strictly the word "JOKER". All other corners are plain and unprinted.`;
+			layoutProse = `The primary card is a Joker card. The top-left corner displays strictly the word "JOKER". All other corners are plain and unprinted.`;
 		} else if (textConfig.topCornerText) {
 			let colorProse = "";
 			if (suitLower.includes("heart") || suitLower.includes("diamond") || suitLower.includes("♥") || suitLower.includes("♦")) {
@@ -552,9 +552,9 @@ export async function generateImage(selected, baseCardId, statusCallback) {
 				? `rank initial "${textConfig.rankInitial}" with the suit symbol "${textConfig.suitSymbol}" placed directly underneath it`
 				: `single index "${textConfig.topCornerText}"`;
 
-			layoutProse = `The Primary Base Card is ${baseDesc}. The top-left corner displays strictly the ${cornerDetailProse}${colorProse}. ${bottomProse} The top-right, bottom-left, and bottom-right corners are plain and unprinted.`;
+			layoutProse = `The primary card is ${baseDesc}. The top-left corner displays strictly the ${cornerDetailProse}${colorProse}. ${bottomProse} The top-right, bottom-left, and bottom-right corners are plain and unprinted.`;
 		} else {
-			layoutProse = `The Primary Base Card is ${baseDesc}. The card features a clean artwork layout with plain, unprinted borders.`;
+			layoutProse = `The primary card is ${baseDesc}. The card features a clean artwork layout with plain, unprinted borders.`;
 		}
 
 		// Detect if any selected card is a court card or character card
@@ -584,7 +584,7 @@ export async function generateImage(selected, baseCardId, statusCallback) {
 
 		// Inject clean, natural delimiters between card descriptions (only base card has identity; secondary cards supply visual motifs only)
 		if (workflow["98"]) {
-			workflow["98"].inputs.delimiter = `. Primary Base Card (${formatCardDescription(baseCard)}): `;
+			workflow["98"].inputs.delimiter = `. Primary Card (${formatCardDescription(baseCard)}): `;
 		}
 		if (workflow["101"] && otherCards[0]) {
 			workflow["101"].inputs.delimiter = `. Visual artwork elements from Secondary Card 2: `;
