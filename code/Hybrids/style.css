@@ -399,6 +399,7 @@ canvas {
 	position: relative;
 	width: 100%;
 	height: 100%;
+	padding: 24px;
 }
 
 #view-idle .idle-text-container,
@@ -511,7 +512,14 @@ canvas {
 .idle-text-container,
 .instruction-text-container,
 .generating-text-container {
-	margin-bottom: 2.5rem;
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+}
+
+#view-generating .generating-text-container {
+	height: auto;
 }
 
 /* Smart 15s Progress Bar Styling */
@@ -563,6 +571,9 @@ canvas {
 	align-items: center;
 	gap: 1.2rem;
 	padding: 12px 20px;
+	background: var(--color-white-cream);
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+	border-radius: 8px;
 }
 
 .qr-icon-box {
