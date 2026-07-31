@@ -6,7 +6,6 @@ use App\Models\Card;
 use App\Models\Game;
 use Illuminate\Database\Seeder;
 use ZipArchive;
-use SimpleXMLElement;
 
 class CardsTableSeeder extends Seeder
 {
@@ -27,46 +26,109 @@ class CardsTableSeeder extends Seeder
             return;
         }
 
-        $count = 0;
+        $excelCards = [];
         foreach ($cardsRows as $row) {
             $ref = trim($row['A'] ?? '');
-            if (empty($ref) || $ref === 'Réf.') {
-                // Skip header or empty row
-                continue;
-            }
-
-            // Extract game ID
+            if (empty($ref) || $ref === 'Réf.') continue;
+            
             $parts = explode('.', $ref);
             $gameId = (int) $parts[0];
 
-            // Verify if the game exists
-            $game = Game::find($gameId);
-            if (!$game) {
-                $this->command->warn("Game ID {$gameId} (from reference {$ref}) not found. Skipping card.");
-                continue;
-            }
-
-            $suit = trim($row['D'] ?? '');
-            $value = trim($row['E'] ?? '');
-
-            $name = $this->generateCardName($suit, $value);
-            $imgSrc = $this->findCardImage($gameId, $ref);
-
-            Card::create([
-                'name' => $name,
+            $excelCards[] = [
+                'ref' => $ref,
                 'game_id' => $gameId,
-                'suits' => $suit ?: null,
-                'value' => $value ?: null,
-                'img_src' => $imgSrc,
-                'french_suits' => $suit ?: null,
-                'french_value' => $value ?: null,
-                'french_equivalence' => $name,
-            ]);
-
-            $count++;
+                'suit' => trim($row['D'] ?? ''),
+                'value' => trim($row['E'] ?? ''),
+            ];
         }
 
-        $this->command->info("Seeded {$count} cards from Excel.");
+        $existingCards = Card::orderBy('id', 'asc')->get();
+        $usedExcelIndices = [];
+        $cardsPath = storage_path('app/public/img/cards');
+
+        // Update existing cards (preserve IDs 1..N)
+        foreach ($existingCards as $dbc) {
+            $matchedIndex = null;
+
+            if ($dbc->id == 250) {
+                foreach ($excelCards as $idx => $ec) {
+                    if (strtolower($ec['ref']) === '20.lco_3') {
+                        $matchedIndex = $idx;
+                        break;
+                    }
+                }
+            } elseif ($dbc->id == 279) {
+                foreach ($excelCards as $idx => $ec) {
+                    if (strtolower($ec['ref']) === '21.le_3') {
+                        $matchedIndex = $idx;
+                        break;
+                    }
+                }
+            } else {
+                if (!empty($dbc->img_src)) {
+                    $refFromImg = strtolower(pathinfo($dbc->img_src, PATHINFO_FILENAME));
+                    foreach ($excelCards as $idx => $ec) {
+                        if (strtolower($ec['ref']) === $refFromImg) {
+                            $matchedIndex = $idx;
+                            break;
+                        }
+                    }
+                }
+
+                if ($matchedIndex === null) {
+                    foreach ($excelCards as $idx => $ec) {
+                        if ($ec['game_id'] == $dbc->game_id && 
+                            strtolower($ec['suit']) == strtolower($dbc->suits) && 
+                            strtolower($ec['value']) == strtolower($dbc->value)) {
+                            $matchedIndex = $idx;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if ($matchedIndex !== null) {
+                $usedExcelIndices[$matchedIndex] = true;
+                $ec = $excelCards[$matchedIndex];
+
+                $name = $this->generateCardName($ec['suit'], $ec['value']);
+                $imgSrc = $this->findCardImage($ec['game_id'], $ec['ref'], $cardsPath);
+
+                $dbc->update([
+                    'name' => $name,
+                    'game_id' => $ec['game_id'],
+                    'suits' => $ec['suit'] ?: null,
+                    'value' => $ec['value'] ?: null,
+                    'img_src' => $imgSrc,
+                    'french_suits' => $ec['suit'] ?: null,
+                    'french_value' => $ec['value'] ?: null,
+                    'french_equivalence' => $name,
+                ]);
+            }
+        }
+
+        // Insert new cards
+        $newCardsCount = 0;
+        foreach ($excelCards as $idx => $ec) {
+            if (!isset($usedExcelIndices[$idx])) {
+                $name = $this->generateCardName($ec['suit'], $ec['value']);
+                $imgSrc = $this->findCardImage($ec['game_id'], $ec['ref'], $cardsPath);
+
+                Card::create([
+                    'name' => $name,
+                    'game_id' => $ec['game_id'],
+                    'suits' => $ec['suit'] ?: null,
+                    'value' => $ec['value'] ?: null,
+                    'img_src' => $imgSrc,
+                    'french_suits' => $ec['suit'] ?: null,
+                    'french_value' => $ec['value'] ?: null,
+                    'french_equivalence' => $name,
+                ]);
+                $newCardsCount++;
+            }
+        }
+
+        $this->command->info("Cards synchronization completed. Total cards: " . Card::count() . " ({$newCardsCount} new cards added).");
     }
 
     private function generateCardName($suit, $value)
@@ -101,38 +163,27 @@ class CardsTableSeeder extends Seeder
         return ucfirst($value) . ' de ' . $suit;
     }
 
-    private function findCardImage($gameId, $ref)
+    private function findCardImage($gameId, $ref, $cardsPath)
     {
-        $prefix = sprintf("%02d.", $gameId);
-        $cardsPath = storage_path('app/public/img/cards');
-        
         if (!is_dir($cardsPath)) {
             return null;
         }
+
+        $prefix = sprintf("%02d.", $gameId);
+        $prefixSingle = sprintf("%d.", $gameId);
 
         $dirs = scandir($cardsPath);
         $matchedDir = null;
         foreach ($dirs as $dir) {
             if ($dir === '.' || $dir === '..') continue;
-            if (strpos($dir, $prefix) === 0 && is_dir($cardsPath . '/' . $dir)) {
+            if ((strpos($dir, $prefix) === 0 || strpos($dir, $prefixSingle) === 0) && is_dir($cardsPath . '/' . $dir)) {
                 $matchedDir = $dir;
                 break;
             }
         }
 
         if (!$matchedDir) {
-            // Also try a single digit format like "1." just in case
-            $prefixSingle = sprintf("%d.", $gameId);
-            foreach ($dirs as $dir) {
-                if ($dir === '.' || $dir === '..') continue;
-                if (strpos($dir, $prefixSingle) === 0 && is_dir($cardsPath . '/' . $dir)) {
-                    $matchedDir = $dir;
-                    break;
-                }
-            }
-            if (!$matchedDir) {
-                return null;
-            }
+            return null;
         }
 
         $dirPath = $cardsPath . '/' . $matchedDir;
@@ -155,7 +206,6 @@ class CardsTableSeeder extends Seeder
             return [];
         }
 
-        // Load shared strings
         $sharedStrings = [];
         $sharedStringsXml = $zip->getFromName('xl/sharedStrings.xml');
         if ($sharedStringsXml) {
@@ -177,7 +227,6 @@ class CardsTableSeeder extends Seeder
             }
         }
 
-        // Load sheets info
         $sheetMap = [];
         $workbookXml = $zip->getFromName('xl/workbook.xml');
         if ($workbookXml) {

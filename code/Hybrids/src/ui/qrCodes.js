@@ -12,7 +12,7 @@ let currentHybridId = null;
  * Initialize QR codes with default URLs
  */
 export function initQRCodes() {
-	const viewAllURL = API_BASE ? (API_BASE.replace(/\/$/, "") + "/hybrids") : location.origin;
+	const viewAllURL = API_BASE ? (API_BASE.replace(/\/$/, "")) : location.origin;
 
 	const qrDownloadEl = document.getElementById("qr-download");
 	const qrViewAllEl = document.getElementById("qr-view-all");
@@ -49,7 +49,7 @@ export function updateDownloadQR(hybridId) {
 	if (!hybridId) return;
 
 	currentHybridId = hybridId;
-	const downloadURL = API_BASE ? `${API_BASE.replace(/\/$/, "")}/hybrids/${hybridId}` : `${location.origin}/hybrids/${hybridId}`;
+	const downloadURL = API_BASE ? `${API_BASE.replace(/\/$/, "")}/${hybridId}` : `${location.origin}/${hybridId}`;
 
 	const qrDownloadEl = document.getElementById("qr-download");
 	if (!qrDownloadEl) return;

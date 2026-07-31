@@ -1,4 +1,19 @@
-@import url("https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;600;700;800&display=swap");
+@font-face {
+	font-family: "Libre Franklin";
+	font-style: normal;
+	font-weight: 100 900;
+	font-display: swap;
+	src: url("./assets/fonts/LibreFranklin-VariableFont.ttf") format("truetype");
+}
+
+@font-face {
+	font-family: "Libre Franklin";
+	font-style: italic;
+	font-weight: 100 900;
+	font-display: swap;
+	src: url("./assets/fonts/LibreFranklin-Italic-VariableFont.ttf") format("truetype");
+}
+
 @import url("https://api.fontshare.com/css?f[]=nippo");
 
 /* ==========================================================================

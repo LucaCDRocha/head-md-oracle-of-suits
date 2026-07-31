@@ -502,7 +502,7 @@ async function onGenerate(bypassDebounce = false) {
         cards: selected,
         baseCardId: baseCardId,
       });
-      updateApp1State("RESULT");
+      syncBrainState("RESULT");
 
       statusCallback("Terminé!");
       isSuccess = true;
@@ -518,6 +518,7 @@ async function onGenerate(bypassDebounce = false) {
   } finally {
     isGenerating = false;
     lastGenerateTime = Date.now();
+    resetInactivityTimer();
     if (btn) {
       btn.removeAttribute("data-generating");
       const selected = getSelectedCards();

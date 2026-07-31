@@ -155,6 +155,14 @@ wss.on("connection", (ws, req) => {
 	ws.on("message", (message) => {
 		try {
 			const data = JSON.parse(message.toString());
+
+			// Respond to PING heartbeat without broadcasting
+			if (data.type === "PING") {
+				if (ws.readyState === WebSocket.OPEN) {
+					ws.send(JSON.stringify({ type: "PONG" }));
+				}
+				return;
+			}
 			
 			// Update in-memory state
 			if (data.type === "STATE_CHANGE") {
@@ -172,9 +180,6 @@ wss.on("connection", (ws, req) => {
 			} else if (data.type === "CARDS_UPDATED") {
 				currentState.selectedCards = data.selectedCards || [];
 				currentState.baseCardId = data.baseCardId || null;
-				if (currentState.state === "IDLE" && currentState.selectedCards.length > 0) {
-					currentState.state = "EXPLORE";
-				}
 			}
 
 			// Broadcast message to all connected clients

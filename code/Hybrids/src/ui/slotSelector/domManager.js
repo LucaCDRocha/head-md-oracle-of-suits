@@ -641,7 +641,7 @@ function renderSlotInfoHTML(container, slot) {
 
 	const gameName = card.game?.name || "Standard";
 	const gameDesc = card.game?.description || "Tarot / Jeu traditionnel.";
-	const yearVal = slot.selectedYear || card.year || "1990";
+	const yearVal = slot.filters?.yearRange || card.game?.year || card.year || "1950-2000";
 	const suitVal = card.suits || card.suit || "Cups";
 	const valueVal = card.value || "Queen";
 

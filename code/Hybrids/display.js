@@ -33,7 +33,7 @@ document.addEventListener("DOMContentLoaded", () => {
 function initQRCodes() {
   const qrExploreEl = document.getElementById("qr-explore-idle");
   if (qrExploreEl && window.QRCode) {
-    const galleryUrl = API_BASE ? `${API_BASE.replace(/\/$/, "")}/hybrids` : `${window.location.origin}/`;
+    const galleryUrl = API_BASE ? `${API_BASE.replace(/\/$/, "")}` : `${window.location.origin}/`;
     qrExploreEl.innerHTML = "";
     qrExploreObj = new QRCode(qrExploreEl, {
       text: galleryUrl,
@@ -62,8 +62,8 @@ function initQRCodes() {
 function updateDownloadQR(hybridId) {
   if (!qrDownloadObj) return;
   const downloadUrl = API_BASE
-    ? `${API_BASE.replace(/\/$/, "")}/hybrids/${hybridId}`
-    : `${window.location.origin}/hybrids/${hybridId}`;
+    ? `${API_BASE.replace(/\/$/, "")}/${hybridId}`
+    : `${window.location.origin}/${hybridId}`;
   qrDownloadObj.clear();
   qrDownloadObj.makeCode(downloadUrl);
 }
@@ -86,12 +86,6 @@ function initWebSocket() {
 
   wsClient.on("CARDS_UPDATED", (data) => {
     console.log("[App2 Display] CARDS_UPDATED received:", data);
-    const cards = data.selectedCards || [];
-    if (cards.length > 0 && currentState === "IDLE") {
-      setViewState("EXPLORE");
-    } else if (cards.length === 0 && currentState === "EXPLORE") {
-      setViewState("IDLE");
-    }
   });
 }
 

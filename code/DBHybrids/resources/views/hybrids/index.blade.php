@@ -13,14 +13,8 @@
         <link rel="icon" type="image/png" href="{{ asset('img/logos/favicon-fr.png') }}">
     @endif
 
-    <!-- Fonts: Nippo (Fontshare) & Libre Franklin (Google Fonts) -->
+    <!-- Fonts: Nippo (Fontshare) & Libre Franklin (Local) -->
     <link href="https://api.fontshare.com/css?f[]=nippo" rel="stylesheet" />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Libre+Franklin:ital,wght@0,300..900;1,300..900&display=swap" rel="stylesheet">
-
-    <!-- Material Symbols Rounded -->
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block" />
 
     <!-- Font loading FOUT detection -->
     <script>

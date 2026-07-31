@@ -24,12 +24,16 @@ class HybridsWSClient {
       this.ws.onopen = () => {
         console.log(`[WSClient] Connected successfully as ${this.role}`);
         this.isConnected = true;
+        this.startHeartbeat();
         this.emit("connection_change", { connected: true });
       };
 
       this.ws.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
+          if (data.type === "PONG") {
+            return; // Ignore heartbeat responses
+          }
           if (data.type) {
             this.emit(data.type, data);
           }
@@ -40,6 +44,7 @@ class HybridsWSClient {
       };
 
       this.ws.onclose = () => {
+        this.stopHeartbeat();
         if (this.isConnected) {
           console.warn("[WSClient] Connection closed. Reconnecting in 2s...");
         }
@@ -52,8 +57,25 @@ class HybridsWSClient {
         console.error("[WSClient] WebSocket error:", err);
       };
     } catch (err) {
+      this.stopHeartbeat();
       console.error("[WSClient] Failed to initialize WebSocket:", err);
       setTimeout(() => this.connect(this.role), this.reconnectInterval);
+    }
+  }
+
+  startHeartbeat() {
+    this.stopHeartbeat();
+    this.heartbeatTimer = setInterval(() => {
+      if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+        this.send({ type: "PING" });
+      }
+    }, 10000);
+  }
+
+  stopHeartbeat() {
+    if (this.heartbeatTimer) {
+      clearInterval(this.heartbeatTimer);
+      this.heartbeatTimer = null;
     }
   }
 
