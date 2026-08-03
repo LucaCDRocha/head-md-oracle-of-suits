@@ -21,6 +21,8 @@ function drawVintageCard(ctx, artworkImage, rank, suit, suitColor = CARD_COLORS.
     ctx.roundRect(0, 0, cardW, cardH, cardRadius);
     ctx.fill();
     ctx.restore();
+    const isPlayingCard = cardType === 'playing_card' && (rank || suit);
+    const isJoker = (rank || '').toUpperCase().trim().includes('JOKER');
 
     // Frame Dimensions & Notch Sizes
     const margin = 72;
@@ -29,10 +31,8 @@ function drawVintageCard(ctx, artworkImage, rank, suit, suitColor = CARD_COLORS.
     const frameW = cardW - (margin * 2);
     const frameH = cardH - (margin * 2);
     const nw = 125; // Notch width
-    const nh = 215; // Notch height
+    const nh = isJoker ? 530 : 215; // Expanded notch height for Joker to fit full-size stacked letters
     const r = 20;  // Corner rounding radius
-
-    const isPlayingCard = cardType === 'playing_card' && (rank || suit);
 
     // 2. Create Inner Frame Path
     let framePath = new Path2D();
@@ -40,31 +40,14 @@ function drawVintageCard(ctx, artworkImage, rank, suit, suitColor = CARD_COLORS.
     if (isPlayingCard) {
         // Smooth Rounded 8-Point Notched Path for Playing Cards
         framePath.moveTo(frameX + nw + r, frameY);
-
-        // Top Edge -> Top-Right Outer Corner
         framePath.arcTo(frameX + frameW, frameY, frameX + frameW, frameY + r, r);
-
-        // Right Edge -> Bottom-Right Notch Outer Step-In Corner
         framePath.arcTo(frameX + frameW, frameY + frameH - nh, frameX + frameW - r, frameY + frameH - nh, r);
-
-        // Bottom-Right Notch -> Inner Corner -> Step-Down
         framePath.arcTo(frameX + frameW - nw, frameY + frameH - nh, frameX + frameW - nw, frameY + frameH - nh + r, r);
-
-        // Bottom-Right Notch -> Bottom Edge Outer Corner
         framePath.arcTo(frameX + frameW - nw, frameY + frameH, frameX + frameW - nw - r, frameY + frameH, r);
-
-        // Bottom Edge -> Bottom-Left Outer Corner
         framePath.arcTo(frameX, frameY + frameH, frameX, frameY + frameH - r, r);
-
-        // Left Edge -> Top-Left Notch Outer Step-In Corner
         framePath.arcTo(frameX, frameY + nh, frameX + r, frameY + nh, r);
-
-        // Top-Left Notch -> Inner Corner -> Step-Up
         framePath.arcTo(frameX + nw, frameY + nh, frameX + nw, frameY + nh - r, r);
-
-        // Top-Left Notch -> Top Edge Outer Corner
         framePath.arcTo(frameX + nw, frameY, frameX + nw + r, frameY, r);
-
         framePath.closePath();
     } else {
         // Standard Rounded Rectangle Frame for Tarot Cards (No Corner Cutouts)
@@ -95,61 +78,101 @@ function drawVintageCard(ctx, artworkImage, rank, suit, suitColor = CARD_COLORS.
     if (isPlayingCard) {
         ctx.fillStyle = suitColor;
 
-        const fontRankSize = 95;
-        const fontSuitSize = 65;
-        const lineSpacing = 6;
-        const edgeOffset = 50; // Distance from suit symbol to inner artwork border lines
+        if (isJoker) {
+            // Joker Layout: Aligned directly to top and left outer notch border lines
+            const jokerLetters = ['J', 'O', 'K', 'E', 'R'];
+            const jokerFontSize = 95;
+            const letterSpacing = 95;
 
-        if (suit) {
-            // Top-Left Index (relative to frameX, frameY)
-            const suitX = frameX + nw - edgeOffset - (fontSuitSize / 2);
-            const suitY = frameY + nh - edgeOffset - (fontSuitSize / 2);
-
-            const rankX = frameX + nw - edgeOffset;
-            const rankY = suitY - (fontSuitSize / 2) - lineSpacing - fontRankSize;
-
-            ctx.font = `bold ${fontRankSize}px "Nippo", "Times New Roman", serif`;
-            ctx.textAlign = 'right';
+            ctx.font = `bold ${jokerFontSize}px "Nippo", "Times New Roman", serif`;
+            ctx.textAlign = 'left';
             ctx.textBaseline = 'top';
-            ctx.fillText(rank, rankX, rankY);
 
-            drawSuitSymbol(ctx, suit, suitX, suitY, fontSuitSize, suitColor);
+            // Top-Left Index 
+            // FIX: Set exactly to frameX and frameY (removing the + 35 offset)
+            const jx = frameX; 
+            const startY = frameY; 
 
-            // Bottom-Right Rotated Index (180° rotated relative to frameX + frameW, frameY + frameH)
+            for (let i = 0; i < jokerLetters.length; i++) {
+                ctx.fillText(jokerLetters[i], jx, startY + (i * letterSpacing));
+            }
+
+            // Bottom-Right Rotated Index (180° rotated point-reflection)
             ctx.save();
             ctx.translate(frameX + frameW, frameY + frameH);
             ctx.rotate(Math.PI);
 
-            const rotSuitX = nw - edgeOffset - (fontSuitSize / 2);
-            const rotSuitY = nh - edgeOffset - (fontSuitSize / 2);
+            // FIX: Set relative origin offsets to 0 (removing the 35 offset)
+            const rotJx = 0; 
+            const rotStartY = 0; 
 
-            const rotRankX = nw - edgeOffset;
-            const rotRankY = rotSuitY - (fontSuitSize / 2) - lineSpacing - fontRankSize;
-
-            ctx.font = `bold ${fontRankSize}px "Nippo", "Times New Roman", serif`;
-            ctx.textAlign = 'right';
-            ctx.textBaseline = 'top';
-            ctx.fillText(rank, rotRankX, rotRankY);
-
-            drawSuitSymbol(ctx, suit, rotSuitX, rotSuitY, fontSuitSize, suitColor);
-            ctx.restore();
+            for (let i = 0; i < jokerLetters.length; i++) {
+                ctx.fillText(jokerLetters[i], rotJx, rotStartY + (i * letterSpacing));
+            }
             ctx.restore();
         } else {
-            // No Suit Symbol: Center Rank inside cutout box using Nippo font
-            ctx.font = `bold ${fontRankSize + 12}px "Nippo", "Times New Roman", serif`;
-            ctx.textAlign = 'left';
-            ctx.textBaseline = 'top';
-            ctx.fillText(rank, frameX + paddingX, frameY + paddingY);
+            const fontRankSize = 95;
+            const fontSuitSize = 65;
+            const lineSpacing = 6;
+            const edgeOffset = 50; // Distance from suit symbol to inner artwork border lines
 
-            // Draw Bottom-Right Rotated Index
-            ctx.save();
-            ctx.translate(frameX + frameW, frameY + frameH);
-            ctx.rotate(Math.PI);
-            ctx.font = `bold ${fontRankSize + 12}px "Nippo", "Times New Roman", serif`;
-            ctx.textAlign = 'left';
-            ctx.textBaseline = 'top';
-            ctx.fillText(rank, paddingX, paddingY);
-            ctx.restore();
+            if (suit) {
+                // Top-Left Index: Center rank horizontally with suit symbol center (fixes '10' centering)
+                const suitX = frameX + nw - edgeOffset - (fontSuitSize / 2);
+                const suitY = frameY + nh - edgeOffset - (fontSuitSize / 2);
+
+                const rankX = suitX; // Centered with suit symbol
+                const rankY = suitY - (fontSuitSize / 2) - lineSpacing - fontRankSize;
+
+                ctx.font = `bold ${fontRankSize}px "Nippo", "Times New Roman", serif`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'top';
+                ctx.fillText(rank, rankX, rankY);
+
+                drawSuitSymbol(ctx, suit, suitX, suitY, fontSuitSize, suitColor);
+
+                // Bottom-Right Rotated Index (180° rotated relative to frameX + frameW, frameY + frameH)
+                ctx.save();
+                ctx.translate(frameX + frameW, frameY + frameH);
+                ctx.rotate(Math.PI);
+
+                const rotSuitX = nw - edgeOffset - (fontSuitSize / 2);
+                const rotSuitY = nh - edgeOffset - (fontSuitSize / 2);
+
+                const rotRankX = rotSuitX; // Centered with rotated suit symbol
+                const rotRankY = rotSuitY - (fontSuitSize / 2) - lineSpacing - fontRankSize;
+
+                ctx.font = `bold ${fontRankSize}px "Nippo", "Times New Roman", serif`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'top';
+                ctx.fillText(rank, rotRankX, rotRankY);
+
+                drawSuitSymbol(ctx, suit, rotSuitX, rotSuitY, fontSuitSize, suitColor);
+                ctx.restore();
+            } else {
+                // No Suit Symbol: Center Rank horizontally inside cutout box
+                const rankX = frameX + (nw / 2) - 10;
+                const rankY = frameY + (nh / 2) - (fontRankSize / 2);
+
+                ctx.font = `bold ${fontRankSize + 12}px "Nippo", "Times New Roman", serif`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'top';
+                ctx.fillText(rank, rankX, rankY);
+
+                // Draw Bottom-Right Rotated Index
+                ctx.save();
+                ctx.translate(frameX + frameW, frameY + frameH);
+                ctx.rotate(Math.PI);
+
+                const rotRankX = (nw / 2) - 10;
+                const rotRankY = (nh / 2) - (fontRankSize / 2);
+
+                ctx.font = `bold ${fontRankSize + 12}px "Nippo", "Times New Roman", serif`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'top';
+                ctx.fillText(rank, rotRankX, rotRankY);
+                ctx.restore();
+            }
         }
     } else if (cardType === 'tarot' || tarotName || tarotNumber) {
         // Draw Tarot Number Banner on Top Margin (centered)
