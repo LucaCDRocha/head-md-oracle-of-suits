@@ -1,5 +1,6 @@
 import wsClient from "./src/network/wsClient.js";
-import { API_BASE } from "./config.js";
+import { API_BASE, DEBUG } from "./config.js";
+import { compositeCardCanvas } from "./src/utils/cardCanvas.js";
 
 // State elements
 const views = {
@@ -28,6 +29,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initWebSocket();
   fetchAndRenderFloatingCards();
   setViewState("IDLE");
+  initDebugPanel();
 });
 
 function initQRCodes() {
@@ -332,4 +334,211 @@ async function fetchAndRenderFloatingCards(forceReRender = false) {
   });
 
   isFloatingCardsRendered = true;
+}
+
+// ── Interactive Debug Layout Tester Panel ──
+const isDebugActive = () => DEBUG === true || window.location.search.includes("debug=true") || window.ENV?.DEBUG === true;
+
+const TAROT_PRESETS = [
+  { num: "XXI", name: "LE MONDE" },
+  { num: "XX", name: "LE JUGEMENT" },
+  { num: "XIX", name: "LE SOLEIL" },
+  { num: "XVIII", name: "LA LUNE" },
+  { num: "XVII", name: "L'ÉTOILE" },
+  { num: "XVI", name: "LA MAISON DIEU" },
+  { num: "XV", name: "LE DIABLE" },
+  { num: "XIV", name: "LA TEMPÉRANCE" },
+  { num: "XIII", name: "LA MORT" },
+  { num: "XII", name: "LE PENDU" },
+  { num: "XI", name: "LA FORCE" },
+  { num: "X", name: "L'ROUE DE FORTUNE" },
+  { num: "IX", name: "L'ERMITE" },
+  { num: "VIII", name: "LA JUSTICE" },
+  { num: "VII", name: "LE CHARIOT" },
+  { num: "VI", name: "L'AMOUREUX" },
+  { num: "V", name: "LE PAPE" },
+  { num: "IV", name: "L'EMPEREUR" },
+  { num: "III", name: "L'IMPÉRATRICE" },
+  { num: "II", name: "LA PAPESSE" },
+  { num: "I", name: "LE BATELEUR" },
+  { num: "0", name: "LE MAT" },
+];
+
+function initDebugPanel() {
+  if (!isDebugActive()) return;
+
+  const panel = document.createElement("div");
+  panel.id = "debug-layout-panel";
+  panel.innerHTML = `
+    <div class="dbg-panel-header">
+      <span>🛠 Canvas Layout & Suit Tester</span>
+      <span style="font-size:0.75rem; color:#10b981; font-weight: bold;">DEBUG ACTIVE</span>
+    </div>
+    <div class="dbg-panel-body">
+      <div class="dbg-preview-box">
+        <img id="debug-canvas-preview" alt="Canvas Layout Live Preview" />
+      </div>
+      
+      <div class="dbg-row">
+        <div class="dbg-field-group">
+          <label>Card Type</label>
+          <select id="dbg-card-type">
+            <option value="playing_card" selected>Playing Card</option>
+            <option value="tarot">Tarot Card</option>
+          </select>
+        </div>
+        <div class="dbg-field-group">
+          <label>Suit Symbol</label>
+          <select id="dbg-suit">
+            <option value="spades">♠ Spades (Pique)</option>
+            <option value="hearts" selected>♥ Hearts (Cœur)</option>
+            <option value="diamonds">♦ Diamonds (Carreau)</option>
+            <option value="clubs">♣ Clubs (Trèfle)</option>
+            <option value="swords">⚔ Swords (Épée)</option>
+            <option value="cups">🍷 Cups (Coupe)</option>
+            <option value="coins">🪙 Coins (Denier)</option>
+            <option value="wands">🦯 Wands (Bâton)</option>
+            <option value="shields">🛡 Shields (Bouclier)</option>
+            <option value="acorns">🌰 Acorns (Gland)</option>
+            <option value="bells">🔔 Bells (Grelot)</option>
+            <option value="roses">🌹 Roses (Rose)</option>
+            <option value="leaves">🍃 Leaves (Feuille)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="dbg-row">
+        <div class="dbg-field-group">
+          <label>Rank / Value</label>
+          <select id="dbg-rank">
+            <option value="A" selected>A (Ace)</option>
+            <option value="K">K (King / Roi)</option>
+            <option value="Q">Q (Queen / Reine)</option>
+            <option value="C">C (Cavalier / Knight)</option>
+            <option value="J">J (Jack / Valet)</option>
+            <option value="10">10</option>
+            <option value="9">9</option>
+            <option value="8">8</option>
+            <option value="7">7</option>
+            <option value="6">6</option>
+            <option value="5">5</option>
+            <option value="4">4</option>
+            <option value="3">3</option>
+            <option value="2">2</option>
+            <option value="1">1</option>
+            <option value="O">O (Ober)</option>
+            <option value="U">U (Unter)</option>
+            <option value="JOKER">JOKER</option>
+          </select>
+        </div>
+        <div class="dbg-field-group">
+          <label>Tarot Number</label>
+          <select id="dbg-tarot-num">
+            ${TAROT_PRESETS.map(t => `<option value="${t.num}" ${t.num === 'XXI' ? 'selected' : ''}>${t.num}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+
+      <div class="dbg-field-group">
+        <label>Tarot Title Name</label>
+        <select id="dbg-tarot-name">
+          ${TAROT_PRESETS.map(t => `<option value="${t.name}" ${t.name === 'LE MONDE' ? 'selected' : ''}>${t.num} - ${t.name}</option>`).join('')}
+        </select>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(panel);
+
+  const previewImg = document.getElementById("debug-canvas-preview");
+  const cardTypeEl = document.getElementById("dbg-card-type");
+  const suitEl = document.getElementById("dbg-suit");
+  const rankEl = document.getElementById("dbg-rank");
+  const tarotNumEl = document.getElementById("dbg-tarot-num");
+  const tarotNameEl = document.getElementById("dbg-tarot-name");
+
+  // Create neutral sample artwork base64 background
+  const sampleCanvas = document.createElement("canvas");
+  sampleCanvas.width = 1200;
+  sampleCanvas.height = 1600;
+  const sCtx = sampleCanvas.getContext("2d");
+  sCtx.fillStyle = "#EAE4D8";
+  sCtx.fillRect(0, 0, 1200, 1600);
+  sCtx.fillStyle = "#B5A795";
+  sCtx.font = "bold 50px sans-serif";
+  sCtx.textAlign = "center";
+  sCtx.textBaseline = "middle";
+  sCtx.fillText("SAMPLE ARTWORK AREA", 600, 800);
+  const sampleBase64 = sampleCanvas.toDataURL("image/png");
+
+  // Enable mouse wheel scrolling over select elements to cycle values
+  function enableScrollOnSelect(selectEl) {
+    selectEl.addEventListener("wheel", (e) => {
+      e.preventDefault();
+      const options = selectEl.options;
+      if (options.length === 0) return;
+
+      let newIndex = selectEl.selectedIndex + (e.deltaY > 0 ? 1 : -1);
+      if (newIndex < 0) newIndex = 0;
+      if (newIndex >= options.length) newIndex = options.length - 1;
+
+      if (newIndex !== selectEl.selectedIndex) {
+        selectEl.selectedIndex = newIndex;
+        selectEl.dispatchEvent(new Event("change"));
+      }
+    }, { passive: false });
+  }
+
+  [cardTypeEl, suitEl, rankEl, tarotNumEl, tarotNameEl].forEach(enableScrollOnSelect);
+
+  // Sync Tarot Name -> Tarot Number & Card Type
+  tarotNameEl.addEventListener("change", () => {
+    const found = TAROT_PRESETS.find(t => t.name === tarotNameEl.value);
+    if (found) {
+      tarotNumEl.value = found.num;
+    }
+    cardTypeEl.value = "tarot";
+    updateDebugPreview();
+  });
+
+  tarotNumEl.addEventListener("change", () => {
+    const found = TAROT_PRESETS.find(t => t.num === tarotNumEl.value);
+    if (found) {
+      tarotNameEl.value = found.name;
+    }
+    cardTypeEl.value = "tarot";
+    updateDebugPreview();
+  });
+
+  rankEl.addEventListener("change", () => {
+    cardTypeEl.value = "playing_card";
+    updateDebugPreview();
+  });
+
+  suitEl.addEventListener("change", () => {
+    cardTypeEl.value = "playing_card";
+    updateDebugPreview();
+  });
+
+  cardTypeEl.addEventListener("change", updateDebugPreview);
+
+  async function updateDebugPreview() {
+    const cardType = cardTypeEl.value;
+    const suit = suitEl.value;
+    const rank = rankEl.value;
+    const tarotNumber = tarotNumEl.value;
+    const tarotName = tarotNameEl.value;
+
+    const resultBase64 = await compositeCardCanvas(sampleBase64, {
+      cardType,
+      rank,
+      suit,
+      tarotNumber,
+      tarotName,
+    });
+
+    previewImg.src = resultBase64.startsWith("data:") ? resultBase64 : "data:image/png;base64," + resultBase64;
+  }
+
+  updateDebugPreview();
 }

@@ -320,14 +320,28 @@ function getExactCardTextConfig(baseCard) {
 	else if (valLower === "ober") rankInitial = "O";
 	else if (valLower === "unter") rankInitial = "U";
 
-	// Suit symbol mapping
+	// Suit symbol / key normalization map covering all suit categories in database
 	const suitSymbolMap = {
-		"spades": "♠", "pique": "♠", "piques": "♠", "♠": "♠",
-		"hearts": "♥", "cœur": "♥", "cœurs": "♥", "coeur": "♥", "♥": "♥",
-		"diamonds": "♦", "carreau": "♦", "carreaux": "♦", "♦": "♦",
-		"clubs": "♣", "trèfle": "♣", "trèfles": "♣", "trefle": "♣", "trefles": "♣", "club": "♣", "♣": "♣"
+		// French standard suits
+		"spades": "spades", "pique": "spades", "piques": "spades", "♠": "spades",
+		"hearts": "hearts", "cœur": "hearts", "cœurs": "hearts", "coeur": "hearts", "coeurs": "hearts", "♥": "hearts",
+		"diamonds": "diamonds", "carreau": "diamonds", "carreaux": "diamonds", "♦": "diamonds",
+		"clubs": "clubs", "trèfle": "clubs", "trèfles": "clubs", "trefle": "clubs", "trefles": "clubs", "club": "clubs", "♣": "clubs",
+		
+		// Latin / Tarot suits
+		"swords": "swords", "épée": "swords", "épées": "swords", "epée": "swords", "epee": "swords", "epees": "swords", "sword": "swords", "⚔": "swords",
+		"cups": "cups", "coupe": "cups", "coupes": "cups", "cup": "cups", "🏆": "cups",
+		"coins": "coins", "denier": "coins", "deniers": "coins", "pentacles": "coins", "pentacle": "coins", "coin": "coins", "🪙": "coins",
+		"wands": "wands", "bâton": "wands", "bâtons": "wands", "baton": "wands", "batons": "wands", "staves": "wands", "wand": "wands",
+		
+		// Swiss / German suits
+		"shields": "shields", "bouclier": "shields", "boucliers": "shields", "shield": "shields", "🛡": "shields",
+		"acorns": "acorns", "gland": "acorns", "glands": "acorns", "eichel": "acorns", "acorn": "acorns", "🌰": "acorns",
+		"bells": "bells", "grelot": "bells", "grelots": "bells", "schellen": "bells", "bell": "bells", "🔔": "bells",
+		"roses": "roses", "rose": "roses", "rosen": "roses", "🌹": "roses",
+		"leaves": "leaves", "feuille": "leaves", "feuilles": "leaves", "laub": "leaves", "grün": "leaves", "grun": "leaves", "leaf": "leaves", "🍃": "leaves"
 	};
-	const suitSymbol = suitSymbolMap[suitLowerRaw] || "";
+	const suitSymbol = suitSymbolMap[suitLowerRaw] || suitLowerRaw;
 
 	let topCornerText = "";
 	let bottomTitleText = "";

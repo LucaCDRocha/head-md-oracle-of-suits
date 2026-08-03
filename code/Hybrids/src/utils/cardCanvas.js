@@ -1,12 +1,83 @@
+
 /**
  * cardCanvas.js
  * Programmatic Canvas compositing for playing cards and tarot cards.
  * - Playing Cards: Smooth rounded 8-point notched inner frame with Top-Left and 180° rotated Bottom-Right index cutouts.
  * - Tarot Cards: Standard rounded rectangle frame with NO corner notches.
- * - Typography: Centered vertically in cutout box if suit symbol is absent.
  * - Image Rendering: 1.08x subtle zoom-in to eliminate raw image edges.
  */
-function drawVintageCard(ctx, artworkImage, rank, suit, suitColor = '#2B2B2B', tarotName = '', cardType = 'playing_card', tarotNumber = '') {
+
+// ── Single Source of Truth: Dynamic SVG Path2D Cache from assets/suits/*.svg ──
+const SVG_PATH2D_CACHE = {};
+
+function getCanonicalSuitKey(suitKey) {
+    const key = (suitKey || "").toLowerCase().trim();
+    if (key === '♠' || key === 'pique' || key === 'piques' || key === 'spades' || key === 'spade') return 'spades';
+    if (key === '♥' || key === 'coeur' || key === 'cœur' || key === 'coeurs' || key === 'cœurs' || key === 'hearts' || key === 'heart') return 'hearts';
+    if (key === '♦' || key === 'carreau' || key === 'carreaux' || key === 'diamonds' || key === 'diamond') return 'diamonds';
+    if (key === '♣' || key === 'trefle' || key === 'trèfle' || key === 'trefles' || key === 'trèfles' || key === 'club' || key === 'clubs') return 'clubs';
+    if (key === 'épée' || key === 'épées' || key === 'epee' || key === 'epees' || key === 'sword' || key === 'swords') return 'swords';
+    if (key === 'coupe' || key === 'coupes' || key === 'cup' || key === 'cups') return 'cups';
+    if (key === 'denier' || key === 'deniers' || key === 'pentacle' || key === 'pentacles' || key === 'coin' || key === 'coins') return 'coins';
+    if (key === 'baton' || key === 'batons' || key === 'bâton' || key === 'bâtons' || key === 'wand' || key === 'wands' || key === 'staves' || key === 'rods') return 'wands';
+    if (key === 'bouclier' || key === 'boucliers' || key === 'shield' || key === 'shields') return 'shields';
+    if (key === 'gland' || key === 'glands' || key === 'eichel' || key === 'acorn' || key === 'acorns') return 'acorns';
+    if (key === 'grelot' || key === 'grelots' || key === 'schellen' || key === 'bell' || key === 'bells') return 'bells';
+    if (key === 'rose' || key === 'rosen' || key === 'roses') return 'roses';
+    if (key === 'feuille' || key === 'feuilles' || key === 'laub' || key === 'leaf' || key === 'leaves') return 'leaves';
+    return key;
+}
+
+async function getSuitPath2D(canonicalKey) {
+    if (!canonicalKey) return null;
+    if (SVG_PATH2D_CACHE[canonicalKey] !== undefined) {
+        return SVG_PATH2D_CACHE[canonicalKey];
+    }
+
+    try {
+        const response = await fetch(`./assets/suits/${canonicalKey}.svg`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const text = await response.text();
+        const matches = Array.from(text.matchAll(/d=["']([^"']+)["']/g));
+        if (matches.length > 0) {
+            const combinedD = matches.map(m => m[1]).join(' ');
+            const path = new Path2D(combinedD);
+            SVG_PATH2D_CACHE[canonicalKey] = path;
+            return path;
+        }
+    } catch (err) {
+        console.warn(`Could not load SVG asset for suit '${canonicalKey}':`, err);
+    }
+
+    SVG_PATH2D_CACHE[canonicalKey] = null;
+    return null;
+}
+
+function drawSuitSymbol(ctx, suitKey, x, y, size = 44, color = '#2B2B2B') {
+    const canonicalKey = getCanonicalSuitKey(suitKey);
+    const path = SVG_PATH2D_CACHE[canonicalKey];
+
+    if (path) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.fillStyle = color;
+        ctx.strokeStyle = color;
+        const scale = size / 100;
+        ctx.scale(scale, scale);
+        ctx.fill(path);
+        ctx.restore();
+    } else {
+        ctx.save();
+        ctx.font = `${size * 0.8}px "Segoe UI Symbol", "Apple Color Emoji", "Nippo", "Times New Roman", serif`;
+        ctx.fillStyle = color;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(suitKey, x, y);
+        ctx.restore();
+    }
+}
+
+function drawVintageCard(ctx, artworkImage, rank, suit, suitColor = '#2B2B2B', tarotName = '', cardType = 'playing_card', tarotNumber = '') {
     const cardW = 1200;
     const cardH = 1600;
 
@@ -19,15 +90,15 @@
     ctx.fill();
     ctx.restore();
 
-    // Frame Dimensions & Notch Sizes (Adjusted to accommodate larger Nippo typography)
-    const margin = 80;
+    // Frame Dimensions & Notch Sizes
+    const margin = 72;
     const frameX = margin;
     const frameY = margin;
     const frameW = cardW - (margin * 2);
     const frameH = cardH - (margin * 2);
-    const nw = 140; // Enlarged Notch width
-    const nh = 180; // Enlarged Notch height
-    const r = 24;  // Corner rounding radius
+    const nw = 125; // Notch width
+    const nh = 215; // Notch height
+    const r = 20;  // Corner rounding radius
 
     const isPlayingCard = cardType === 'playing_card' && (rank || suit);
 
@@ -88,57 +159,64 @@
     ctx.stroke(framePath);
     ctx.restore();
 
-    // 5. Render Dynamic Typography using enlarged Nippo font
+    // 5. Render Dynamic Typography using Nippo font & custom vector suit symbols
     if (isPlayingCard) {
         ctx.fillStyle = suitColor;
-        ctx.textAlign = 'center';
 
-        const fontRankSize = 92;
-        const fontSuitSize = 72;
-        const lineSpacing = 8;
-        const totalHeight = fontRankSize + lineSpacing + fontSuitSize;
+        const fontRankSize = 95;
+        const fontSuitSize = 65;
+        const lineSpacing = 6;
+        const edgeOffset = 50; // Distance from suit symbol to inner artwork border lines
 
         if (suit) {
-            // Calculate Top-Left Notch centered block Y start
-            const blockCenterY = frameY + (nh / 2);
-            const rankY = blockCenterY - (totalHeight / 2);
-            const suitY = rankY + fontRankSize + lineSpacing;
+            // Top-Left Index (relative to frameX, frameY)
+            const suitX = frameX + nw - edgeOffset - (fontSuitSize / 2);
+            const suitY = frameY + nh - edgeOffset - (fontSuitSize / 2);
 
-            // Draw Top-Left Index (Rank + Suit centered together in Nippo)
+            const rankX = frameX + nw - edgeOffset;
+            const rankY = suitY - (fontSuitSize / 2) - lineSpacing - fontRankSize;
+
             ctx.font = `bold ${fontRankSize}px "Nippo", "Times New Roman", serif`;
+            ctx.textAlign = 'right';
             ctx.textBaseline = 'top';
-            ctx.fillText(rank, frameX + (nw / 2), rankY);
+            ctx.fillText(rank, rankX, rankY);
 
-            ctx.font = `${fontSuitSize}px "Segoe UI Symbol", "Apple Color Emoji", "Nippo", "Times New Roman", serif`;
-            ctx.textBaseline = 'top';
-            ctx.fillText(suit, frameX + (nw / 2), suitY);
+            drawSuitSymbol(ctx, suit, suitX, suitY, fontSuitSize, suitColor);
 
-            // Draw Bottom-Right Rotated Index (Rank + Suit centered together in Nippo)
+            // Bottom-Right Rotated Index (180° rotated relative to frameX + frameW, frameY + frameH)
             ctx.save();
-            ctx.translate(frameX + frameW - (nw / 2), frameY + frameH - (nh / 2));
+            ctx.translate(frameX + frameW, frameY + frameH);
             ctx.rotate(Math.PI);
-            
-            ctx.font = `bold ${fontRankSize}px "Nippo", "Times New Roman", serif`;
-            ctx.textBaseline = 'top';
-            ctx.fillText(rank, 0, -(totalHeight / 2));
 
-            ctx.font = `${fontSuitSize}px "Segoe UI Symbol", "Apple Color Emoji", "Nippo", "Times New Roman", serif`;
+            const rotSuitX = nw - edgeOffset - (fontSuitSize / 2);
+            const rotSuitY = nh - edgeOffset - (fontSuitSize / 2);
+
+            const rotRankX = nw - edgeOffset;
+            const rotRankY = rotSuitY - (fontSuitSize / 2) - lineSpacing - fontRankSize;
+
+            ctx.font = `bold ${fontRankSize}px "Nippo", "Times New Roman", serif`;
+            ctx.textAlign = 'right';
             ctx.textBaseline = 'top';
-            ctx.fillText(suit, 0, -(totalHeight / 2) + fontRankSize + lineSpacing);
+            ctx.fillText(rank, rotRankX, rotRankY);
+
+            drawSuitSymbol(ctx, suit, rotSuitX, rotSuitY, fontSuitSize, suitColor);
+            ctx.restore();
             ctx.restore();
         } else {
-            // No Suit Symbol: Center Rank vertically inside the enlarged cutout box using Nippo font
+            // No Suit Symbol: Center Rank inside cutout box using Nippo font
             ctx.font = `bold ${fontRankSize + 12}px "Nippo", "Times New Roman", serif`;
-            ctx.textBaseline = 'middle';
-            ctx.fillText(rank, frameX + (nw / 2), frameY + (nh / 2));
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'top';
+            ctx.fillText(rank, frameX + paddingX, frameY + paddingY);
 
-            // Draw Bottom-Right Rotated Index (centered vertically in Nippo)
+            // Draw Bottom-Right Rotated Index
             ctx.save();
-            ctx.translate(frameX + frameW - (nw / 2), frameY + frameH - (nh / 2));
+            ctx.translate(frameX + frameW, frameY + frameH);
             ctx.rotate(Math.PI);
             ctx.font = `bold ${fontRankSize + 12}px "Nippo", "Times New Roman", serif`;
-            ctx.textBaseline = 'middle';
-            ctx.fillText(rank, 0, 0);
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'top';
+            ctx.fillText(rank, paddingX, paddingY);
             ctx.restore();
         }
     } else if (cardType === 'tarot' || tarotName || tarotNumber) {
@@ -198,6 +276,10 @@ export async function compositeCardCanvas(rawBase64, typographyInfo = {}) {
 	if (!rawBase64) return rawBase64;
 
 	const { cardType = 'playing_card', rank = '', suit = '', tarotName = '', tarotNumber = '' } = typographyInfo;
+	const canonicalKey = getCanonicalSuitKey(suit);
+
+	// Preload suit SVG Path2D from assets/suits/*.svg
+	await getSuitPath2D(canonicalKey);
 
 	return new Promise((resolve) => {
 		const img = new Image();
@@ -211,7 +293,7 @@ export async function compositeCardCanvas(rawBase64, typographyInfo = {}) {
 				const ctx = canvas.getContext("2d");
 
 				const suitClean = (suit || "").trim();
-				const isRed = suitClean === "♥" || suitClean === "♦" || suitClean.toLowerCase().includes("heart") || suitClean.toLowerCase().includes("diamond") || suitClean.toLowerCase().includes("cœur") || suitClean.toLowerCase().includes("carreau");
+				const isRed = suitClean === "♥" || suitClean === "♦" || suitClean.toLowerCase().includes("heart") || suitClean.toLowerCase().includes("diamond") || suitClean.toLowerCase().includes("cœur") || suitClean.toLowerCase().includes("carreau") || canonicalKey === "hearts" || canonicalKey === "diamonds" || canonicalKey === "roses";
 				const suitColor = isRed ? "#C81E1E" : "#2B2B2B";
 
 				drawVintageCard(ctx, img, rank, suitClean, suitColor, tarotName, cardType, tarotNumber);
