@@ -6,8 +6,7 @@
  * - Typography: Centered vertically in cutout box if suit symbol is absent.
  * - Image Rendering: 1.08x subtle zoom-in to eliminate raw image edges.
  */
-
-function drawVintageCard(ctx, artworkImage, rank, suit, suitColor = '#2B2B2B', tarotName = '', cardType = 'playing_card') {
+function drawVintageCard(ctx, artworkImage, rank, suit, suitColor = '#2B2B2B', tarotName = '', cardType = 'playing_card', tarotNumber = '') {
     const cardW = 1200;
     const cardH = 1600;
 
@@ -142,35 +141,63 @@ function drawVintageCard(ctx, artworkImage, rank, suit, suitColor = '#2B2B2B', t
             ctx.fillText(rank, 0, 0);
             ctx.restore();
         }
-    } else if (tarotName) {
-        // Draw Tarot Title Banner on Bottom Margin using Nippo font
-        ctx.save();
-        ctx.fillStyle = '#F4F0E8';
-        const bannerW = Math.min(800, frameW - 40);
-        const bannerH = 76;
-        const bannerX = (cardW - bannerW) / 2;
-        const bannerY = frameY + frameH - bannerH / 2;
+    } else if (cardType === 'tarot' || tarotName || tarotNumber) {
+        // Draw Tarot Number Banner on Top Margin (centered)
+        if (tarotNumber) {
+            ctx.save();
+            ctx.font = 'bold 38px "Nippo", "Cinzel", "Times New Roman", serif';
+            const numText = tarotNumber.toUpperCase();
+            const textMetrics = ctx.measureText(numText);
+            const numBannerW = Math.max(130, textMetrics.width + 52);
+            const numBannerH = 64;
+            const numBannerX = (cardW - numBannerW) / 2;
+            const numBannerY = frameY - (numBannerH / 2);
 
-        ctx.beginPath();
-        ctx.roundRect(bannerX, bannerY, bannerW, bannerH, 16);
-        ctx.fill();
-        ctx.strokeStyle = '#2B2B2B';
-        ctx.lineWidth = 4;
-        ctx.stroke();
+            ctx.fillStyle = '#F4F0E8';
+            ctx.beginPath();
+            ctx.roundRect(numBannerX, numBannerY, numBannerW, numBannerH, 14);
+            ctx.fill();
+            ctx.strokeStyle = '#2B2B2B';
+            ctx.lineWidth = 4;
+            ctx.stroke();
 
-        ctx.fillStyle = '#2B2B2B';
-        ctx.font = 'bold 40px "Nippo", "Cinzel", "Times New Roman", serif';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(tarotName.toUpperCase(), cardW / 2, bannerY + bannerH / 2);
-        ctx.restore();
+            ctx.fillStyle = '#2B2B2B';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(numText, cardW / 2, numBannerY + (numBannerH / 2));
+            ctx.restore();
+        }
+
+        // Draw Tarot Title Banner on Bottom Margin (centered, name ONLY without number)
+        if (tarotName) {
+            ctx.save();
+            ctx.fillStyle = '#F4F0E8';
+            const bannerW = Math.min(840, frameW - 40);
+            const bannerH = 76;
+            const bannerX = (cardW - bannerW) / 2;
+            const bannerY = frameY + frameH - (bannerH / 2);
+
+            ctx.beginPath();
+            ctx.roundRect(bannerX, bannerY, bannerW, bannerH, 16);
+            ctx.fill();
+            ctx.strokeStyle = '#2B2B2B';
+            ctx.lineWidth = 4;
+            ctx.stroke();
+
+            ctx.fillStyle = '#2B2B2B';
+            ctx.font = 'bold 40px "Nippo", "Cinzel", "Times New Roman", serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(tarotName.toUpperCase(), cardW / 2, bannerY + (bannerH / 2));
+            ctx.restore();
+        }
     }
 }
 
 export async function compositeCardCanvas(rawBase64, typographyInfo = {}) {
 	if (!rawBase64) return rawBase64;
 
-	const { cardType = 'playing_card', rank = '', suit = '', tarotName = '' } = typographyInfo;
+	const { cardType = 'playing_card', rank = '', suit = '', tarotName = '', tarotNumber = '' } = typographyInfo;
 
 	return new Promise((resolve) => {
 		const img = new Image();
@@ -187,7 +214,7 @@ export async function compositeCardCanvas(rawBase64, typographyInfo = {}) {
 				const isRed = suitClean === "♥" || suitClean === "♦" || suitClean.toLowerCase().includes("heart") || suitClean.toLowerCase().includes("diamond") || suitClean.toLowerCase().includes("cœur") || suitClean.toLowerCase().includes("carreau");
 				const suitColor = isRed ? "#C81E1E" : "#2B2B2B";
 
-				drawVintageCard(ctx, img, rank, suitClean, suitColor, tarotName, cardType);
+				drawVintageCard(ctx, img, rank, suitClean, suitColor, tarotName, cardType, tarotNumber);
 
 				const dataUrl = canvas.toDataURL("image/png");
 				const base64 = dataUrl.includes(",") ? dataUrl.split(",")[1] : dataUrl;

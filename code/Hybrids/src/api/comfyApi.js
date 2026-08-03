@@ -263,33 +263,33 @@ function translateTerm(term, map) {
 	return map[key] || term;
 }
 
-// ── French Tarot Major Arcana Titles ──
-const TAROT_FRENCH_TITLES = {
-	"0": "LE MAT",
-	"excuse": "LE MAT",
-	"fou": "LE MAT",
-	"mat": "LE MAT",
-	"1": "I - LE BATELEUR",
-	"2": "II - LA PAPESSE",
-	"3": "III - L'IMPÉRATRICE",
-	"4": "IV - L'EMPEREUR",
-	"5": "V - LE PAPE",
-	"6": "VI - L'AMOUREUX",
-	"7": "VII - LE CHARIOT",
-	"8": "VIII - LA JUSTICE",
-	"9": "IX - L'ERMITE",
-	"10": "X - LA ROUE DE FORTUNE",
-	"11": "XI - LA FORCE",
-	"12": "XII - LE PENDU",
-	"13": "XIII - LA MORT",
-	"14": "XIV - LA TEMPÉRANCE",
-	"15": "XV - LE DIABLE",
-	"16": "XVI - LA MAISON DIEU",
-	"17": "XVII - L'ÉTOILE",
-	"18": "XVIII - LA LUNE",
-	"19": "XIX - LE SOLEIL",
-	"20": "XX - LE JUGEMENT",
-	"21": "XXI - LE MONDE"
+// ── French Tarot Major Arcana Titles & Roman Numerals ──
+const TAROT_MAJOR_ARCANA = {
+	"0":       { num: "0",    name: "LE MAT" },
+	"excuse":  { num: "0",    name: "LE MAT" },
+	"fou":     { num: "0",    name: "LE MAT" },
+	"mat":     { num: "0",    name: "LE MAT" },
+	"1":       { num: "I",    name: "LE BATELEUR" },
+	"2":       { num: "II",   name: "LA PAPESSE" },
+	"3":       { num: "III",  name: "L'IMPÉRATRICE" },
+	"4":       { num: "IV",   name: "L'EMPEREUR" },
+	"5":       { num: "V",    name: "LE PAPE" },
+	"6":       { num: "VI",   name: "L'AMOUREUX" },
+	"7":       { num: "VII",  name: "LE CHARIOT" },
+	"8":       { num: "VIII", name: "LA JUSTICE" },
+	"9":       { num: "IX",   name: "L'ERMITE" },
+	"10":      { num: "X",    name: "LA ROUE DE FORTUNE" },
+	"11":      { num: "XI",   name: "LA FORCE" },
+	"12":      { num: "XII",  name: "LE PENDU" },
+	"13":      { num: "XIII", name: "LA MORT" },
+	"14":      { num: "XIV",  name: "LA TEMPÉRANCE" },
+	"15":      { num: "XV",   name: "LE DIABLE" },
+	"16":      { num: "XVI",  name: "LA MAISON DIEU" },
+	"17":      { num: "XVII", name: "L'ÉTOILE" },
+	"18":      { num: "XVIII",name: "LA LUNE" },
+	"19":      { num: "XIX",  name: "LE SOLEIL" },
+	"20":      { num: "XX",   name: "LE JUGEMENT" },
+	"21":      { num: "XXI",  name: "LE MONDE" }
 };
 
 /**
@@ -331,6 +331,7 @@ function getExactCardTextConfig(baseCard) {
 
 	let topCornerText = "";
 	let bottomTitleText = "";
+	let tarotNumber = "";
 	let isTarotMajor = false;
 
 	if (isJoker) {
@@ -338,11 +339,14 @@ function getExactCardTextConfig(baseCard) {
 	} else if (isTarotAtout || (isTarotGame && (suitLowerRaw === "" || suitLowerRaw === "atout"))) {
 		// Major Arcana (Atout)
 		const cleanKey = valLower.replace(/^atout\s*/, "");
-		if (TAROT_FRENCH_TITLES[cleanKey]) {
+		if (TAROT_MAJOR_ARCANA[cleanKey]) {
 			isTarotMajor = true;
-			bottomTitleText = TAROT_FRENCH_TITLES[cleanKey];
+			tarotNumber = TAROT_MAJOR_ARCANA[cleanKey].num;
+			bottomTitleText = TAROT_MAJOR_ARCANA[cleanKey].name;
 		} else if (rawVal) {
-			bottomTitleText = rawVal.toUpperCase();
+			isTarotMajor = true;
+			tarotNumber = rawVal.match(/^(?:atout\s*)?([IVXLCDM0-9]+)/i)?.[1] || "";
+			bottomTitleText = rawVal.replace(/^(?:atout\s*)?(?:[IVXLCDM0-9]+[\s\-:]*)?/i, "").toUpperCase() || rawVal.toUpperCase();
 		}
 	} else {
 		// Minor Arcana or Standard Card (e.g. 3 of Diamonds / 3 de Carreau, incluso en mazos de Tarot)
@@ -355,17 +359,18 @@ function getExactCardTextConfig(baseCard) {
 		isJoker,
 		rankInitial,
 		suitSymbol,
+		tarotNumber,
 		topCornerText,
 		bottomTitleText
 	};
 }
 
 /**
- * Extracts typography settings (cardType, rank, suit, tarotName) for cardCanvas compositing.
+ * Extracts typography settings (cardType, rank, suit, tarotName, tarotNumber) for cardCanvas compositing.
  */
 export function getCardTypographyInfo(baseCard) {
 	if (!baseCard) {
-		return { cardType: 'playing_card', rank: '', suit: '', tarotName: '' };
+		return { cardType: 'playing_card', rank: '', suit: '', tarotName: '', tarotNumber: '' };
 	}
 
 	const config = getExactCardTextConfig(baseCard);
@@ -375,6 +380,7 @@ export function getCardTypographyInfo(baseCard) {
 			cardType: 'tarot',
 			rank: '',
 			suit: '',
+			tarotNumber: config.tarotNumber,
 			tarotName: config.bottomTitleText
 		};
 	}
@@ -383,6 +389,7 @@ export function getCardTypographyInfo(baseCard) {
 		cardType: 'playing_card',
 		rank: config.rankInitial,
 		suit: config.suitSymbol,
+		tarotNumber: '',
 		tarotName: ''
 	};
 }
