@@ -7,8 +7,7 @@
  * - Image Rendering: 1.08x subtle zoom-in to eliminate raw image edges.
  */
 
-// ── Single Source of Truth: Dynamic SVG Path2D Cache from assets/suits/*.svg ──
-const SVG_PATH2D_CACHE = {};
+const SVG_IMAGE_CACHE = {};
 
 function getCanonicalSuitKey(suitKey) {
     const key = (suitKey || "").toLowerCase().trim();
@@ -28,43 +27,236 @@ function getCanonicalSuitKey(suitKey) {
     return key;
 }
 
-async function getSuitPath2D(canonicalKey) {
-    if (!canonicalKey) return null;
-    if (SVG_PATH2D_CACHE[canonicalKey] !== undefined) {
-        return SVG_PATH2D_CACHE[canonicalKey];
-    }
+// ── Suit Key Normalization & Custom Vector Suit Path Renderer ──
+const SUIT_VECTOR_PATHS = {
+    // ♠ Spades
+    spades: (ctx, s) => {
+        ctx.beginPath();
+        ctx.moveTo(0, -s * 0.45);
+        ctx.bezierCurveTo(s * 0.15, -s * 0.20, s * 0.48, 0, s * 0.48, s * 0.22);
+        ctx.bezierCurveTo(s * 0.48, s * 0.38, s * 0.30, s * 0.45, s * 0.12, s * 0.36);
+        ctx.bezierCurveTo(s * 0.06, s * 0.33, s * 0.02, s * 0.28, 0, s * 0.26);
+        ctx.bezierCurveTo(-s * 0.02, s * 0.28, -s * 0.06, s * 0.33, -s * 0.12, s * 0.36);
+        ctx.bezierCurveTo(-s * 0.30, s * 0.45, -s * 0.48, s * 0.38, -s * 0.48, s * 0.22);
+        ctx.bezierCurveTo(-s * 0.48, 0, -s * 0.15, -s * 0.20, 0, -s * 0.45);
+        ctx.closePath();
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(-s * 0.04, s * 0.20);
+        ctx.bezierCurveTo(-s * 0.04, s * 0.35, -s * 0.20, s * 0.46, -s * 0.24, s * 0.48);
+        ctx.lineTo(s * 0.24, s * 0.48);
+        ctx.bezierCurveTo(s * 0.20, s * 0.46, s * 0.04, s * 0.35, s * 0.04, s * 0.20);
+        ctx.closePath();
+        ctx.fill();
+    },
 
-    try {
-        const response = await fetch(`./assets/suits/${canonicalKey}.svg`);
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const text = await response.text();
-        const matches = Array.from(text.matchAll(/d=["']([^"']+)["']/g));
-        if (matches.length > 0) {
-            const combinedD = matches.map(m => m[1]).join(' ');
-            const path = new Path2D(combinedD);
-            SVG_PATH2D_CACHE[canonicalKey] = path;
-            return path;
+    // ♥ Hearts
+    hearts: (ctx, s) => {
+        ctx.beginPath();
+        ctx.moveTo(0, s * 0.45);
+        ctx.bezierCurveTo(-s * 0.02, s * 0.42, -s * 0.48, s * 0.12, -s * 0.48, -s * 0.18);
+        ctx.bezierCurveTo(-s * 0.48, -s * 0.38, -s * 0.28, -s * 0.48, -s * 0.08, -s * 0.42);
+        ctx.bezierCurveTo(-s * 0.02, -s * 0.40, 0, -s * 0.32, 0, -s * 0.32);
+        ctx.bezierCurveTo(0, -s * 0.32, s * 0.02, -s * 0.40, s * 0.08, -s * 0.42);
+        ctx.bezierCurveTo(s * 0.28, -s * 0.48, s * 0.48, -s * 0.38, s * 0.48, -s * 0.18);
+        ctx.bezierCurveTo(s * 0.48, s * 0.12, s * 0.02, s * 0.42, 0, s * 0.45);
+        ctx.closePath();
+        ctx.fill();
+    },
+
+    // ♦ Diamonds
+    diamonds: (ctx, s) => {
+        ctx.beginPath();
+        ctx.moveTo(0, -s * 0.48);
+        ctx.lineTo(s * 0.38, 0);
+        ctx.lineTo(0, s * 0.48);
+        ctx.lineTo(-s * 0.38, 0);
+        ctx.closePath();
+        ctx.fill();
+    },
+
+    // ♣ Clubs
+    clubs: (ctx, s) => {
+        ctx.beginPath(); ctx.arc(0, -s * 0.22, s * 0.20, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(-s * 0.22, s * 0.10, s * 0.20, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(s * 0.22, s * 0.10, s * 0.20, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(0, 0, s * 0.12, 0, Math.PI * 2); ctx.fill(); // Fills the center hole completely
+        ctx.beginPath();
+        ctx.moveTo(-s * 0.04, s * 0.10);
+        ctx.bezierCurveTo(-s * 0.04, s * 0.32, -s * 0.22, s * 0.45, -s * 0.24, s * 0.48);
+        ctx.lineTo(s * 0.24, s * 0.48);
+        ctx.bezierCurveTo(s * 0.22, s * 0.45, s * 0.04, s * 0.32, s * 0.04, s * 0.10);
+        ctx.closePath();
+        ctx.fill();
+    },
+
+    // ⚔ Swords
+    swords: (ctx, s) => {
+        ctx.beginPath();
+        ctx.moveTo(0, -s * 0.48);
+        ctx.lineTo(s * 0.10, -s * 0.25);
+        ctx.lineTo(s * 0.09, s * 0.20);
+        ctx.lineTo(s * 0.30, s * 0.20);
+        ctx.lineTo(s * 0.30, s * 0.27);
+        ctx.lineTo(s * 0.07, s * 0.27);
+        ctx.lineTo(s * 0.06, s * 0.42);
+        ctx.arc(0, s * 0.46, s * 0.07, 0, Math.PI * 2);
+        ctx.lineTo(-s * 0.06, s * 0.42);
+        ctx.lineTo(-s * 0.07, s * 0.27);
+        ctx.lineTo(-s * 0.30, s * 0.27);
+        ctx.lineTo(-s * 0.30, s * 0.20);
+        ctx.lineTo(-s * 0.09, s * 0.20);
+        ctx.lineTo(-s * 0.10, -s * 0.25);
+        ctx.closePath();
+        ctx.fill();
+    },
+
+    // 🏆 Cups
+    cups: (ctx, s) => {
+        ctx.beginPath();
+        ctx.moveTo(-s * 0.36, -s * 0.42);
+        ctx.lineTo(s * 0.36, -s * 0.42);
+        ctx.bezierCurveTo(s * 0.34, -s * 0.10, s * 0.20, s * 0.10, s * 0.08, s * 0.15);
+        ctx.lineTo(s * 0.08, s * 0.28);
+        ctx.lineTo(s * 0.28, s * 0.42);
+        ctx.lineTo(s * 0.28, s * 0.48);
+        ctx.lineTo(-s * 0.28, s * 0.48);
+        ctx.lineTo(-s * 0.28, s * 0.42);
+        ctx.lineTo(-s * 0.08, s * 0.28);
+        ctx.lineTo(-s * 0.08, s * 0.15);
+        ctx.bezierCurveTo(-s * 0.20, s * 0.10, -s * 0.34, -s * 0.10, -s * 0.36, -s * 0.42);
+        ctx.closePath();
+        ctx.fill();
+    },
+
+    // 🪙 Coins
+    coins: (ctx, s) => {
+        ctx.beginPath(); ctx.arc(0, 0, s * 0.46, 0, Math.PI * 2); ctx.fill();
+        ctx.save();
+        ctx.fillStyle = '#F4F0E8';
+        ctx.beginPath(); ctx.arc(0, 0, s * 0.36, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = ctx.strokeStyle || '#2B2B2B';
+        const rOuter = s * 0.26;
+        const rInner = s * 0.11;
+        ctx.beginPath();
+        for (let i = 0; i < 10; i++) {
+            const r = (i % 2 === 0) ? rOuter : rInner;
+            const angle = (i * Math.PI) / 5 - Math.PI / 2;
+            const x = r * Math.cos(angle);
+            const y = r * Math.sin(angle);
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
         }
-    } catch (err) {
-        console.warn(`Could not load SVG asset for suit '${canonicalKey}':`, err);
-    }
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+    },
 
-    SVG_PATH2D_CACHE[canonicalKey] = null;
+    // 🦯 Wands
+    wands: (ctx, s) => {
+        ctx.beginPath();
+        ctx.moveTo(-s * 0.09, -s * 0.46);
+        ctx.bezierCurveTo(s * 0.08, -s * 0.20, -s * 0.06, s * 0.10, s * 0.08, s * 0.46);
+        ctx.lineTo(s * 0.18, s * 0.46);
+        ctx.bezierCurveTo(s * 0.04, s * 0.10, s * 0.18, -s * 0.20, s * 0.01, -s * 0.46);
+        ctx.closePath();
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(s * 0.04, -s * 0.35);
+        ctx.bezierCurveTo(s * 0.28, -s * 0.42, s * 0.38, -s * 0.25, s * 0.22, -s * 0.20);
+        ctx.closePath();
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(-s * 0.03, -s * 0.15);
+        ctx.bezierCurveTo(-s * 0.28, -s * 0.22, -s * 0.38, -s * 0.05, -s * 0.22, 0);
+        ctx.closePath();
+        ctx.fill();
+    },
+
+    // 🛡 Shields
+    shields: (ctx, s) => {
+        ctx.beginPath();
+        ctx.moveTo(-s * 0.38, -s * 0.44);
+        ctx.lineTo(s * 0.38, -s * 0.44);
+        ctx.bezierCurveTo(s * 0.40, -s * 0.10, s * 0.36, s * 0.20, 0, s * 0.48);
+        ctx.bezierCurveTo(-s * 0.36, s * 0.20, -s * 0.40, -s * 0.10, -s * 0.38, -s * 0.44);
+        ctx.closePath();
+        ctx.fill();
+    },
+
+    // 🌰 Acorns
+    acorns: (ctx, s) => {
+        ctx.beginPath();
+        ctx.moveTo(-s * 0.32, -s * 0.24);
+        ctx.lineTo(s * 0.32, -s * 0.24);
+        ctx.bezierCurveTo(s * 0.34, -s * 0.10, s * 0.28, 0, 0, 0);
+        ctx.bezierCurveTo(-s * 0.28, 0, -s * 0.34, -s * 0.10, -s * 0.32, -s * 0.24);
+        ctx.closePath();
+        ctx.fill();
+        ctx.beginPath();
+        ctx.rect(-s * 0.04, -s * 0.48, s * 0.08, s * 0.24);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(-s * 0.28, 0);
+        ctx.bezierCurveTo(-s * 0.32, s * 0.20, -s * 0.20, s * 0.42, 0, s * 0.48);
+        ctx.bezierCurveTo(s * 0.20, s * 0.42, s * 0.32, s * 0.20, s * 0.28, 0);
+        ctx.closePath();
+        ctx.fill();
+    },
+
+    // 🔔 Bells
+    bells: (ctx, s) => {
+        ctx.beginPath(); ctx.arc(0, -s * 0.34, s * 0.12, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(0, s * 0.08, s * 0.38, 0, Math.PI * 2); ctx.fill();
+        ctx.save();
+        ctx.fillStyle = '#F4F0E8';
+        ctx.beginPath(); ctx.rect(-s * 0.28, s * 0.08, s * 0.56, s * 0.08); ctx.fill();
+        ctx.restore();
+    },
+
+    // 🌹 Roses
+    roses: (ctx, s) => {
+        for (let i = 0; i < 5; i++) {
+            const angle = (i * 2 * Math.PI) / 5 - Math.PI / 2;
+            const px = s * 0.22 * Math.cos(angle);
+            const py = s * 0.22 * Math.sin(angle);
+            ctx.beginPath();
+            ctx.arc(px, py, s * 0.18, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        ctx.save();
+        ctx.fillStyle = '#F4F0E8';
+        ctx.beginPath(); ctx.arc(0, 0, s * 0.12, 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
+    },
+
+    // 🍃 Leaves
+    leaves: (ctx, s) => {
+        ctx.beginPath();
+        ctx.moveTo(0, -s * 0.48);
+        ctx.bezierCurveTo(s * 0.30, -s * 0.30, s * 0.42, -s * 0.05, s * 0.24, s * 0.25);
+        ctx.bezierCurveTo(s * 0.15, s * 0.38, s * 0.04, s * 0.44, 0, s * 0.48);
+        ctx.bezierCurveTo(-s * 0.04, s * 0.44, -s * 0.15, s * 0.38, -s * 0.24, s * 0.25);
+        ctx.bezierCurveTo(-s * 0.42, -s * 0.05, -s * 0.30, -s * 0.30, 0, -s * 0.48);
+        ctx.closePath();
+        ctx.fill();
+    }
+};
+
+function getSuitPath2D(canonicalKey) {
     return null;
 }
 
 function drawSuitSymbol(ctx, suitKey, x, y, size = 44, color = '#2B2B2B') {
     const canonicalKey = getCanonicalSuitKey(suitKey);
-    const path = SVG_PATH2D_CACHE[canonicalKey];
+    const drawFn = SUIT_VECTOR_PATHS[canonicalKey];
 
-    if (path) {
+    if (drawFn) {
         ctx.save();
         ctx.translate(x, y);
         ctx.fillStyle = color;
         ctx.strokeStyle = color;
-        const scale = size / 100;
-        ctx.scale(scale, scale);
-        ctx.fill(path);
+        drawFn(ctx, size);
         ctx.restore();
     } else {
         ctx.save();
