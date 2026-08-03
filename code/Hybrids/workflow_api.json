@@ -58,7 +58,7 @@
         "123",
         0
       ],
-      "delimiter": "Card 1: "
+      "delimiter": " "
     },
     "class_type": "StringConcatenate",
     "_meta": {
@@ -125,7 +125,7 @@
         "124",
         0
       ],
-      "delimiter": ", combined with elements of Card 2: "
+      "delimiter": " "
     },
     "class_type": "StringConcatenate",
     "_meta": {
@@ -142,7 +142,7 @@
         "125",
         0
       ],
-      "delimiter": ", and Card 3: "
+      "delimiter": " "
     },
     "class_type": "StringConcatenate",
     "_meta": {
@@ -163,7 +163,7 @@
   },
   "112": {
     "inputs": {
-      "value": "A high-quality full-bleed portrait illustration of a single playing card or tarot card in a 3:4 aspect ratio. The image seamlessly inherits the outer border frame and style from Primary Card 1. In the central artwork space, an imaginative, dynamic, and fluid hybrid scene creatively merges, overlaps, and reimagines the visual elements, figures, clothing, props, and motifs from three sources:"
+      "value": "A full-bleed artwork illustration covering 100% of the image surface from edge to edge. An imaginative, dynamic, and fluid hybrid scene creatively merges, overlaps, and reimagines the visual elements, figures, clothing, props, and motifs from three sources:"
     },
     "class_type": "PrimitiveStringMultiline",
     "_meta": {
@@ -176,7 +176,7 @@
         "102",
         0
       ],
-      "string_b": ". Expressive angles, overlapping motifs, surreal combinations, and fluid artistic arrangements seamlessly blend all three sources into a striking cohesive masterpiece. Rendered in a refined vintage editorial illustration style with crisp line art, detailed garment patterns, a rich balanced color palette, and soft ambient lighting.",
+      "string_b": ". Expressive angles, overlapping motifs, surreal combinations, and fluid artistic arrangements seamlessly blend all three sources into a striking cohesive masterpiece. Rendered in a refined vintage editorial illustration style with crisp line art, detailed garment patterns, a rich balanced color palette, and soft ambient lighting. The four corners, outer edges, and entire canvas surface are continuously filled with full-bleed background scenery, smooth color gradients, continuous line art, and detailed environmental textures. The background and lower sections are filled with continuous atmospheric scenery, detailed environmental elements, flowing decorative patterns, and pure painted textures.",
       "delimiter": ""
     },
     "class_type": "StringConcatenate",
@@ -223,11 +223,11 @@
         "96",
         2
       ],
-      "regex_pattern": "(?i)\\b(The image is a (playing|tarot) card( illustration| from the [^.]+ series)?|It is a rectangular card[^.]*|The card (is rectangular|features)[^.]*|The text (on the card|reads|says|is)[^.]*|There (are|is) (text|letters|words|numbers|digits|roman numerals|captions|inscriptions|labels|banners|ribbons|monograms|watermarks|signatures|initials)[^.]*|(with|has|showing|featuring) (a|the|some)?\\s*(text|letter|word|number|digit|roman numeral|caption|inscription|label|banner|ribbon|monogram|watermark|signature|initials|stamp)[^.]*|(the|a|capital)?\\s*(letter|number|digit|word)\\s+[a-zA-Z0-9]+[^.]*|(a|the)?\\s*(spade|heart|diamond|club|spades|hearts|diamonds|clubs)\\s*(symbol|shape|icon|mark|in the corner|pip)?[^.]*|(a|the)?\\s*(monogram|watermark|signature|initials|printer stamp|maker stamp)[^.]*|upside[- ]down[^.]*|mirrored( image)?[^.]*|inverted (figure|image|head|body|face)?[^.]*|reversed (figure|image|head|body|face)?[^.]*|reflected (figure|image|head|body|face)?[^.]*|bottom half[^.]*|(second|duplicate|double-headed) (head|face|figure|body|person)[^.]*|there is a [a-z]+ border[^.]*|with a [a-z]+ background[^.]*|in a cursive font)\\b\\.?",
+      "regex_pattern": "(?i)[^.!?]*\\b(cards?|spades?|hearts?|diamonds?|clubs?|pips?|playing[- ]card|tarot[- ]card|borders?|frames?|margins?|outlines?|corners?|indices|index|notches?|text|words?|letters?|numbers?|digits?|numerals?|captions?|labels?|banners?|titles?|inscriptions?|writings?|fonts?|symbols?|monograms?|watermarks?|signatures?|stamps?|rectangles?|rectangular|panels?|queen|king|jack|valet|ace|joker|fool|bateleur|papesse|empress|emperor|pope|chariot|hermit|atout|roman|written|reads|saying|labeled|titled|name|named)\\b[^.!?]*[.!?]?",
       "replace": "",
       "case_insensitive": true,
-      "multiline": false,
-      "dotall": false,
+      "multiline": true,
+      "dotall": true,
       "count": 0
     },
     "class_type": "RegexReplace",
@@ -241,11 +241,11 @@
         "99",
         2
       ],
-      "regex_pattern": "(?i)\\b(The image is a (playing|tarot) card( illustration| from the [^.]+ series)?|It is a rectangular card[^.]*|The card (is rectangular|features)[^.]*|The text (on the card|reads|says|is)[^.]*|There (are|is) (text|letters|words|numbers|digits|roman numerals|captions|inscriptions|labels|banners|ribbons|monograms|watermarks|signatures|initials)[^.]*|(with|has|showing|featuring) (a|the|some)?\\s*(text|letter|word|number|digit|roman numeral|caption|inscription|label|banner|ribbon|monogram|watermark|signature|initials|stamp)[^.]*|(the|a|capital)?\\s*(letter|number|digit|word)\\s+[a-zA-Z0-9]+[^.]*|(a|the)?\\s*(spade|heart|diamond|club|spades|hearts|diamonds|clubs)\\s*(symbol|shape|icon|mark|in the corner|pip)?[^.]*|(a|the)?\\s*(monogram|watermark|signature|initials|printer stamp|maker stamp)[^.]*|upside[- ]down[^.]*|mirrored( image)?[^.]*|inverted (figure|image|head|body|face)?[^.]*|reversed (figure|image|head|body|face)?[^.]*|reflected (figure|image|head|body|face)?[^.]*|bottom half[^.]*|(second|duplicate|double-headed) (head|face|figure|body|person)[^.]*|there is a [a-z]+ border[^.]*|with a [a-z]+ background[^.]*|in a cursive font)\\b\\.?",
+      "regex_pattern": "(?i)[^.!?]*\\b(cards?|spades?|hearts?|diamonds?|clubs?|pips?|playing[- ]card|tarot[- ]card|borders?|frames?|margins?|outlines?|corners?|indices|index|notches?|text|words?|letters?|numbers?|digits?|numerals?|captions?|labels?|banners?|titles?|inscriptions?|writings?|fonts?|symbols?|monograms?|watermarks?|signatures?|stamps?|rectangles?|rectangular|panels?|queen|king|jack|valet|ace|joker|fool|bateleur|papesse|empress|emperor|pope|chariot|hermit|atout|roman|written|reads|saying|labeled|titled|name|named)\\b[^.!?]*[.!?]?",
       "replace": "",
       "case_insensitive": true,
-      "multiline": false,
-      "dotall": false,
+      "multiline": true,
+      "dotall": true,
       "count": 0
     },
     "class_type": "RegexReplace",
@@ -259,11 +259,11 @@
         "100",
         2
       ],
-      "regex_pattern": "(?i)\\b(The image is a (playing|tarot) card( illustration| from the [^.]+ series)?|It is a rectangular card[^.]*|The card (is rectangular|features)[^.]*|The text (on the card|reads|says|is)[^.]*|There (are|is) (text|letters|words|numbers|digits|roman numerals|captions|inscriptions|labels|banners|ribbons|monograms|watermarks|signatures|initials)[^.]*|(with|has|showing|featuring) (a|the|some)?\\s*(text|letter|word|number|digit|roman numeral|caption|inscription|label|banner|ribbon|monogram|watermark|signature|initials|stamp)[^.]*|(the|a|capital)?\\s*(letter|number|digit|word)\\s+[a-zA-Z0-9]+[^.]*|(a|the)?\\s*(spade|heart|diamond|club|spades|hearts|diamonds|clubs)\\s*(symbol|shape|icon|mark|in the corner|pip)?[^.]*|(a|the)?\\s*(monogram|watermark|signature|initials|printer stamp|maker stamp)[^.]*|upside[- ]down[^.]*|mirrored( image)?[^.]*|inverted (figure|image|head|body|face)?[^.]*|reversed (figure|image|head|body|face)?[^.]*|reflected (figure|image|head|body|face)?[^.]*|bottom half[^.]*|(second|duplicate|double-headed) (head|face|figure|body|person)[^.]*|there is a [a-z]+ border[^.]*|with a [a-z]+ background[^.]*|in a cursive font)\\b\\.?",
+      "regex_pattern": "(?i)[^.!?]*\\b(cards?|spades?|hearts?|diamonds?|clubs?|pips?|playing[- ]card|tarot[- ]card|borders?|frames?|margins?|outlines?|corners?|indices|index|notches?|text|words?|letters?|numbers?|digits?|numerals?|captions?|labels?|banners?|titles?|inscriptions?|writings?|fonts?|symbols?|monograms?|watermarks?|signatures?|stamps?|rectangles?|rectangular|panels?|queen|king|jack|valet|ace|joker|fool|bateleur|papesse|empress|emperor|pope|chariot|hermit|atout|roman|written|reads|saying|labeled|titled|name|named)\\b[^.!?]*[.!?]?",
       "replace": "",
       "case_insensitive": true,
-      "multiline": false,
-      "dotall": false,
+      "multiline": true,
+      "dotall": true,
       "count": 0
     },
     "class_type": "RegexReplace",

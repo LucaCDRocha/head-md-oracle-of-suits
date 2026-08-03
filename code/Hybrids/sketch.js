@@ -20,6 +20,8 @@ import { DEBUG, DEV_MODE } from "./config.js";
 import soundEffects from "./src/audio/soundEffects.js";
 import LoadingAnimation from "./src/ui/loadingAnimation.js";
 import wsClient from "./src/network/wsClient.js";
+import { getCardTypographyInfo } from "./src/api/comfyApi.js";
+import { compositeCardCanvas } from "./src/utils/cardCanvas.js";
 
 let canvas;
 let lastGeneratedBase64 = null;
@@ -465,13 +467,17 @@ async function onGenerate(bypassDebounce = false) {
       lastGeneratedBase64 = null;
       isSuccess = true;
     } else {
-      lastGeneratedBase64 = base64;
+      statusCallback("Application des bordures et de la typographie...");
+      const baseCardObj = selected.find((c) => c.id === baseCardId) || selected[0];
+      const typographyInfo = getCardTypographyInfo(baseCardObj);
+      const compositedBase64 = await compositeCardCanvas(base64, typographyInfo);
+      lastGeneratedBase64 = compositedBase64;
 
       await new Promise((resolve) => setTimeout(resolve, 500));
       soundEffects.playCompleteSound();
       await new Promise((resolve) => setTimeout(resolve, 300));
 
-      const dataUrl = "data:image/png;base64," + base64;
+      const dataUrl = "data:image/png;base64," + compositedBase64;
       const imgEl = document.getElementById("generated-img");
       if (imgEl) {
         imgEl.src = dataUrl;
@@ -485,7 +491,7 @@ async function onGenerate(bypassDebounce = false) {
 
       statusCallback("Envoi au serveur...");
       const uploadResult = await uploadHybridBase64(
-        base64,
+        compositedBase64,
         selected,
         baseCardId,
         statusCallback
@@ -497,7 +503,7 @@ async function onGenerate(bypassDebounce = false) {
       }
 
       wsClient.sendHybridGenerated({
-        base64: base64,
+        base64: compositedBase64,
         id: hybridId,
         cards: selected,
         baseCardId: baseCardId,
