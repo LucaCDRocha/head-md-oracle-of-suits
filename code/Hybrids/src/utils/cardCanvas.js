@@ -7,16 +7,16 @@
  * - Image Rendering: 1.08x subtle zoom-in to eliminate raw image edges.
  */
 
-import { drawSuitSymbol, getCanonicalSuitKey, getSuitPath2D } from "./suitPaths.js";
+import { drawSuitSymbol, getCanonicalSuitKey, getSuitPath2D, CARD_COLORS } from "./suitPaths.js";
 
-function drawVintageCard(ctx, artworkImage, rank, suit, suitColor = '#2B2B2B', tarotName = '', cardType = 'playing_card', tarotNumber = '') {
+function drawVintageCard(ctx, artworkImage, rank, suit, suitColor = CARD_COLORS.BLACK, tarotName = '', cardType = 'playing_card', tarotNumber = '') {
     const cardW = 1200;
     const cardH = 1600;
 
     // 1. Draw Cream/Vintage Card Background with Rounded Card Outer Edges
     const cardRadius = 32;
     ctx.save();
-    ctx.fillStyle = '#F4F0E8'; // Vintage card stock color
+    ctx.fillStyle = CARD_COLORS.CREAM; // Vintage card stock color
     ctx.beginPath();
     ctx.roundRect(0, 0, cardW, cardH, cardRadius);
     ctx.fill();
@@ -87,7 +87,7 @@ function drawVintageCard(ctx, artworkImage, rank, suit, suitColor = '#2B2B2B', t
     // 4. Draw Inner Frame Border Line
     ctx.save();
     ctx.lineWidth = 6;
-    ctx.strokeStyle = '#2B2B2B'; // Dark ink line
+    ctx.strokeStyle = CARD_COLORS.BLACK; // Dark ink line
     ctx.stroke(framePath);
     ctx.restore();
 
@@ -163,15 +163,15 @@ function drawVintageCard(ctx, artworkImage, rank, suit, suitColor = '#2B2B2B', t
             const numBannerX = (cardW - numBannerW) / 2;
             const numBannerY = frameY - (numBannerH / 2);
 
-            ctx.fillStyle = '#F4F0E8';
+            ctx.fillStyle = CARD_COLORS.CREAM;
             ctx.beginPath();
             ctx.roundRect(numBannerX, numBannerY, numBannerW, numBannerH, 14);
             ctx.fill();
-            ctx.strokeStyle = '#2B2B2B';
-            ctx.lineWidth = 4;
+            ctx.strokeStyle = CARD_COLORS.BLACK;
+            ctx.lineWidth = 6;
             ctx.stroke();
 
-            ctx.fillStyle = '#2B2B2B';
+            ctx.fillStyle = CARD_COLORS.BLACK;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText(numText, cardW / 2, numBannerY + (numBannerH / 2));
@@ -181,7 +181,7 @@ function drawVintageCard(ctx, artworkImage, rank, suit, suitColor = '#2B2B2B', t
         // Draw Tarot Title Banner on Bottom Margin (centered, name ONLY without number)
         if (tarotName) {
             ctx.save();
-            ctx.fillStyle = '#F4F0E8';
+            ctx.fillStyle = CARD_COLORS.CREAM;
             const bannerW = Math.min(840, frameW - 40);
             const bannerH = 76;
             const bannerX = (cardW - bannerW) / 2;
@@ -190,11 +190,11 @@ function drawVintageCard(ctx, artworkImage, rank, suit, suitColor = '#2B2B2B', t
             ctx.beginPath();
             ctx.roundRect(bannerX, bannerY, bannerW, bannerH, 16);
             ctx.fill();
-            ctx.strokeStyle = '#2B2B2B';
-            ctx.lineWidth = 4;
+            ctx.strokeStyle = CARD_COLORS.BLACK;
+            ctx.lineWidth = 6;
             ctx.stroke();
 
-            ctx.fillStyle = '#2B2B2B';
+            ctx.fillStyle = CARD_COLORS.BLACK;
             ctx.font = 'bold 40px "Nippo", "Cinzel", "Times New Roman", serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
@@ -226,7 +226,7 @@ export async function compositeCardCanvas(rawBase64, typographyInfo = {}) {
 
 				const suitClean = (suit || "").trim();
 				const isRed = suitClean === "♥" || suitClean === "♦" || suitClean.toLowerCase().includes("heart") || suitClean.toLowerCase().includes("diamond") || suitClean.toLowerCase().includes("cœur") || suitClean.toLowerCase().includes("carreau") || canonicalKey === "hearts" || canonicalKey === "diamonds" || canonicalKey === "roses";
-				const suitColor = isRed ? "#C81E1E" : "#2B2B2B";
+				const suitColor = isRed ? CARD_COLORS.RED : CARD_COLORS.BLACK;
 
 				drawVintageCard(ctx, img, rank, suitClean, suitColor, tarotName, cardType, tarotNumber);
 

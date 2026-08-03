@@ -4,6 +4,12 @@
  * Synchronous, high-DPI vector paths for 13 card suits.
  */
 
+export const CARD_COLORS = {
+    CREAM: '#fdf4e3',
+    BLACK: '#000000',
+    RED: '#C81E1E'
+};
+
 export function getCanonicalSuitKey(suitKey) {
     const key = (suitKey || "").toLowerCase().trim();
     if (key === '♠' || key === 'pique' || key === 'piques' || key === 'spades' || key === 'spade') return 'spades';
@@ -131,9 +137,9 @@ export const SUIT_VECTOR_PATHS = {
     coins: (ctx, s) => {
         ctx.beginPath(); ctx.arc(0, 0, s * 0.46, 0, Math.PI * 2); ctx.fill();
         ctx.save();
-        ctx.fillStyle = '#F4F0E8';
+        ctx.fillStyle = CARD_COLORS.CREAM;
         ctx.beginPath(); ctx.arc(0, 0, s * 0.36, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = ctx.strokeStyle || '#2B2B2B';
+        ctx.fillStyle = ctx.strokeStyle || CARD_COLORS.BLACK;
         const rOuter = s * 0.26;
         const rInner = s * 0.11;
         ctx.beginPath();
@@ -207,7 +213,7 @@ export const SUIT_VECTOR_PATHS = {
         ctx.beginPath(); ctx.arc(0, -s * 0.34, s * 0.12, 0, Math.PI * 2); ctx.fill();
         ctx.beginPath(); ctx.arc(0, s * 0.08, s * 0.38, 0, Math.PI * 2); ctx.fill();
         ctx.save();
-        ctx.fillStyle = '#F4F0E8';
+        ctx.fillStyle = CARD_COLORS.CREAM;
         ctx.beginPath(); ctx.rect(-s * 0.28, s * 0.08, s * 0.56, s * 0.08); ctx.fill();
         ctx.restore();
     },
@@ -223,7 +229,7 @@ export const SUIT_VECTOR_PATHS = {
             ctx.fill();
         }
         ctx.save();
-        ctx.fillStyle = '#F4F0E8';
+        ctx.fillStyle = CARD_COLORS.CREAM;
         ctx.beginPath(); ctx.arc(0, 0, s * 0.12, 0, Math.PI * 2); ctx.fill();
         ctx.restore();
     },
@@ -241,7 +247,7 @@ export const SUIT_VECTOR_PATHS = {
     }
 };
 
-export function drawSuitSymbol(ctx, suitKey, x, y, size = 44, color = '#2B2B2B') {
+export function drawSuitSymbol(ctx, suitKey, x, y, size = 44, color = CARD_COLORS.BLACK) {
     const canonicalKey = getCanonicalSuitKey(suitKey);
     const drawFn = SUIT_VECTOR_PATHS[canonicalKey];
 

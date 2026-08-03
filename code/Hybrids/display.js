@@ -351,7 +351,7 @@ const TAROT_PRESETS = [
   { num: "XIII", name: "LA MORT" },
   { num: "XII", name: "LE PENDU" },
   { num: "XI", name: "LA FORCE" },
-  { num: "X", name: "L'ROUE DE FORTUNE" },
+  { num: "X", name: "LA ROUE DE FORTUNE" },
   { num: "IX", name: "L'ERMITE" },
   { num: "VIII", name: "LA JUSTICE" },
   { num: "VII", name: "LE CHARIOT" },
