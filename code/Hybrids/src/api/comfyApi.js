@@ -98,16 +98,17 @@ async function fetchImageAsRawBase64(imgUrl) {
 	if (imgUrl.startsWith('http') && !imgUrl.includes(window.location.host)) {
 		fetchUrl = `/proxy-image?url=${encodeURIComponent(imgUrl)}`;
 	}
-	const res = await fetch(fetchUrl);
-	if (!res.ok) {
+	const imgRes = await fetch(fetchUrl);
+	if (!imgRes.ok) {
 		throw new Error(`Failed to fetch card image: ${imgUrl}`);
 	}
-	const blob = await res.blob();
+	const blob = await imgRes.blob();
+	
 	return new Promise((resolve, reject) => {
 		const reader = new FileReader();
 		reader.onloadend = () => {
-			const rawBase64 = reader.result.split(',')[1];
-			resolve(rawBase64);
+			const base64 = reader.result.split(',')[1];
+			resolve(base64);
 		};
 		reader.onerror = reject;
 		reader.readAsDataURL(blob);
@@ -262,33 +263,33 @@ function translateTerm(term, map) {
 	return map[key] || term;
 }
 
-// ── French Tarot Major Arcana Titles ──
-const TAROT_FRENCH_TITLES = {
-	"0": "LE MAT",
-	"excuse": "LE MAT",
-	"fou": "LE MAT",
-	"mat": "LE MAT",
-	"1": "I - LE BATELEUR",
-	"2": "II - LA PAPESSE",
-	"3": "III - L'IMPÉRATRICE",
-	"4": "IV - L'EMPEREUR",
-	"5": "V - LE PAPE",
-	"6": "VI - L'AMOUREUX",
-	"7": "VII - LE CHARIOT",
-	"8": "VIII - LA JUSTICE",
-	"9": "IX - L'ERMITE",
-	"10": "X - LA ROUE DE FORTUNE",
-	"11": "XI - LA FORCE",
-	"12": "XII - LE PENDU",
-	"13": "XIII - LA MORT",
-	"14": "XIV - LA TEMPÉRANCE",
-	"15": "XV - LE DIABLE",
-	"16": "XVI - LA MAISON DIEU",
-	"17": "XVII - L'ÉTOILE",
-	"18": "XVIII - LA LUNE",
-	"19": "XIX - LE SOLEIL",
-	"20": "XX - LE JUGEMENT",
-	"21": "XXI - LE MONDE"
+// ── French Tarot Major Arcana Titles & Roman Numerals ──
+const TAROT_MAJOR_ARCANA = {
+	"0":       { num: "0",    name: "LE MAT" },
+	"excuse":  { num: "0",    name: "LE MAT" },
+	"fou":     { num: "0",    name: "LE MAT" },
+	"mat":     { num: "0",    name: "LE MAT" },
+	"1":       { num: "I",    name: "LE BATELEUR" },
+	"2":       { num: "II",   name: "LA PAPESSE" },
+	"3":       { num: "III",  name: "L'IMPÉRATRICE" },
+	"4":       { num: "IV",   name: "L'EMPEREUR" },
+	"5":       { num: "V",    name: "LE PAPE" },
+	"6":       { num: "VI",   name: "L'AMOUREUX" },
+	"7":       { num: "VII",  name: "LE CHARIOT" },
+	"8":       { num: "VIII", name: "LA JUSTICE" },
+	"9":       { num: "IX",   name: "L'ERMITE" },
+	"10":      { num: "X",    name: "LA ROUE DE FORTUNE" },
+	"11":      { num: "XI",   name: "LA FORCE" },
+	"12":      { num: "XII",  name: "LE PENDU" },
+	"13":      { num: "XIII", name: "LA MORT" },
+	"14":      { num: "XIV",  name: "LA TEMPÉRANCE" },
+	"15":      { num: "XV",   name: "LE DIABLE" },
+	"16":      { num: "XVI",  name: "LA MAISON DIEU" },
+	"17":      { num: "XVII", name: "L'ÉTOILE" },
+	"18":      { num: "XVIII",name: "LA LUNE" },
+	"19":      { num: "XIX",  name: "LE SOLEIL" },
+	"20":      { num: "XX",   name: "LE JUGEMENT" },
+	"21":      { num: "XXI",  name: "LE MONDE" }
 };
 
 /**
@@ -321,15 +322,16 @@ function getExactCardTextConfig(baseCard) {
 
 	// Suit symbol mapping
 	const suitSymbolMap = {
-		"spades": "♠", "pique": "♠", "♠": "♠",
-		"hearts": "♥", "cœur": "♥", "coeur": "♥", "♥": "♥",
-		"diamonds": "♦", "carreau": "♦", "♦": "♦",
-		"clubs": "♣", "trèfle": "♣", "trefle": "♣", "♣": "♣"
+		"spades": "♠", "pique": "♠", "piques": "♠", "♠": "♠",
+		"hearts": "♥", "cœur": "♥", "cœurs": "♥", "coeur": "♥", "♥": "♥",
+		"diamonds": "♦", "carreau": "♦", "carreaux": "♦", "♦": "♦",
+		"clubs": "♣", "trèfle": "♣", "trèfles": "♣", "trefle": "♣", "trefles": "♣", "club": "♣", "♣": "♣"
 	};
 	const suitSymbol = suitSymbolMap[suitLowerRaw] || "";
 
 	let topCornerText = "";
 	let bottomTitleText = "";
+	let tarotNumber = "";
 	let isTarotMajor = false;
 
 	if (isJoker) {
@@ -337,11 +339,14 @@ function getExactCardTextConfig(baseCard) {
 	} else if (isTarotAtout || (isTarotGame && (suitLowerRaw === "" || suitLowerRaw === "atout"))) {
 		// Major Arcana (Atout)
 		const cleanKey = valLower.replace(/^atout\s*/, "");
-		if (TAROT_FRENCH_TITLES[cleanKey]) {
+		if (TAROT_MAJOR_ARCANA[cleanKey]) {
 			isTarotMajor = true;
-			bottomTitleText = TAROT_FRENCH_TITLES[cleanKey];
+			tarotNumber = TAROT_MAJOR_ARCANA[cleanKey].num;
+			bottomTitleText = TAROT_MAJOR_ARCANA[cleanKey].name;
 		} else if (rawVal) {
-			bottomTitleText = rawVal.toUpperCase();
+			isTarotMajor = true;
+			tarotNumber = rawVal.match(/^(?:atout\s*)?([IVXLCDM0-9]+)/i)?.[1] || "";
+			bottomTitleText = rawVal.replace(/^(?:atout\s*)?(?:[IVXLCDM0-9]+[\s\-:]*)?/i, "").toUpperCase() || rawVal.toUpperCase();
 		}
 	} else {
 		// Minor Arcana or Standard Card (e.g. 3 of Diamonds / 3 de Carreau, incluso en mazos de Tarot)
@@ -354,8 +359,38 @@ function getExactCardTextConfig(baseCard) {
 		isJoker,
 		rankInitial,
 		suitSymbol,
+		tarotNumber,
 		topCornerText,
 		bottomTitleText
+	};
+}
+
+/**
+ * Extracts typography settings (cardType, rank, suit, tarotName, tarotNumber) for cardCanvas compositing.
+ */
+export function getCardTypographyInfo(baseCard) {
+	if (!baseCard) {
+		return { cardType: 'playing_card', rank: '', suit: '', tarotName: '', tarotNumber: '' };
+	}
+
+	const config = getExactCardTextConfig(baseCard);
+
+	if (config.isTarotMajor) {
+		return {
+			cardType: 'tarot',
+			rank: '',
+			suit: '',
+			tarotNumber: config.tarotNumber,
+			tarotName: config.bottomTitleText
+		};
+	}
+
+	return {
+		cardType: 'playing_card',
+		rank: config.rankInitial,
+		suit: config.suitSymbol,
+		tarotNumber: '',
+		tarotName: ''
 	};
 }
 
@@ -377,18 +412,18 @@ function formatCardDescription(card) {
 	const isFool  = val.toLowerCase() === "the fool" || suit.toLowerCase() === "the fool";
 
 	if (isJoker) {
-		return `Joker card from the ${game} deck`;
+		return `Joker from the ${game} deck`;
 	}
 	if (isFool) {
-		return `The Fool card from the ${game} deck`;
+		return `The Fool from the ${game} deck`;
 	}
 	if (val && suit) {
-		return `${val} of ${suit} card from the ${game} deck`;
+		return `${val} of ${suit} from the ${game} deck`;
 	}
 	if (val) {
-		return `${val} card from the ${game} deck`;
+		return `${val} from the ${game} deck`;
 	}
-	return `card from the ${game} deck`;
+	return `illustration from the ${game} deck`;
 }
 
 export async function generateImage(selected, baseCardId, statusCallback) {
@@ -493,12 +528,11 @@ export async function generateImage(selected, baseCardId, statusCallback) {
 			workflow[nodeId].inputs.image = comfyFilename;
 		}
 	}
-	// 3. Inject actual suit and rank of the base card into the base prompt (node 112 / Prompt string)
-	const promptNode = Object.values(workflow).find(
+	// 3. Inject prompt values into workflow (node 112 / Node 115)
+	const promptNode = workflow["112"] || Object.values(workflow).find(
 		(node) => node.class_type === "PrimitiveStringMultiline" && 
 		          node.inputs && 
-		          typeof node.inputs.value === "string" && 
-		          node.inputs.value.includes("aspect ratio")
+		          typeof node.inputs.value === "string"
 	);
 	if (promptNode) {
 		const textConfig = getExactCardTextConfig(baseCard);
@@ -515,47 +549,8 @@ export async function generateImage(selected, baseCardId, statusCallback) {
 
 		let promptValue = promptNode.inputs.value;
 
-		// Construct positive natural language layout description for FLUX with targeted wordless texture protection
-		const baseDesc = formatCardDescription(baseCard);
-		let textAllowanceProse = "";
-		if (textConfig.isTarotMajor) {
-			textAllowanceProse = `With the strict exception of the bottom center title panel displaying strictly the French Tarot title "${textConfig.bottomTitleText}"`;
-		} else if (textConfig.isJoker) {
-			textAllowanceProse = `With the strict exception of the top-left corner index displaying strictly "JOKER"`;
-		} else if (textConfig.topCornerText) {
-			const allowedStr = textConfig.bottomTitleText 
-				? `top-left index displaying strictly "${textConfig.topCornerText}" and bottom title panel displaying strictly "${textConfig.bottomTitleText}"`
-				: `top-left index displaying strictly "${textConfig.topCornerText}"`;
-			textAllowanceProse = `With the strict exception of the ${allowedStr}`;
-		} else {
-			textAllowanceProse = `With no exceptions, all text is forbidden and`;
-		}
-
-		let layoutProse = "";
-		if (textConfig.isTarotMajor) {
-			layoutProse = `The primary card is ${baseDesc}. All four corners are plain, clean, and unprinted. At the bottom center, a single title panel displays strictly the French Tarot title "${textConfig.bottomTitleText}".`;
-		} else if (textConfig.isJoker) {
-			layoutProse = `The primary card is a Joker card. The top-left corner displays strictly the word "JOKER". All other corners are plain and unprinted.`;
-		} else if (textConfig.topCornerText) {
-			let colorProse = "";
-			if (suitLower.includes("heart") || suitLower.includes("diamond") || suitLower.includes("♥") || suitLower.includes("♦")) {
-				colorProse = " in red ink";
-			} else if (suitLower.includes("spade") || suitLower.includes("club") || suitLower.includes("♠") || suitLower.includes("♣")) {
-				colorProse = " in black ink";
-			}
-
-			const bottomProse = textConfig.bottomTitleText
-				? `At the bottom center, a single title panel displays strictly "${textConfig.bottomTitleText}".`
-				: `The bottom area flows into continuous background scenery.`;
-
-			const cornerDetailProse = (textConfig.rankInitial && textConfig.suitSymbol)
-				? `rank initial "${textConfig.rankInitial}" with the suit symbol "${textConfig.suitSymbol}" placed directly underneath it`
-				: `single index "${textConfig.topCornerText}"`;
-
-			layoutProse = `The primary card is ${baseDesc}. The top-left corner displays strictly the ${cornerDetailProse}${colorProse}. ${bottomProse} The top-right, bottom-left, and bottom-right corners are plain and unprinted.`;
-		} else {
-			layoutProse = `The primary card is ${baseDesc}. The card features a clean artwork layout with plain, unprinted borders.`;
-		}
+		// High-quality natural language prompt with positive full-bleed corner descriptions
+		let layoutProse = "The four corners, outer edges, and entire canvas surface are continuously filled with full-bleed background scenery, smooth color gradients, continuous line art, and detailed environmental textures.";
 
 		// Detect if any selected card is a court card or character card
 		const hasCharacterCard = [baseCard, ...otherCards].some(c => {
@@ -569,28 +564,40 @@ export async function generateImage(selected, baseCardId, statusCallback) {
 			? "The scene features a single, upright central figure seamlessly integrated into a rich, full-bleed illustrated environment."
 			: "The scene features a harmonious, balanced central composition of objects and motifs seamlessly integrated into a rich, full-bleed illustrated environment.";
 
-		const naturalProseSuffix = `\n\n${layoutProse} ${subjectProse} The background and lower sections are filled with continuous atmospheric scenery, detailed environmental elements, or flowing decorative patterns. ${textAllowanceProse}, all other areas, backgrounds, props, and garments are purely illustrative, featuring wordless painted textures and continuous artistic brushstrokes.`;
+		const naturalProseSuffix = `. Expressive angles, overlapping motifs, surreal combinations, and fluid artistic arrangements seamlessly blend all three sources into a striking cohesive masterpiece. Rendered in a refined vintage editorial illustration style with crisp line art, detailed garment patterns, a rich balanced color palette, and soft ambient lighting. ${layoutProse} ${subjectProse} The background and lower sections are filled with continuous atmospheric scenery, detailed environmental elements, flowing decorative patterns, and pure painted textures.`;
 
-		// Find the final concatenation node (node 115) and append the natural prose suffix
+		// Find the final concatenation node (node 115) and set natural prose suffix
 		const suffixNode = Object.values(workflow).find(
 			(node) => node.class_type === "StringConcatenate" && 
-			          typeof node.inputs?.string_b === "string" && 
-			          (node.inputs.string_b.includes("illustration style") || node.inputs.string_b.includes("color palette"))
+			          typeof node.inputs?.string_b === "string"
 		);
 
 		if (suffixNode) {
-			suffixNode.inputs.string_b = suffixNode.inputs.string_b + naturalProseSuffix;
+			suffixNode.inputs.string_b = naturalProseSuffix;
 		}
 
-		// Inject clean, natural delimiters between card descriptions (only base card has identity; secondary cards supply visual motifs only)
+		// Inject clean, natural delimiters without card name text leakage
 		if (workflow["98"]) {
-			workflow["98"].inputs.delimiter = `. Primary Card (${formatCardDescription(baseCard)}): `;
+			workflow["98"].inputs.delimiter = `. Primary Source Artwork: `;
 		}
 		if (workflow["101"] && otherCards[0]) {
-			workflow["101"].inputs.delimiter = `. Visual artwork elements from Secondary Card 2: `;
+			workflow["101"].inputs.delimiter = `. Secondary Source Artwork: `;
 		}
 		if (workflow["102"] && otherCards[1]) {
-			workflow["102"].inputs.delimiter = `. Visual artwork elements from Secondary Card 3: `;
+			workflow["102"].inputs.delimiter = `. Third Source Artwork: `;
+		}
+
+		// Enforce sentence-stripping regex filtering on all Florence-2 text outputs to wipe any sentence mentioning spades, card titles, text, letters, numbers, or banners
+		const sentenceStripRegex = "(?i)[^.!?]*\\b(cards?|spades?|hearts?|diamonds?|clubs?|pips?|playing[- ]card|tarot[- ]card|borders?|frames?|margins?|outlines?|corners?|indices|index|notches?|text|words?|letters?|numbers?|digits?|numerals?|captions?|labels?|banners?|titles?|inscriptions?|writings?|fonts?|symbols?|monograms?|watermarks?|signatures?|stamps?|rectangles?|rectangular|panels?|queen|king|jack|valet|ace|joker|fool|bateleur|papesse|empress|emperor|pope|chariot|hermit|atout|roman|written|reads|saying|labeled|titled|name|named)\\b[^.!?]*[.!?]?";
+
+		for (const id in workflow) {
+			if (workflow[id].class_type === "RegexReplace") {
+				workflow[id].inputs.regex_pattern = sentenceStripRegex;
+				workflow[id].inputs.replace = "";
+				workflow[id].inputs.multiline = true;
+				workflow[id].inputs.dotall = true;
+				workflow[id].inputs.case_insensitive = true;
+			}
 		}
 		
 		promptNode.inputs.value = promptValue;
@@ -599,13 +606,13 @@ export async function generateImage(selected, baseCardId, statusCallback) {
 		if (LOG_PROMPT_PREVIEW) {
 			try {
 				const node112Text = promptNode.inputs.value;
-				const card1Desc = `[Florence2 description of Card 1: ${formatCardDescription(baseCard)}]`;
-				const card2Desc = otherCards[0] ? `[Florence2 description of Card 2: ${formatCardDescription(otherCards[0])}]` : "";
-				const card3Desc = otherCards[1] ? `[Florence2 description of Card 3: ${formatCardDescription(otherCards[1])}]` : "";
+				const card1Desc = `[Florence-2 visual description of Source 1]`;
+				const card2Desc = otherCards[0] ? `[Florence-2 visual description of Source 2]` : "";
+				const card3Desc = otherCards[1] ? `[Florence-2 visual description of Source 3]` : "";
 				
-				const delimiter1 = workflow["98"] ? workflow["98"].inputs.delimiter : "Card 1: ";
-				const delimiter2 = (workflow["101"] && otherCards[0]) ? workflow["101"].inputs.delimiter : ", combined with elements of Card 2: ";
-				const delimiter3 = (workflow["102"] && otherCards[1]) ? workflow["102"].inputs.delimiter : ", and Card 3: ";
+				const delimiter1 = workflow["98"] ? workflow["98"].inputs.delimiter : " ";
+				const delimiter2 = (workflow["101"] && otherCards[0]) ? workflow["101"].inputs.delimiter : " ";
+				const delimiter3 = (workflow["102"] && otherCards[1]) ? workflow["102"].inputs.delimiter : " ";
 				const suffixText = suffixNode ? suffixNode.inputs.string_b : "";
 				
 				const fullPromptPreview = node112Text + delimiter1 + card1Desc + delimiter2 + card2Desc + delimiter3 + card3Desc + suffixText;
