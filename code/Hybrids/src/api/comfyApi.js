@@ -322,10 +322,10 @@ function getExactCardTextConfig(baseCard) {
 
 	// Suit symbol mapping
 	const suitSymbolMap = {
-		"spades": "♠", "pique": "♠", "♠": "♠",
-		"hearts": "♥", "cœur": "♥", "coeur": "♥", "♥": "♥",
-		"diamonds": "♦", "carreau": "♦", "♦": "♦",
-		"clubs": "♣", "trèfle": "♣", "trefle": "♣", "♣": "♣"
+		"spades": "♠", "pique": "♠", "piques": "♠", "♠": "♠",
+		"hearts": "♥", "cœur": "♥", "cœurs": "♥", "coeur": "♥", "♥": "♥",
+		"diamonds": "♦", "carreau": "♦", "carreaux": "♦", "♦": "♦",
+		"clubs": "♣", "trèfle": "♣", "trèfles": "♣", "trefle": "♣", "trefles": "♣", "club": "♣", "♣": "♣"
 	};
 	const suitSymbol = suitSymbolMap[suitLowerRaw] || "";
 
