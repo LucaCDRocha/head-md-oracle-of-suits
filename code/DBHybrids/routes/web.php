@@ -222,25 +222,25 @@ Route::get('/{id}', function ($id) {
 Route::get('/{id}/download', function ($id) {
     $hybrid = Hybrid::find($id);
 
-    if (!$hybrid) {
-        abort(404, 'Hybrid not found');
+    if (!$hybrid || !$hybrid->img_src) {
+        abort(404, 'Hybrid or image not found');
     }
 
-    if (!$hybrid->img_src) {
-        abort(404, 'Image not found');
-    }
+    $dateStr = $hybrid->created_at ? $hybrid->created_at->format('Y-m-d') : now()->format('Y-m-d');
 
     // Check if the image is an external URL
     if (preg_match('/^https?:\/\//', $hybrid->img_src)) {
-        // For external URLs, redirect to the image
-        return redirect($hybrid->img_src);
+        $extension = pathinfo(parse_url($hybrid->img_src, PHP_URL_PATH), PATHINFO_EXTENSION) ?: 'png';
+        $filename = $dateStr . '-hybrid-' . $hybrid->id . '.' . $extension;
+
+        return response()->streamDownload(function () use ($hybrid) {
+            echo file_get_contents($hybrid->img_src);
+        }, $filename);
     }
 
     // For local images stored in storage
-    // Remove leading slash to ensure proper path construction
     $relativePath = ltrim($hybrid->img_src, '/');
     
-    // Try multiple possible locations
     $possiblePaths = [
         storage_path('app/public/' . $relativePath),
         public_path('storage/' . $relativePath),
@@ -256,11 +256,11 @@ Route::get('/{id}/download', function ($id) {
     }
 
     if (!$imagePath) {
-        abort(404, 'Image file not found. Checked paths: ' . implode(', ', $possiblePaths));
+        abort(404, 'Image file not found.');
     }
 
-    // Generate a clean filename
-    $filename = preg_replace('/[^a-zA-Z0-9-_]/', '-', $hybrid->name) . '-' . $hybrid->id . '.' . pathinfo($imagePath, PATHINFO_EXTENSION);
+    $extension = pathinfo($imagePath, PATHINFO_EXTENSION) ?: 'png';
+    $filename = $dateStr . '-hybrid-' . $hybrid->id . '.' . $extension;
 
     return response()->download($imagePath, $filename);
 })->name('hybrids.download');
