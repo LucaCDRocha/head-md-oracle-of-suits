@@ -119,22 +119,20 @@ function setViewState(nextState, extraData = {}) {
     startProgressBar();
   } else if (nextState === "RESULT") {
     if (floatingContainer) floatingContainer.style.display = "none";
-    if (extraData.hybridPayload) {
-      handleHybridGenerated(extraData.hybridPayload);
-    }
   }
 }
+
+let isPayloadLoaded = false;
+let preloadedImageSrc = null;
 
 /**
  * Smart 15-second progress bar filling timer:
  * - Fills smoothly from 0% to ~92% over 15s (15,000 ms)
- * - Holds at ~92% if result payload hasn't arrived yet
- * - When payload arrives, rapidly completes fill to 100% and opens RESULT view
+ * - Holds at ~92% until result payload is 100% loaded in GPU/RAM memory
+ * - When loaded, rapidly completes fill to 100% and opens RESULT view
  */
 function startProgressBar() {
   resetProgressBar();
-  isPayloadReceived = false;
-  pendingPayload = null;
 
   const durationMs = 15000; // 15 seconds
   const targetSubMax = 92; // fill up to 92% over 15s
@@ -144,9 +142,9 @@ function startProgressBar() {
   currentProgress = 0;
 
   progressTimer = setInterval(() => {
-    if (isPayloadReceived) {
-      // Complete fill quickly
-      currentProgress += 4;
+    // Only rapidly complete fill when the image is 100% preloaded in memory
+    if (isPayloadLoaded) {
+      currentProgress += 5;
       if (currentProgress >= 100) {
         currentProgress = 100;
         if (progressBarFill) progressBarFill.style.width = "100%";
@@ -154,7 +152,7 @@ function startProgressBar() {
         progressTimer = null;
         setTimeout(() => {
           showResultView(pendingPayload);
-        }, 400);
+        }, 300);
       } else {
         if (progressBarFill) progressBarFill.style.width = currentProgress.toFixed(1) + "%";
       }
@@ -175,37 +173,77 @@ function resetProgressBar() {
     progressTimer = null;
   }
   currentProgress = 0;
+  isPayloadLoaded = false;
+  isPayloadReceived = false;
+  preloadedImageSrc = null;
+  pendingPayload = null;
   if (progressBarFill) progressBarFill.style.width = "0%";
+  if (resultHybridImg) {
+    resultHybridImg.style.opacity = "0";
+    resultHybridImg.removeAttribute("src");
+  }
 }
 
 function handleHybridGenerated(payload) {
   pendingPayload = payload;
   isPayloadReceived = true;
 
-  // If progress bar is running, let it complete to 100% via the timer
-  if (!progressTimer) {
-    showResultView(payload);
+  const newSrc = payload.base64
+    ? (payload.base64.startsWith("data:") ? payload.base64 : `data:image/png;base64,${payload.base64}`)
+    : payload.img_src;
+
+  preloadedImageSrc = newSrc;
+
+  // Background preload in memory while progress bar is running
+  if (newSrc) {
+    const tempImg = new Image();
+    const onReady = () => {
+      isPayloadLoaded = true;
+      if (!progressTimer) {
+        showResultView(payload);
+      }
+    };
+    tempImg.onload = onReady;
+    tempImg.onerror = onReady;
+    tempImg.src = newSrc;
+  } else {
+    isPayloadLoaded = true;
+    if (!progressTimer) {
+      showResultView(payload);
+    }
   }
 }
 
 function showResultView(payload) {
   if (!payload) return;
 
-  if (resultHybridImg) {
-    if (payload.base64) {
-      resultHybridImg.src = payload.base64.startsWith("data:")
-        ? payload.base64
-        : `data:image/png;base64,${payload.base64}`;
-    } else if (payload.img_src) {
-      resultHybridImg.src = payload.img_src;
-    }
-  }
+  const newSrc = preloadedImageSrc || (payload.base64
+    ? (payload.base64.startsWith("data:") ? payload.base64 : `data:image/png;base64,${payload.base64}`)
+    : payload.img_src);
 
   if (payload.id) {
     updateDownloadQR(payload.id);
   }
 
+  if (newSrc && resultHybridImg) {
+    resultHybridImg.src = newSrc;
+  }
+
+  const isStateChanged = currentState !== "RESULT";
+
+  // Switch to RESULT view
   setViewState("RESULT");
+
+  // Broadcast RESULT state to App 1 so Brain un-dims at the exact same instant
+  if (isStateChanged) {
+    wsClient.sendStateChange("RESULT", { hybridPayload: payload });
+  }
+
+  requestAnimationFrame(() => {
+    if (resultHybridImg) {
+      resultHybridImg.style.opacity = "1";
+    }
+  });
 }
 
 let floatingCardsRenderToken = 0;

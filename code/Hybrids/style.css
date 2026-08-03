@@ -578,6 +578,8 @@ canvas {
 	object-fit: contain;
 	border-radius: 12px;
 	box-shadow: 0 12px 35px rgba(0, 0, 0, 0.25);
+	opacity: 0;
+	transition: opacity 0.35s ease-in-out, transform 0.35s ease-in-out;
 }
 
 /* Display QR Code Block */

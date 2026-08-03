@@ -80,6 +80,14 @@ window.setup = function () {
     }
   });
 
+  wsClient.on("STATE_CHANGE", (data) => {
+    if (data.state === "RESULT") {
+      currentApp1State = "RESULT";
+      updateApp1State("RESULT");
+      resetInactivityTimer();
+    }
+  });
+
   // Setup Arduino serial connection
   setupSerial();
 
@@ -508,7 +516,6 @@ async function onGenerate(bypassDebounce = false) {
         cards: selected,
         baseCardId: baseCardId,
       });
-      syncBrainState("RESULT");
 
       statusCallback("Terminé!");
       isSuccess = true;
@@ -524,7 +531,6 @@ async function onGenerate(bypassDebounce = false) {
   } finally {
     isGenerating = false;
     lastGenerateTime = Date.now();
-    resetInactivityTimer();
     if (btn) {
       btn.removeAttribute("data-generating");
       const selected = getSelectedCards();
@@ -682,6 +688,8 @@ export function syncBrainState(forcedState = null) {
   });
 }
 
+let app1DimmedTimeout = null;
+
 /**
  * Manage App 1 state views (IDLE overlay vs EXPLORE / GENERATING / RESULT)
  */
@@ -696,6 +704,11 @@ function updateApp1State(newState) {
   } else {
     if (idleOverlay) idleOverlay.classList.remove("active");
     if (cardsContainer) cardsContainer.classList.remove("blurred");
+  }
+
+  if (app1DimmedTimeout) {
+    clearTimeout(app1DimmedTimeout);
+    app1DimmedTimeout = null;
   }
 
   if (newState === "GENERATING") {
