@@ -45,41 +45,39 @@ class CardsTableSeeder extends Seeder
         $existingCards = Card::orderBy('id', 'asc')->get();
         $usedExcelIndices = [];
         $cardsPath = storage_path('app/public/img/cards');
+        $updatedCount = 0;
 
         // Update existing cards (preserve IDs 1..N)
         foreach ($existingCards as $dbc) {
             $matchedIndex = null;
 
-            if ($dbc->id == 250) {
+            // 1. Match by Ref from img_src
+            if (!empty($dbc->img_src)) {
+                $refFromImg = strtolower(pathinfo($dbc->img_src, PATHINFO_FILENAME));
                 foreach ($excelCards as $idx => $ec) {
-                    if (strtolower($ec['ref']) === '20.lco_3') {
+                    if (strtolower($ec['ref']) === $refFromImg) {
                         $matchedIndex = $idx;
                         break;
                     }
                 }
-            } elseif ($dbc->id == 279) {
-                foreach ($excelCards as $idx => $ec) {
-                    if (strtolower($ec['ref']) === '21.le_3') {
-                        $matchedIndex = $idx;
-                        break;
-                    }
-                }
-            } else {
-                if (!empty($dbc->img_src)) {
-                    $refFromImg = strtolower(pathinfo($dbc->img_src, PATHINFO_FILENAME));
-                    foreach ($excelCards as $idx => $ec) {
-                        if (strtolower($ec['ref']) === $refFromImg) {
-                            $matchedIndex = $idx;
-                            break;
-                        }
-                    }
-                }
+            }
 
-                if ($matchedIndex === null) {
-                    foreach ($excelCards as $idx => $ec) {
-                        if ($ec['game_id'] == $dbc->game_id && 
-                            strtolower($ec['suit']) == strtolower($dbc->suits) && 
-                            strtolower($ec['value']) == strtolower($dbc->value)) {
+            // 2. Match by DB Card ID index alignment
+            if ($matchedIndex === null) {
+                $idx = $dbc->id - 1;
+                if (isset($excelCards[$idx])) {
+                    $ec = $excelCards[$idx];
+                    if ($ec['game_id'] == $dbc->game_id && strtolower($ec['value']) == strtolower($dbc->value)) {
+                        $matchedIndex = $idx;
+                    }
+                }
+            }
+
+            // 3. Fallback: match by game_id + value
+            if ($matchedIndex === null) {
+                foreach ($excelCards as $idx => $ec) {
+                    if (!isset($usedExcelIndices[$idx])) {
+                        if ($ec['game_id'] == $dbc->game_id && strtolower($ec['value']) == strtolower($dbc->value)) {
                             $matchedIndex = $idx;
                             break;
                         }
@@ -99,11 +97,12 @@ class CardsTableSeeder extends Seeder
                     'game_id' => $ec['game_id'],
                     'suits' => $ec['suit'] ?: null,
                     'value' => $ec['value'] ?: null,
-                    'img_src' => $imgSrc,
+                    'img_src' => $imgSrc ?: $dbc->img_src,
                     'french_suits' => $ec['suit'] ?: null,
                     'french_value' => $ec['value'] ?: null,
                     'french_equivalence' => $name,
                 ]);
+                $updatedCount++;
             }
         }
 
@@ -128,7 +127,7 @@ class CardsTableSeeder extends Seeder
             }
         }
 
-        $this->command->info("Cards synchronization completed. Total cards: " . Card::count() . " ({$newCardsCount} new cards added).");
+        $this->command->info("Cards synchronization completed. Total cards: " . Card::count() . " ({$updatedCount} cards updated, {$newCardsCount} new cards added).");
     }
 
     private function generateCardName($suit, $value)
