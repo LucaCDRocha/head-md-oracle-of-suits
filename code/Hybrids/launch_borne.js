@@ -3,6 +3,7 @@ const fs = require("fs");
 const path = require("path");
 const net = require("net");
 const os = require("os");
+const http = require("http");
 
 const PORT = 8080;
 const URL_DISPLAY1 = `http://localhost:${PORT}/index.html`;
@@ -30,6 +31,24 @@ function checkServerRunning(port) {
 			resolve(false);
 		});
 		socket.connect(port, "127.0.0.1");
+	});
+}
+
+// Check if ComfyUI HTTP server is online and ready
+function checkComfyReady(port = 8188) {
+	return new Promise((resolve) => {
+		const req = http.get(`http://127.0.0.1:${port}/system_stats`, (res) => {
+			if (res.statusCode === 200) {
+				resolve(true);
+			} else {
+				resolve(false);
+			}
+		});
+		req.on("error", () => resolve(false));
+		req.setTimeout(1200, () => {
+			req.destroy();
+			resolve(false);
+		});
 	});
 }
 
@@ -162,52 +181,76 @@ async function main() {
 
 	// --- STEP 2: Launch ComfyUI without browser opening ---
 	console.log("\n[2/3] Preparing ComfyUI backend...");
-	const comfyDir = findComfyDir();
-	if (comfyDir) {
-		console.log(` -> Found ComfyUI directory at: ${comfyDir}`);
-		const embeddedPython = path.join(comfyDir, "python_embeded", "python.exe");
-		const comfyMainPy = path.join(comfyDir, "ComfyUI", "main.py");
-		const rootMainPy = path.join(comfyDir, "main.py");
+	let isComfyOnline = await checkComfyReady(8188);
 
-		let comfyCmd = "python";
-		let comfyArgs = ["main.py", "--disable-auto-launch"];
-		let spawnCwd = comfyDir;
-
-		if (fs.existsSync(embeddedPython) && fs.existsSync(comfyMainPy)) {
-			// ComfyUI Windows Portable distribution
-			comfyCmd = embeddedPython;
-			comfyArgs = [
-				"-s",
-				comfyMainPy,
-				"--windows-standalone-build",
-				"--disable-auto-launch",
-			];
-			spawnCwd = comfyDir;
-			console.log(" -> Launching ComfyUI Portable Python with --disable-auto-launch");
-		} else if (fs.existsSync(rootMainPy)) {
-			// Standard ComfyUI installation with main.py in root
-			comfyArgs = ["main.py", "--disable-auto-launch"];
-			spawnCwd = comfyDir;
-			console.log(" -> Launching main.py with --disable-auto-launch");
-		} else {
-			const batFile = path.join(comfyDir, "run_nvidia_gpu.bat");
-			if (fs.existsSync(batFile)) {
-				comfyCmd = batFile;
-				comfyArgs = [];
-				console.log(" -> Launching via run_nvidia_gpu.bat");
-			}
-		}
-
-		comfyProc = spawn(comfyCmd, comfyArgs, {
-			cwd: spawnCwd,
-			stdio: "ignore",
-			shell: false,
-		});
-		console.log(` -> ComfyUI backend launched without opening browser (PID: ${comfyProc.pid}).`);
+	if (isComfyOnline) {
+		console.log(" -> ComfyUI server is already online and ready on port 8188.");
 	} else {
-		console.warn(" [!] ComfyUI directory not found automatically.");
-		console.warn("     If ComfyUI is installed elsewhere, set environment variable COMFYUI_DIR");
-		console.warn("     e.g., set COMFYUI_DIR=C:\\path\\to\\ComfyUI");
+		const comfyDir = findComfyDir();
+		if (comfyDir) {
+			console.log(` -> Found ComfyUI directory at: ${comfyDir}`);
+			const embeddedPython = path.join(comfyDir, "python_embeded", "python.exe");
+			const comfyMainPy = path.join(comfyDir, "ComfyUI", "main.py");
+			const rootMainPy = path.join(comfyDir, "main.py");
+
+			let comfyCmd = "python";
+			let comfyArgs = ["main.py", "--disable-auto-launch"];
+			let spawnCwd = comfyDir;
+
+			if (fs.existsSync(embeddedPython) && fs.existsSync(comfyMainPy)) {
+				// ComfyUI Windows Portable distribution
+				comfyCmd = embeddedPython;
+				comfyArgs = [
+					"-s",
+					comfyMainPy,
+					"--windows-standalone-build",
+					"--disable-auto-launch",
+				];
+				spawnCwd = comfyDir;
+				console.log(" -> Launching ComfyUI Portable Python with --disable-auto-launch");
+			} else if (fs.existsSync(rootMainPy)) {
+				// Standard ComfyUI installation with main.py in root
+				comfyArgs = ["main.py", "--disable-auto-launch"];
+				spawnCwd = comfyDir;
+				console.log(" -> Launching main.py with --disable-auto-launch");
+			} else {
+				const batFile = path.join(comfyDir, "run_nvidia_gpu.bat");
+				if (fs.existsSync(batFile)) {
+					comfyCmd = batFile;
+					comfyArgs = [];
+					console.log(" -> Launching via run_nvidia_gpu.bat");
+				}
+			}
+
+			comfyProc = spawn(comfyCmd, comfyArgs, {
+				cwd: spawnCwd,
+				stdio: "ignore",
+				shell: false,
+			});
+			console.log(` -> ComfyUI backend process spawned (PID: ${comfyProc.pid}).`);
+			console.log(" -> Waiting for ComfyUI server to finish booting and reach ready status on port 8188...");
+
+			const maxWaitSeconds = 60;
+			for (let i = 1; i <= maxWaitSeconds; i++) {
+				await new Promise((r) => setTimeout(r, 1000));
+				isComfyOnline = await checkComfyReady(8188);
+				if (isComfyOnline) {
+					console.log(` -> ComfyUI server is fully online and ready after ${i}s!`);
+					break;
+				}
+				if (i % 5 === 0) {
+					console.log(`    ... still booting ComfyUI backend (${i}s)`);
+				}
+			}
+
+			if (!isComfyOnline) {
+				console.warn(" [!] Warning: ComfyUI server did not respond within 60s. Proceeding to launch browsers...");
+			}
+		} else {
+			console.warn(" [!] ComfyUI directory not found automatically.");
+			console.warn("     If ComfyUI is installed elsewhere, set environment variable COMFYUI_DIR");
+			console.warn("     e.g., set COMFYUI_DIR=C:\\path\\to\\ComfyUI");
+		}
 	}
 
 	// --- STEP 3: Multi-Monitor Chrome Placement ---
