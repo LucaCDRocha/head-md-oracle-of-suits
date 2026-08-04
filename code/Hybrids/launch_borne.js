@@ -100,6 +100,39 @@ function getScreens() {
 	return [];
 }
 
+let serverProc = null;
+let comfyProc = null;
+
+function stopAllServices() {
+	if (serverProc && serverProc.pid) {
+		try {
+			execSync(`taskkill /F /PID ${serverProc.pid} /T`, { stdio: "ignore" });
+		} catch (e) {}
+	}
+	if (comfyProc && comfyProc.pid) {
+		try {
+			execSync(`taskkill /F /PID ${comfyProc.pid} /T`, { stdio: "ignore" });
+		} catch (e) {}
+	}
+}
+
+// Clean up background services when terminal is closed or interrupted
+process.on("SIGINT", () => {
+	stopAllServices();
+	process.exit(0);
+});
+process.on("SIGTERM", () => {
+	stopAllServices();
+	process.exit(0);
+});
+process.on("SIGHUP", () => {
+	stopAllServices();
+	process.exit(0);
+});
+process.on("exit", () => {
+	stopAllServices();
+});
+
 async function main() {
 	// --- STEP 1: Launch Hybrids server.js ---
 	console.log("[1/3] Checking Hybrids Server (server.js)...");
@@ -108,13 +141,11 @@ async function main() {
 		console.log(` -> Hybrids server is already running on port ${PORT}.`);
 	} else {
 		console.log(` -> Starting Node.js server (server.js) on port ${PORT}...`);
-		const serverProc = spawn("node", ["server.js"], {
+		serverProc = spawn("node", ["server.js"], {
 			cwd: __dirname,
-			detached: true,
 			stdio: "ignore",
 		});
-		serverProc.unref();
-		console.log(` -> Server process spawned independently.`);
+		console.log(` -> Server process spawned (PID: ${serverProc.pid}).`);
 
 		// Wait until server is listening on port
 		for (let i = 0; i < 10; i++) {
@@ -139,7 +170,7 @@ async function main() {
 		const rootMainPy = path.join(comfyDir, "main.py");
 
 		let comfyCmd = "python";
-		let comfyArgs = ["main.py", "--dont-auto-launch-browser", "--no-browser"];
+		let comfyArgs = ["main.py", "--disable-auto-launch"];
 		let spawnCwd = comfyDir;
 
 		if (fs.existsSync(embeddedPython) && fs.existsSync(comfyMainPy)) {
@@ -149,16 +180,15 @@ async function main() {
 				"-s",
 				comfyMainPy,
 				"--windows-standalone-build",
-				"--dont-auto-launch-browser",
-				"--no-browser",
+				"--disable-auto-launch",
 			];
 			spawnCwd = comfyDir;
-			console.log(" -> Launching ComfyUI Portable Python with --dont-auto-launch-browser --no-browser");
+			console.log(" -> Launching ComfyUI Portable Python with --disable-auto-launch");
 		} else if (fs.existsSync(rootMainPy)) {
 			// Standard ComfyUI installation with main.py in root
-			comfyArgs = ["main.py", "--dont-auto-launch-browser", "--no-browser"];
+			comfyArgs = ["main.py", "--disable-auto-launch"];
 			spawnCwd = comfyDir;
-			console.log(" -> Launching main.py with --dont-auto-launch-browser --no-browser");
+			console.log(" -> Launching main.py with --disable-auto-launch");
 		} else {
 			const batFile = path.join(comfyDir, "run_nvidia_gpu.bat");
 			if (fs.existsSync(batFile)) {
@@ -168,14 +198,12 @@ async function main() {
 			}
 		}
 
-		const comfyProc = spawn(comfyCmd, comfyArgs, {
+		comfyProc = spawn(comfyCmd, comfyArgs, {
 			cwd: spawnCwd,
-			detached: true,
 			stdio: "ignore",
 			shell: false,
 		});
-		comfyProc.unref();
-		console.log(" -> ComfyUI backend launched without opening browser.");
+		console.log(` -> ComfyUI backend launched without opening browser (PID: ${comfyProc.pid}).`);
 	} else {
 		console.warn(" [!] ComfyUI directory not found automatically.");
 		console.warn("     If ComfyUI is installed elsewhere, set environment variable COMFYUI_DIR");
@@ -229,8 +257,7 @@ async function main() {
 		"--no-default-browser-check",
 		`--app=${URL_DISPLAY2}`,
 	];
-	const c2 = spawn(chromeExe, chrome2Args, { detached: true, stdio: "ignore" });
-	c2.unref();
+	const c2 = spawn(chromeExe, chrome2Args, { stdio: "ignore" });
 
 	await new Promise((r) => setTimeout(r, 1000));
 
@@ -245,8 +272,7 @@ async function main() {
 		"--no-default-browser-check",
 		`--app=${URL_DISPLAY1}`,
 	];
-	const c1 = spawn(chromeExe, chrome1Args, { detached: true, stdio: "ignore" });
-	c1.unref();
+	const c1 = spawn(chromeExe, chrome1Args, { stdio: "ignore" });
 
 	await new Promise((r) => setTimeout(r, 800));
 
@@ -264,6 +290,8 @@ async function main() {
 	console.log("      BORNE LAUNCH COMPLETE!                            ");
 	console.log(`  Control Screen (Display 1): ${URL_DISPLAY1}`);
 	console.log(`  Exhibition Screen (Display 2): ${URL_DISPLAY2}`);
+	console.log("  [INFO] Closing this terminal window or pressing Ctrl+C");
+	console.log("         will automatically shut down server.js and ComfyUI.");
 	console.log("========================================================\n");
 }
 
