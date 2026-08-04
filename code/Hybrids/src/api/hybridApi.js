@@ -1,5 +1,4 @@
-// API calls for hybrids
-import { API_BASE } from "../../config.js";
+import { API_BASE, KIOSK_API_TOKEN } from "../../config.js";
 import { compressImage } from "../utils/imageUtils.js";
 
 /**
@@ -59,15 +58,21 @@ export async function uploadHybridBase64(base64, selected, baseCardId, statusCal
 
 		const url = API_BASE.replace(/\/$/, "") + "/api/hybrids";
 
+		const headers = {
+			Accept: "application/json",
+			"X-Requested-With": "XMLHttpRequest",
+		};
+		if (KIOSK_API_TOKEN) {
+			headers["Authorization"] = `Bearer ${KIOSK_API_TOKEN}`;
+		}
+
 		const res = await fetch(url, {
 			method: "POST",
 			body: fd,
-			headers: {
-				Accept: "application/json",
-				"X-Requested-With": "XMLHttpRequest",
-			},
+			headers,
 			redirect: "manual",
 		});
+
 
 		const json = await res.json().catch(() => null);
 

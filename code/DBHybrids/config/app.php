@@ -123,4 +123,15 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Kiosk API Token
+    |--------------------------------------------------------------------------
+    |
+    | Pre-shared secret token for static authentication from the physical kiosk.
+    |
+    */
+
+    'kiosk_api_token' => env('KIOSK_API_TOKEN', 'hybrids_kiosk_token'),
+
 ];

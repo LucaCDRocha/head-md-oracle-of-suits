@@ -197,63 +197,81 @@
             }
         });
 
+        // Helper to get or generate an anonymous device UUID
+        function getDeviceId() {
+            let deviceId = localStorage.getItem('hybrids_device_id');
+            if (!deviceId) {
+                if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+                    deviceId = crypto.randomUUID();
+                } else {
+                    deviceId = 'dev_' + Date.now() + '_' + Math.random().toString(36).substring(2, 11);
+                }
+                localStorage.setItem('hybrids_device_id', deviceId);
+            }
+            return deviceId;
+        }
+
         // Like Button Functionality
         const likeButton = document.getElementById('like-button');
         const likeCount = document.getElementById('like-count');
-        const hybridId = likeButton.dataset.hybridId;
+        const hybridId = likeButton ? likeButton.dataset.hybridId : null;
         const likedKey = `hybrid_liked_${hybridId}`;
 
         let isLiked = localStorage.getItem(likedKey) === 'true';
 
-        if (isLiked) {
+        if (likeButton && isLiked) {
             likeButton.classList.add('liked');
         }
 
-        likeButton.addEventListener('click', async function() {
-            if (this.disabled) return;
-            this.disabled = true;
+        if (likeButton) {
+            likeButton.addEventListener('click', async function() {
+                if (this.disabled) return;
+                this.disabled = true;
 
-            try {
-                const action = isLiked ? 'unlike' : 'like';
-                const endpoint = window.location.pathname.endsWith('/like') 
-                    ? window.location.pathname 
-                    : `${window.location.pathname.replace(/\/$/, '')}/like`;
+                try {
+                    const action = isLiked ? 'unlike' : 'like';
+                    const endpoint = `/api/hybrids/${hybridId}/like`;
 
-                const response = await fetch(endpoint, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                    },
-                    body: JSON.stringify({ action: action })
-                });
+                    const response = await fetch(endpoint, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify({
+                            action: action,
+                            device_id: getDeviceId()
+                        })
+                    });
 
-                if (response.ok) {
-                    const data = await response.json();
-                    likeCount.textContent = data.nb_like;
-                    isLiked = data.liked;
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (likeCount) likeCount.textContent = data.nb_like;
+                        isLiked = data.liked;
 
-                    if (isLiked) {
-                        this.classList.add('liked');
-                        localStorage.setItem(likedKey, 'true');
+                        if (isLiked) {
+                            this.classList.add('liked');
+                            localStorage.setItem(likedKey, 'true');
+                        } else {
+                            this.classList.remove('liked');
+                            localStorage.removeItem(likedKey);
+                        }
+
+                        this.style.transform = 'scale(1.15)';
+                        setTimeout(() => {
+                            this.style.transform = '';
+                            this.disabled = false;
+                        }, 200);
                     } else {
-                        this.classList.remove('liked');
-                        localStorage.removeItem(likedKey);
-                    }
-
-                    this.style.transform = 'scale(1.15)';
-                    setTimeout(() => {
-                        this.style.transform = '';
                         this.disabled = false;
-                    }, 200);
-                } else {
+                    }
+                } catch (error) {
+                    console.error('Error liking hybrid:', error);
                     this.disabled = false;
                 }
-            } catch (error) {
-                console.error('Error liking hybrid:', error);
-                this.disabled = false;
-            }
-        });
+            });
+        }
+
 
         // Custom Share Modal Functionality
         const shareBtn = document.getElementById('share-btn');

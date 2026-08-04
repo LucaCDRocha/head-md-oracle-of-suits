@@ -188,4 +188,58 @@ class HybridController extends Controller
 
         return response()->json(['data' => $payload]);
     }
+
+    /**
+     * Toggle or set a like on a hybrid using device UUID tracking and DB transaction.
+     */
+    public function like(Request $request, $id)
+    {
+        $hybrid = Hybrid::find($id);
+
+        if (!$hybrid) {
+            return response()->json(['error' => 'Hybrid not found'], 404);
+        }
+
+        $data = $request->validate([
+            'device_id' => 'required|string|max:100',
+            'action' => 'nullable|string|in:like,unlike',
+        ]);
+
+        $deviceId = $data['device_id'];
+        $action = $data['action'] ?? 'like';
+        $liked = false;
+
+        \Illuminate\Support\Facades\DB::transaction(function () use ($hybrid, $deviceId, $action, &$liked) {
+            $existingLike = \App\Models\Like::where('hybrid_id', $hybrid->id)
+                ->where('device_id', $deviceId)
+                ->first();
+
+            if ($action === 'unlike') {
+                if ($existingLike) {
+                    $existingLike->delete();
+                    $hybrid->nb_like = max(0, $hybrid->nb_like - 1);
+                    $hybrid->save();
+                }
+                $liked = false;
+            } else {
+                if (!$existingLike) {
+                    \App\Models\Like::create([
+                        'hybrid_id' => $hybrid->id,
+                        'device_id' => $deviceId,
+                    ]);
+                    $hybrid->increment('nb_like');
+                }
+                $liked = true;
+            }
+        });
+
+        $hybrid->refresh();
+
+        return response()->json([
+            'success' => true,
+            'nb_like' => $hybrid->nb_like,
+            'liked' => $liked
+        ]);
+    }
 }
+

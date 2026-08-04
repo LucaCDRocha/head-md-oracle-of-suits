@@ -270,6 +270,20 @@
             }
         }
 
+        // Helper to get or generate an anonymous device UUID
+        function getDeviceId() {
+            let deviceId = localStorage.getItem('hybrids_device_id');
+            if (!deviceId) {
+                if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+                    deviceId = crypto.randomUUID();
+                } else {
+                    deviceId = 'dev_' + Date.now() + '_' + Math.random().toString(36).substring(2, 11);
+                }
+                localStorage.setItem('hybrids_device_id', deviceId);
+            }
+            return deviceId;
+        }
+
         // Like button functionality on index page with expanded hitbox & event isolation
         document.querySelectorAll('.index-like-btn').forEach(btn => {
             const id = btn.dataset.hybridId;
@@ -290,13 +304,16 @@
                 const action = isLiked ? 'unlike' : 'like';
 
                 try {
-                    const response = await fetch(`/${id}/like`, {
+                    const response = await fetch(`/api/hybrids/${id}/like`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
                             'X-CSRF-TOKEN': '{{ csrf_token() }}'
                         },
-                        body: JSON.stringify({ action: action })
+                        body: JSON.stringify({
+                            action: action,
+                            device_id: getDeviceId()
+                        })
                     });
 
                     if (response.ok) {
@@ -326,6 +343,7 @@
                 }
             });
         });
+
 
         // Instant check for cached images
         document.querySelectorAll('.hybrid-card-img').forEach(img => {

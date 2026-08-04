@@ -3,133 +3,140 @@
 use Illuminate\Support\Facades\Route;
 use App\Models\Hybrid;
 
-function getAppLocale() {
-    if (request()->has('lang')) {
-        $lang = in_array(request('lang'), ['fr', 'en']) ? request('lang') : 'fr';
-        session(['locale' => $lang]);
-        return $lang;
+if (!function_exists('getAppLocale')) {
+    function getAppLocale() {
+        if (request()->has('lang')) {
+            $lang = in_array(request('lang'), ['fr', 'en']) ? request('lang') : 'fr';
+            session(['locale' => $lang]);
+            return $lang;
+        }
+        return session('locale', 'fr');
     }
-    return session('locale', 'fr');
 }
 
-function getTranslations($lang) {
-    if ($lang === 'en') {
+if (!function_exists('getTranslations')) {
+    function getTranslations($lang) {
+        if ($lang === 'en') {
+            return [
+                'hybrids' => 'Hybrids',
+                'gallery' => 'Gallery',
+                'explore' => 'Explore all generated hybrid cards',
+                'cards_used' => 'CARDS USED:',
+                'of' => 'of',
+                'previous' => '‹ Previous',
+                'next' => 'Next ›',
+                'language' => 'Language',
+                'sort_by' => 'Sort by',
+                'most_recent' => 'Most recent',
+                'oldest' => 'Oldest',
+                'most_liked' => 'Most liked',
+                'filter_by_date' => 'Filter by date',
+                'apply' => 'Apply',
+                'reset' => 'Reset',
+                'no_hybrids' => 'No hybrids found matching your criteria.',
+                'back_link' => 'Back to all Hybrids',
+                'share' => 'Share',
+                'download' => 'Download image',
+                'source_cards' => 'Source cards',
+                'base_card' => '★ BASE CARD',
+                'share_title' => 'Share this Hybrid',
+                'share_subtext' => 'Scan the QR Code or copy the link below to share this hybrid.',
+                'copy' => 'Copy',
+                'copied' => 'Copied !',
+            ];
+        }
+
         return [
             'hybrids' => 'Hybrids',
-            'gallery' => 'Gallery',
-            'explore' => 'Explore all generated hybrid cards',
-            'cards_used' => 'CARDS USED:',
-            'of' => 'of',
-            'previous' => '‹ Previous',
-            'next' => 'Next ›',
-            'language' => 'Language',
-            'sort_by' => 'Sort by',
-            'most_recent' => 'Most recent',
-            'oldest' => 'Oldest',
-            'most_liked' => 'Most liked',
-            'filter_by_date' => 'Filter by date',
-            'apply' => 'Apply',
-            'reset' => 'Reset',
-            'no_hybrids' => 'No hybrids found matching your criteria.',
-            'back_link' => 'Back to all Hybrids',
-            'share' => 'Share',
-            'download' => 'Download image',
-            'source_cards' => 'Source cards',
-            'base_card' => '★ BASE CARD',
-            'share_title' => 'Share this Hybrid',
-            'share_subtext' => 'Scan the QR Code or copy the link below to share this hybrid.',
-            'copy' => 'Copy',
-            'copied' => 'Copied !',
+            'gallery' => 'Galerie',
+            'explore' => 'Explorez toutes les cartes hybrides générées',
+            'cards_used' => 'CARTES UTILISÉES :',
+            'of' => 'sur',
+            'previous' => '‹ Précédent',
+            'next' => 'Suivant ›',
+            'language' => 'Langue',
+            'sort_by' => 'Trier par',
+            'most_recent' => 'Plus récents',
+            'oldest' => 'Plus anciens',
+            'most_liked' => 'Plus aimés',
+            'filter_by_date' => 'Filtrer par date',
+            'apply' => 'Appliquer',
+            'reset' => 'Réinitialiser',
+            'no_hybrids' => 'Aucun hybrid trouvé pour vos critères.',
+            'back_link' => 'Retour à tous les Hybrids',
+            'share' => 'Partager',
+            'download' => 'Télécharger l\'image',
+            'source_cards' => 'Cartes sources',
+            'base_card' => '★ CARTE DE BASE',
+            'share_title' => 'Partager cet Hybrid',
+            'share_subtext' => 'Scannez le QR Code ou copiez le lien ci-dessous pour partager cet hybrid.',
+            'copy' => 'Copier',
+            'copied' => 'Copié !',
         ];
     }
-
-    return [
-        'hybrids' => 'Hybrids',
-        'gallery' => 'Galerie',
-        'explore' => 'Explorez toutes les cartes hybrides générées',
-        'cards_used' => 'CARTES UTILISÉES :',
-        'of' => 'sur',
-        'previous' => '‹ Précédent',
-        'next' => 'Suivant ›',
-        'language' => 'Langue',
-        'sort_by' => 'Trier par',
-        'most_recent' => 'Plus récents',
-        'oldest' => 'Plus anciens',
-        'most_liked' => 'Plus aimés',
-        'filter_by_date' => 'Filtrer par date',
-        'apply' => 'Appliquer',
-        'reset' => 'Réinitialiser',
-        'no_hybrids' => 'Aucun hybrid trouvé pour vos critères.',
-        'back_link' => 'Retour à tous les Hybrids',
-        'share' => 'Partager',
-        'download' => 'Télécharger l\'image',
-        'source_cards' => 'Cartes sources',
-        'base_card' => '★ CARTE DE BASE',
-        'share_title' => 'Partager cet Hybrid',
-        'share_subtext' => 'Scannez le QR Code ou copiez le lien ci-dessous pour partager cet hybrid.',
-        'copy' => 'Copier',
-        'copied' => 'Copié !',
-    ];
 }
 
-function getExpandedCards($hybrid) {
-    if (!$hybrid || !$hybrid->cards) return collect([]);
-    
-    $cardNames = explode(' + ', $hybrid->name);
-    if (count($cardNames) < 2) {
-        $result = $hybrid->cards;
-    } else {
-        $cardMap = [];
-        foreach ($hybrid->cards as $c) {
-            $cardMap[trim($c->name)] = $c;
-        }
+if (!function_exists('getExpandedCards')) {
+    function getExpandedCards($hybrid) {
+        if (!$hybrid || !$hybrid->cards) return collect([]);
+        
+        $cardNames = explode(' + ', $hybrid->name);
+        if (count($cardNames) < 2) {
+            $result = $hybrid->cards;
+        } else {
+            $cardMap = [];
+            foreach ($hybrid->cards as $c) {
+                $cardMap[trim($c->name)] = $c;
+            }
 
-        $expanded = collect([]);
-        $baseCardSeen = false;
+            $expanded = collect([]);
+            $baseCardSeen = false;
 
-        foreach ($cardNames as $name) {
-            $trimmed = trim($name);
-            if (isset($cardMap[$trimmed])) {
-                $cloned = clone $cardMap[$trimmed];
-                
-                if (isset($cloned->pivot)) {
-                    if ($cloned->pivot->is_base) {
-                        if ($baseCardSeen) {
-                            $pivotClone = clone $cloned->pivot;
-                            $pivotClone->is_base = 0;
-                            $cloned->pivot = $pivotClone;
-                        } else {
-                            $baseCardSeen = true;
+            foreach ($cardNames as $name) {
+                $trimmed = trim($name);
+                if (isset($cardMap[$trimmed])) {
+                    $cloned = clone $cardMap[$trimmed];
+                    
+                    if (isset($cloned->pivot)) {
+                        if ($cloned->pivot->is_base) {
+                            if ($baseCardSeen) {
+                                $pivotClone = clone $cloned->pivot;
+                                $pivotClone->is_base = 0;
+                                $cloned->pivot = $pivotClone;
+                            } else {
+                                $baseCardSeen = true;
+                            }
                         }
                     }
+
+                    $expanded->push($cloned);
                 }
+            }
+            $result = $expanded->isNotEmpty() ? $expanded : $hybrid->cards;
+        }
 
-                $expanded->push($cloned);
+        // Always position the Base Card in the CENTER (index 1) if there are 3 cards
+        if ($result->count() === 3) {
+            $baseIndex = null;
+            foreach ($result->values() as $idx => $card) {
+                if (isset($card->pivot) && $card->pivot->is_base) {
+                    $baseIndex = $idx;
+                    break;
+                }
+            }
+
+            if ($baseIndex !== null && $baseIndex !== 1) {
+                $items = $result->values()->all();
+                $baseCard = array_splice($items, $baseIndex, 1)[0];
+                array_splice($items, 1, 0, [$baseCard]);
+                $result = collect($items);
             }
         }
-        $result = $expanded->isNotEmpty() ? $expanded : $hybrid->cards;
+
+        return $result;
     }
-
-    // Always position the Base Card in the CENTER (index 1) if there are 3 cards
-    if ($result->count() === 3) {
-        $baseIndex = null;
-        foreach ($result->values() as $idx => $card) {
-            if (isset($card->pivot) && $card->pivot->is_base) {
-                $baseIndex = $idx;
-                break;
-            }
-        }
-
-        if ($baseIndex !== null && $baseIndex !== 1) {
-            $items = $result->values()->all();
-            $baseCard = array_splice($items, $baseIndex, 1)[0];
-            array_splice($items, 1, 0, [$baseCard]);
-            $result = collect($items);
-        }
-    }
-
-    return $result;
 }
+
 
 Route::get('/', function () {
     // 1. Language session persistence
@@ -265,31 +272,7 @@ Route::get('/{id}/download', function ($id) {
     return response()->download($imagePath, $filename);
 })->name('hybrids.download');
 
-Route::post('/{id}/like', function ($id) {
-    $hybrid = Hybrid::find($id);
+Route::post('/{id}/like', [\App\Http\Controllers\Api\HybridController::class, 'like'])
+    ->middleware('throttle:150,1')
+    ->name('hybrids.like');
 
-    if (!$hybrid) {
-        return response()->json(['error' => 'Hybrid not found'], 404);
-    }
-
-    // Get the action (like or unlike) from request
-    $action = request()->input('action', 'like');
-
-    if ($action === 'unlike') {
-        // Decrement the like count (but don't go below 0)
-        $hybrid->nb_like = max(0, $hybrid->nb_like - 1);
-        $liked = false;
-    } else {
-        // Increment the like count
-        $hybrid->nb_like = $hybrid->nb_like + 1;
-        $liked = true;
-    }
-
-    $hybrid->save();
-
-    return response()->json([
-        'success' => true,
-        'nb_like' => $hybrid->nb_like,
-        'liked' => $liked
-    ]);
-})->name('hybrids.like');

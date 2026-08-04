@@ -21,4 +21,10 @@ class Hybrid extends Model
             ->withPivot('is_base')
             ->withTimestamps();
     }
+
+    public function likes()
+    {
+        return $this->hasMany(Like::class);
+    }
 }
+
