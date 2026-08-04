@@ -48,6 +48,7 @@ function findComfyDir() {
 		"D:\\ComfyUI",
 		path.join(userHome, "ComfyUI_windows_portable"),
 		path.join(userHome, "Desktop", "ComfyUI_windows_portable"),
+		path.join(userHome, "Desktop", "HEAD-Hybrids\\ComfyUI_windows_portable"),
 		path.join(userHome, "Desktop", "ComfyUI"),
 		path.resolve(hybridsDir, "..", "..", "..", "..", "ComfyUI_windows_portable"),
 		path.resolve(hybridsDir, "..", "..", "..", "..", "ComfyUI"),
@@ -133,26 +134,45 @@ async function main() {
 	const comfyDir = findComfyDir();
 	if (comfyDir) {
 		console.log(` -> Found ComfyUI directory at: ${comfyDir}`);
-		const batFile = path.join(comfyDir, "run_nvidia_gpu.bat");
-		const pyFile = path.join(comfyDir, "main.py");
+		const embeddedPython = path.join(comfyDir, "python_embeded", "python.exe");
+		const comfyMainPy = path.join(comfyDir, "ComfyUI", "main.py");
+		const rootMainPy = path.join(comfyDir, "main.py");
 
 		let comfyCmd = "python";
-		let comfyArgs = ["main.py", "--dont-auto-launch-browser"];
+		let comfyArgs = ["main.py", "--dont-auto-launch-browser", "--no-browser"];
+		let spawnCwd = comfyDir;
 
-		if (fs.existsSync(batFile)) {
-			comfyCmd = batFile;
-			comfyArgs = ["--dont-auto-launch-browser"];
-			console.log(" -> Launching via run_nvidia_gpu.bat --dont-auto-launch-browser");
-		} else if (fs.existsSync(pyFile)) {
-			comfyArgs = ["main.py", "--dont-auto-launch-browser"];
-			console.log(" -> Launching via main.py --dont-auto-launch-browser");
+		if (fs.existsSync(embeddedPython) && fs.existsSync(comfyMainPy)) {
+			// ComfyUI Windows Portable distribution
+			comfyCmd = embeddedPython;
+			comfyArgs = [
+				"-s",
+				comfyMainPy,
+				"--windows-standalone-build",
+				"--dont-auto-launch-browser",
+				"--no-browser",
+			];
+			spawnCwd = comfyDir;
+			console.log(" -> Launching ComfyUI Portable Python with --dont-auto-launch-browser --no-browser");
+		} else if (fs.existsSync(rootMainPy)) {
+			// Standard ComfyUI installation with main.py in root
+			comfyArgs = ["main.py", "--dont-auto-launch-browser", "--no-browser"];
+			spawnCwd = comfyDir;
+			console.log(" -> Launching main.py with --dont-auto-launch-browser --no-browser");
+		} else {
+			const batFile = path.join(comfyDir, "run_nvidia_gpu.bat");
+			if (fs.existsSync(batFile)) {
+				comfyCmd = batFile;
+				comfyArgs = [];
+				console.log(" -> Launching via run_nvidia_gpu.bat");
+			}
 		}
 
 		const comfyProc = spawn(comfyCmd, comfyArgs, {
-			cwd: comfyDir,
+			cwd: spawnCwd,
 			detached: true,
 			stdio: "ignore",
-			shell: true,
+			shell: false,
 		});
 		comfyProc.unref();
 		console.log(" -> ComfyUI backend launched without opening browser.");
