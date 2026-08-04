@@ -50,6 +50,7 @@ const server = http.createServer((req, res) => {
 				res.writeHead(proxyRes.statusCode, {
 					"Content-Type": proxyRes.headers["content-type"] || "image/jpeg",
 					"Access-Control-Allow-Origin": "*",
+					"Cache-Control": "public, max-age=31536000, immutable" // Force browser to cache this for 1 year
 				});
 				proxyRes.pipe(res);
 			})

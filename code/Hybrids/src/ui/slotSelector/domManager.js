@@ -74,7 +74,8 @@ function createSlotElement(slot) {
 	previewDiv.id = `preview-${slot.id}`;
 
 	if (slot.selectedCard) {
-		previewDiv.innerHTML = `<img src="${slot.selectedCard.img_src}" alt="${slot.selectedCard.name}" />`;
+		const cachedSrc = slot.selectedCard.img_src && slot.selectedCard.img_src.startsWith('blob:') ? slot.selectedCard.img_src : (slot.selectedCard.img_src && slot.selectedCard.img_src.startsWith('data:') ? slot.selectedCard.img_src : '');
+		previewDiv.innerHTML = `<img src="${cachedSrc}" alt="${slot.selectedCard.name}" />`;
 	} else {
 		previewDiv.innerHTML = '<div class="no-card">Select filters to choose a card</div>';
 	}
@@ -150,7 +151,13 @@ export function updateSlotElement(slot) {
 	const previewDiv = document.getElementById(`preview-${slot.id}`);
 	if (previewDiv) {
 		if (slot.selectedCard) {
-			previewDiv.innerHTML = `<img src="${slot.selectedCard.img_src}" alt="${slot.selectedCard.name}" />`;
+			let imgEl = previewDiv.querySelector('img');
+			if (!imgEl) {
+				const cachedSrc = (slot.selectedCard.img_src && (slot.selectedCard.img_src.startsWith('blob:') || slot.selectedCard.img_src.startsWith('data:'))) ? slot.selectedCard.img_src : '';
+				previewDiv.innerHTML = `<img src="${cachedSrc}" alt="${slot.selectedCard.name}" />`;
+			} else {
+				imgEl.alt = slot.selectedCard.name;
+			}
 		} else {
 			previewDiv.innerHTML = '<div class="no-card">Select filters to choose a card</div>';
 		}

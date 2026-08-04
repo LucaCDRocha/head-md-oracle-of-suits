@@ -1,8 +1,10 @@
-/**
- * slotState.js - Data and state management for slot selector
- */
-
 import { fetchCards } from "../../api/cardApi.js";
+import { 
+	isAlreadyCached, 
+	setAlreadyCached, 
+	showCacheProgress, 
+	hideCacheProgress 
+} from "../../ui/cacheLoaderModal.js";
 
 export let allCards = [];
 export let allGames = [];
@@ -11,12 +13,42 @@ export let slots = [
 	{ id: 2, filters: {}, selectedCard: null },
 	{ id: 3, filters: {}, selectedCard: null },
 ];
-export let baseSlotId = 2; // Middle card is default base card for Gemini
+export let baseSlotId = 2;
 export let slotAbortControllers = [null, null, null];
 
 export function setBaseSlotId(id) {
 	baseSlotId = id;
 }
+
+// ----------------------------------------------------
+// WEB CACHE API HELPERS (Replaces IndexedDB & HTTP cache)
+// ----------------------------------------------------
+const CACHE_NAME = 'oracle-cards-cache-v1';
+
+async function getFromCache(key) {
+	if (typeof window === 'undefined' || !window.caches) return null;
+	try {
+		const cache = await caches.open(CACHE_NAME);
+		const res = await cache.match(key);
+		if (res) return res;
+	} catch (e) {
+		console.warn("Cache read error:", e);
+	}
+	return null;
+}
+
+async function saveToCache(key, response) {
+	if (typeof window === 'undefined' || !window.caches) return;
+	try {
+		const cache = await caches.open(CACHE_NAME);
+		await cache.put(key, response);
+	} catch (e) {
+		console.warn("Cache write error:", e);
+	}
+}
+// ----------------------------------------------------
+
+let isProgressivePreloading = false;
 
 export async function fetchAndInitCards() {
 	allCards = await fetchCards();
@@ -26,6 +58,75 @@ export async function fetchAndInitCards() {
 	slots.forEach((slot) => {
 		selectRandomCard(slot);
 	});
+
+	// Check if this is the first launch (un-cached)
+	if (!isAlreadyCached()) {
+		startProgressivePreloader();
+	} else {
+		console.log(`[Cache] Borne already cached! Skipping loading screen for instant 0-latency launch.`);
+	}
+}
+
+async function startProgressivePreloader() {
+	if (isProgressivePreloading || !allCards || allCards.length === 0) return;
+	isProgressivePreloading = true;
+	console.log(`[Cache] First launch detected! Preloading ${allCards.length} cards...`);
+
+	showCacheProgress(0, allCards.length);
+
+	const total = allCards.length;
+	let completed = 0;
+	const BATCH_SIZE = 5;
+
+	for (let i = 0; i < total; i += BATCH_SIZE) {
+		const batch = allCards.slice(i, i + BATCH_SIZE);
+		
+		await Promise.all(batch.map(async (card) => {
+			if (!card.img_src || card.img_src.startsWith('data:')) {
+				completed++;
+				return;
+			}
+
+			let targetUrl = card.img_src;
+			if (targetUrl.startsWith('http') && !targetUrl.includes('localhost:8080')) {
+				targetUrl = `/proxy-image?url=${encodeURIComponent(targetUrl)}`;
+			}
+
+			const isTiff = targetUrl.toLowerCase().endsWith('.tif') || targetUrl.toLowerCase().endsWith('.tiff');
+
+			try {
+				if (isTiff) {
+					const cached = await getFromCache(`tiff-${card.id}`);
+					if (!cached) {
+						const dataUrl = await decodeTiffToDataUrl(targetUrl);
+						if (dataUrl && dataUrl.startsWith('data:')) {
+							await saveToCache(`tiff-${card.id}`, new Response(dataUrl));
+						}
+					}
+				} else {
+					const cached = await getFromCache(targetUrl);
+					if (!cached) {
+						const response = await fetch(targetUrl);
+						if (response.ok) {
+							await saveToCache(targetUrl, response.clone());
+						}
+					}
+				}
+			} catch (e) {
+				console.warn(`[Cache] Preloader error for ${card.id}:`, e);
+			}
+
+			completed++;
+			showCacheProgress(completed, total);
+		}));
+
+		// Small 30ms gap between 5-card batches for maximum speed & stability
+		await new Promise(resolve => setTimeout(resolve, 30));
+	}
+
+	console.log(`[Cache] First launch preloading complete! Saving cache flag.`);
+	setAlreadyCached(true);
+	hideCacheProgress();
 }
 
 async function decodeTiffToDataUrl(url, signal) {
@@ -38,6 +139,10 @@ async function decodeTiffToDataUrl(url, signal) {
 		if (!response.ok) throw new Error("Failed to fetch TIFF");
 		const buffer = await response.arrayBuffer();
 		const ifds = UTIF.decode(buffer);
+		if (!ifds || ifds.length === 0) {
+			console.warn("UTIF could not find image IFD frame in TIFF:", url);
+			return url;
+		}
 		UTIF.decodeImage(buffer, ifds[0]);
 		const rgba = UTIF.toRGBA8(ifds[0]);
 
@@ -60,9 +165,6 @@ async function decodeTiffToDataUrl(url, signal) {
 	}
 }
 
-/**
- * Extract unique games, years, suits, values from cards
- */
 function extractGameData() {
 	const gameMap = new Map();
 
@@ -96,9 +198,6 @@ function extractGameData() {
 	}));
 }
 
-/**
- * Select a random card for a slot
- */
 export function selectRandomCard(slot) {
 	if (allCards.length === 0) return;
 
@@ -116,20 +215,13 @@ export function selectRandomCard(slot) {
 	selectCardForSlot(slot, randomCard);
 }
 
-/**
- * Shuffle all 3 slots with new random cards
- */
 export function shuffleAllSlots() {
 	slots.forEach((slot) => {
 		selectRandomCard(slot);
 	});
 }
 
-/**
- * Select a card for a slot
- */
 export function selectCardForSlot(slot, card) {
-	// Cancel any pending fetch/decoding for this slot
 	const slotIdx = slot.id - 1;
 	if (slotAbortControllers[slotIdx]) {
 		slotAbortControllers[slotIdx].abort();
@@ -147,11 +239,10 @@ export function selectCardForSlot(slot, card) {
 			finalUrl = `/proxy-image?url=${encodeURIComponent(finalUrl)}`;
 		}
 
-		// Dynamically update the preview image in the DOM (single request)
 		if (typeof document !== 'undefined') {
 			const slotEl = document.getElementById(`slot-${slot.id}`);
 			if (slotEl) {
-				const imgEl = slotEl.querySelector('.card-preview img');
+				const imgEl = slotEl.querySelector('.slot-preview img') || slotEl.querySelector('img');
 				if (imgEl) {
 					if (imgEl.src !== finalUrl) {
 						imgEl.src = finalUrl;
@@ -163,31 +254,73 @@ export function selectCardForSlot(slot, card) {
 
 	const isTiff = card.img_src && (card.img_src.toLowerCase().endsWith('.tif') || card.img_src.toLowerCase().endsWith('.tiff'));
 
-	if (isTiff && !card.img_src.startsWith('data:')) {
-		// Use empty first, then decode TIFF asynchronously (1 fetch total)
-		triggerImageLoad('');
+	let url = card.img_src;
+	if (url && url.startsWith('http') && !url.includes('localhost:8080')) {
+		url = `/proxy-image?url=${encodeURIComponent(url)}`;
+	}
 
-		let url = card.img_src;
-		if (url.startsWith('http') && !url.includes('localhost:8080')) {
-			url = `/proxy-image?url=${encodeURIComponent(url)}`;
-		}
+	if (card.img_src.startsWith('data:') || card.img_src.startsWith('blob:')) {
+		triggerImageLoad(card.img_src);
+		if (p5LoadImage) p5LoadImage(card.img_src);
+		return;
+	}
 
-		// Create new AbortController for this fetch
-		const controller = new AbortController();
-		slotAbortControllers[slotIdx] = controller;
-
-		decodeTiffToDataUrl(url, controller.signal).then(dataUrl => {
-			card.img_src = dataUrl; // save data URL to card so we don't decode again
-			if (slot.selectedCard && slot.selectedCard.id === card.id) {
+	if (isTiff) {
+		getFromCache(`tiff-${card.id}`).then(async cached => {
+			if (cached) {
+				const dataUrl = await cached.text();
+				card.img_src = dataUrl;
 				triggerImageLoad(dataUrl);
-			}
-		}).catch(err => {
-			if (err.name !== 'AbortError') {
-				console.error("Failed to decode card image:", card, err);
+				if (p5LoadImage) p5LoadImage(dataUrl);
+			} else {
+				const controller = new AbortController();
+				slotAbortControllers[slotIdx] = controller;
+		
+				decodeTiffToDataUrl(url, controller.signal).then(dataUrl => {
+					card.img_src = dataUrl;
+					saveToCache(`tiff-${card.id}`, new Response(dataUrl));
+					if (slot.selectedCard && slot.selectedCard.id === card.id) {
+						triggerImageLoad(dataUrl);
+						if (p5LoadImage) p5LoadImage(dataUrl);
+					}
+				}).catch(err => {
+					if (err.name !== 'AbortError') console.error("Failed to decode card image:", card, err);
+				});
 			}
 		});
 	} else {
-		triggerImageLoad(card.img_src);
+		getFromCache(url).then(async cached => {
+			if (cached) {
+				const blob = await cached.blob();
+				const objectUrl = URL.createObjectURL(blob);
+				card.img_src = objectUrl;
+				triggerImageLoad(objectUrl);
+				if (p5LoadImage) p5LoadImage(objectUrl);
+			} else {
+				const controller = new AbortController();
+				slotAbortControllers[slotIdx] = controller;
+
+				fetch(url, { signal: controller.signal }).then(res => {
+					if (!res.ok) throw new Error("Fetch failed");
+					const resClone = res.clone();
+					saveToCache(url, resClone);
+					return res.blob();
+				}).then(blob => {
+					if (slot.selectedCard && slot.selectedCard.id === card.id) {
+						const objectUrl = URL.createObjectURL(blob);
+						card.img_src = objectUrl;
+						triggerImageLoad(objectUrl);
+						if (p5LoadImage) p5LoadImage(objectUrl);
+					}
+				}).catch(err => {
+					if (err.name !== 'AbortError') {
+						console.error("Failed to fetch image dynamically:", err);
+						triggerImageLoad(url); 
+						if (p5LoadImage) p5LoadImage(url);
+					}
+				});
+			}
+		});
 	}
 }
 
