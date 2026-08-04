@@ -25,6 +25,7 @@ export function getCanonicalSuitKey(suitKey) {
     if (key === 'grelot' || key === 'grelots' || key === 'schellen' || key === 'bell' || key === 'bells') return 'bells';
     if (key === 'rose' || key === 'rosen' || key === 'roses') return 'roses';
     if (key === 'feuille' || key === 'feuilles' || key === 'laub' || key === 'leaf' || key === 'leaves') return 'leaves';
+    if (key === '★' || key === 'star' || key === 'stars' || key === 'étoile' || key === 'etoile' || key === 'excuse' || key === 'fou' || key === 'mat') return 'star';
     return key;
 }
 
@@ -33,6 +34,24 @@ export function getSuitPath2D() {
 }
 
 export const SUIT_VECTOR_PATHS = {
+    // ★ Star (for Excuse / Special Cards)
+    star: (ctx, s) => {
+        ctx.beginPath();
+        const outerR = s * 0.48;
+        const innerR = s * 0.20;
+        for (let i = 0; i < 5; i++) {
+            const outerAngle = (i * 2 * Math.PI / 5) - (Math.PI / 2);
+            const innerAngle = outerAngle + (Math.PI / 5);
+            if (i === 0) {
+                ctx.moveTo(Math.cos(outerAngle) * outerR, Math.sin(outerAngle) * outerR);
+            } else {
+                ctx.lineTo(Math.cos(outerAngle) * outerR, Math.sin(outerAngle) * outerR);
+            }
+            ctx.lineTo(Math.cos(innerAngle) * innerR, Math.sin(innerAngle) * innerR);
+        }
+        ctx.closePath();
+        ctx.fill();
+    },
     // ♠ Spades
     spades: (ctx, s) => {
         ctx.beginPath();

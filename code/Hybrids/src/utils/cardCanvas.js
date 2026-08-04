@@ -22,7 +22,8 @@ function drawVintageCard(ctx, artworkImage, rank, suit, suitColor = CARD_COLORS.
     ctx.fill();
     ctx.restore();
     const isPlayingCard = cardType === 'playing_card' && (rank || suit);
-    const isJoker = (rank || '').toUpperCase().trim().includes('JOKER');
+    const rankUpper = (rank || '').toUpperCase().trim();
+    const isJoker = rankUpper.includes('JOKER');
 
     // Frame Dimensions & Notch Sizes
     const margin = 72;
@@ -31,7 +32,7 @@ function drawVintageCard(ctx, artworkImage, rank, suit, suitColor = CARD_COLORS.
     const frameW = cardW - (margin * 2);
     const frameH = cardH - (margin * 2);
     const nw = 125; // Notch width
-    const nh = isJoker ? 530 : 215; // Expanded notch height for Joker to fit full-size stacked letters
+    const nh = isJoker ? 530 : 215; // Expanded notch height ONLY for JOKER; standard 215px notch for all other cards
     const r = 20;  // Corner rounding radius
 
     // 2. Create Inner Frame Path
@@ -89,7 +90,6 @@ function drawVintageCard(ctx, artworkImage, rank, suit, suitColor = CARD_COLORS.
             ctx.textBaseline = 'top';
 
             // Top-Left Index 
-            // FIX: Set exactly to frameX and frameY (removing the + 35 offset)
             const jx = frameX; 
             const startY = frameY; 
 
@@ -102,7 +102,6 @@ function drawVintageCard(ctx, artworkImage, rank, suit, suitColor = CARD_COLORS.
             ctx.translate(frameX + frameW, frameY + frameH);
             ctx.rotate(Math.PI);
 
-            // FIX: Set relative origin offsets to 0 (removing the 35 offset)
             const rotJx = 0; 
             const rotStartY = 0; 
 
@@ -117,17 +116,19 @@ function drawVintageCard(ctx, artworkImage, rank, suit, suitColor = CARD_COLORS.
             const edgeOffset = 50; // Distance from suit symbol to inner artwork border lines
 
             if (suit) {
-                // Top-Left Index: Center rank horizontally with suit symbol center (fixes '10' centering)
+                // Top-Left Index: Center rank horizontally with suit symbol center
                 const suitX = frameX + nw - edgeOffset - (fontSuitSize / 2);
-                const suitY = frameY + nh - edgeOffset - (fontSuitSize / 2);
+                const suitY = rank ? (frameY + nh - edgeOffset - (fontSuitSize / 2)) : (frameY + (nh / 2));
 
-                const rankX = suitX; // Centered with suit symbol
-                const rankY = suitY - (fontSuitSize / 2) - lineSpacing - fontRankSize;
+                if (rank) {
+                    const rankX = suitX; // Centered with suit symbol
+                    const rankY = suitY - (fontSuitSize / 2) - lineSpacing - fontRankSize;
 
-                ctx.font = `bold ${fontRankSize}px "Nippo", "Times New Roman", serif`;
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'top';
-                ctx.fillText(rank, rankX, rankY);
+                    ctx.font = `bold ${fontRankSize}px "Nippo", "Times New Roman", serif`;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'top';
+                    ctx.fillText(rank, rankX, rankY);
+                }
 
                 drawSuitSymbol(ctx, suit, suitX, suitY, fontSuitSize, suitColor);
 
@@ -137,15 +138,17 @@ function drawVintageCard(ctx, artworkImage, rank, suit, suitColor = CARD_COLORS.
                 ctx.rotate(Math.PI);
 
                 const rotSuitX = nw - edgeOffset - (fontSuitSize / 2);
-                const rotSuitY = nh - edgeOffset - (fontSuitSize / 2);
+                const rotSuitY = rank ? (nh - edgeOffset - (fontSuitSize / 2)) : (nh / 2);
 
-                const rotRankX = rotSuitX; // Centered with rotated suit symbol
-                const rotRankY = rotSuitY - (fontSuitSize / 2) - lineSpacing - fontRankSize;
+                if (rank) {
+                    const rotRankX = rotSuitX; // Centered with rotated suit symbol
+                    const rotRankY = rotSuitY - (fontSuitSize / 2) - lineSpacing - fontRankSize;
 
-                ctx.font = `bold ${fontRankSize}px "Nippo", "Times New Roman", serif`;
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'top';
-                ctx.fillText(rank, rotRankX, rotRankY);
+                    ctx.font = `bold ${fontRankSize}px "Nippo", "Times New Roman", serif`;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'top';
+                    ctx.fillText(rank, rotRankX, rotRankY);
+                }
 
                 drawSuitSymbol(ctx, suit, rotSuitX, rotSuitY, fontSuitSize, suitColor);
                 ctx.restore();

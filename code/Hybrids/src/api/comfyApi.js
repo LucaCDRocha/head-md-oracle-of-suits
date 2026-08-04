@@ -305,18 +305,24 @@ function getExactCardTextConfig(baseCard) {
 	const isTarotGame = rawGame.includes("tarot") || rawGame.includes("marseille") || rawGame.includes("waite") || rawGame.includes("tarocco") || rawGame.includes("tarok");
 	const isTarot = isTarotAtout || isTarotGame;
 	const isJass = rawGame.includes("jass") || rawGame.includes("saxon") || rawGame.includes("munich");
-	const isJoker = rawVal.toLowerCase() === "joker";
+	const isJoker = rawVal.toLowerCase().includes("joker") || rawSuit.toLowerCase().includes("joker");
+	const isExcuse = rawVal.toLowerCase().includes("excuse") || rawVal.toLowerCase().includes("fou") || rawVal.toLowerCase().includes("mat") || rawSuit.toLowerCase().includes("excuse");
 
 	// Rank initial for court cards - ALWAYS use English initials (K, Q, J, A)
 	let rankInitial = rawVal;
 	const valLower = rawVal.toLowerCase();
 
-	if (valLower === "king" || valLower === "könig" || valLower === "konig" || valLower === "roi" || valLower === "r") rankInitial = "K";
+	if (isJoker) rankInitial = "JOKER";
+	else if (isExcuse) rankInitial = "";
+	else if (valLower === "king" || valLower === "könig" || valLower === "konig" || valLower === "roi" || valLower === "r") rankInitial = "K";
 	else if (valLower === "queen" || valLower === "dame" || valLower === "d") rankInitial = "Q";
 	else if (valLower === "jack" || valLower === "valet" || valLower === "v") rankInitial = "J";
 	else if (valLower === "cavalier" || valLower === "knight") rankInitial = "C";
 	else if (valLower === "page") rankInitial = "P";
 	else if (valLower === "ace" || valLower === "as" || valLower === "daus") rankInitial = "A";
+	else if (valLower === "génie" || valLower === "genie") rankInitial = "G";
+	else if (valLower === "liberté" || valLower === "liberte") rankInitial = "L";
+	else if (valLower === "égalité" || valLower === "egalite") rankInitial = "E";
 	else if (valLower === "ober") rankInitial = "O";
 	else if (valLower === "unter") rankInitial = "U";
 
@@ -350,6 +356,8 @@ function getExactCardTextConfig(baseCard) {
 
 	if (isJoker) {
 		topCornerText = "JOKER";
+	} else if (isExcuse) {
+		topCornerText = "★";
 	} else if (isTarotAtout || (isTarotGame && (suitLowerRaw === "" || suitLowerRaw === "atout"))) {
 		// Major Arcana (Atout)
 		const cleanKey = valLower.replace(/^atout\s*/, "");
@@ -372,7 +380,7 @@ function getExactCardTextConfig(baseCard) {
 		isTarotMajor,
 		isJoker,
 		rankInitial,
-		suitSymbol,
+		suitSymbol: isExcuse ? "star" : suitSymbol,
 		tarotNumber,
 		topCornerText,
 		bottomTitleText
