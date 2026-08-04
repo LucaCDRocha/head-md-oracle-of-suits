@@ -133,6 +133,12 @@ function stopAllServices() {
 			execSync(`taskkill /F /PID ${comfyProc.pid} /T`, { stdio: "ignore" });
 		} catch (e) {}
 	}
+	try {
+		const profileBase = path.join(process.env.LOCALAPPDATA || os.tmpdir(), "OracleOfSuitsBorneProfiles");
+		if (fs.existsSync(profileBase)) {
+			fs.rmSync(profileBase, { recursive: true, force: true });
+		}
+	} catch (e) {}
 }
 
 // Clean up background services when terminal is closed or interrupted
@@ -280,6 +286,15 @@ async function main() {
 	const profileBase = path.join(process.env.LOCALAPPDATA || os.tmpdir(), "OracleOfSuitsBorneProfiles");
 	const p1 = path.join(profileBase, "Display1");
 	const p2 = path.join(profileBase, "Display2");
+
+	// Purge previous browser cache and user data for THIS APP ONLY on start
+	console.log(" -> Clearing cache and temporary profile data for Borne application...");
+	try {
+		if (fs.existsSync(p1)) fs.rmSync(p1, { recursive: true, force: true });
+		if (fs.existsSync(p2)) fs.rmSync(p2, { recursive: true, force: true });
+	} catch (e) {
+		console.warn("    (Note: previous cache lock pending, continuing clean start...)");
+	}
 
 	fs.mkdirSync(p1, { recursive: true });
 	fs.mkdirSync(p2, { recursive: true });
