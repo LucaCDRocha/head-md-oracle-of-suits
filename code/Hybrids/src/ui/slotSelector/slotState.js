@@ -142,27 +142,20 @@ export function selectCardForSlot(slot, card) {
 	const p5LoadImage = typeof window !== 'undefined' && window.loadImage ? window.loadImage : (typeof loadImage !== "undefined" ? loadImage : null);
 
 	const triggerImageLoad = (imgUrl) => {
-		if (p5LoadImage && imgUrl) {
-			let finalUrl = imgUrl;
-			if (finalUrl.startsWith('http') && !finalUrl.includes('localhost:8080')) {
-				finalUrl = `/proxy-image?url=${encodeURIComponent(finalUrl)}`;
-			}
-			card.img = p5LoadImage(
-				finalUrl,
-				() => {},
-				() => {}
-			);
-		} else {
-			card.img = null;
+		let finalUrl = imgUrl || '';
+		if (finalUrl.startsWith('http') && !finalUrl.includes('localhost:8080')) {
+			finalUrl = `/proxy-image?url=${encodeURIComponent(finalUrl)}`;
 		}
 
-		// Dynamically update the preview image in the DOM
+		// Dynamically update the preview image in the DOM (single request)
 		if (typeof document !== 'undefined') {
 			const slotEl = document.getElementById(`slot-${slot.id}`);
 			if (slotEl) {
 				const imgEl = slotEl.querySelector('.card-preview img');
 				if (imgEl) {
-					imgEl.src = imgUrl || '';
+					if (imgEl.src !== finalUrl) {
+						imgEl.src = finalUrl;
+					}
 				}
 			}
 		}
@@ -171,7 +164,7 @@ export function selectCardForSlot(slot, card) {
 	const isTiff = card.img_src && (card.img_src.toLowerCase().endsWith('.tif') || card.img_src.toLowerCase().endsWith('.tiff'));
 
 	if (isTiff && !card.img_src.startsWith('data:')) {
-		// Use placeholder or empty first, then load decoded image asynchronously
+		// Use empty first, then decode TIFF asynchronously (1 fetch total)
 		triggerImageLoad('');
 
 		let url = card.img_src;
