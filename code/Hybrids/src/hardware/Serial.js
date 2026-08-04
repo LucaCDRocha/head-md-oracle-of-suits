@@ -38,6 +38,66 @@ export function setupSerial() {
 	connectButton = createButton("Connect Arduino");
 	connectButton.position(10, 10);
 	connectButton.mousePressed(connectSerial);
+
+	// Attempt auto-connection to already paired Arduino
+	autoConnectSerial();
+}
+
+export function applySerialDebugMode(showButton) {
+	if (connectButton) {
+		if (showButton) {
+			connectButton.show();
+		} else {
+			connectButton.hide();
+		}
+	}
+}
+
+export async function autoConnectSerial() {
+	if (typeof navigator === "undefined" || !("serial" in navigator)) return;
+
+	try {
+		const ports = await navigator.serial.getPorts();
+		if (ports.length > 0) {
+			console.log("[Serial] Auto-connecting to paired Arduino device...");
+			await openSerialPort(ports[0]);
+		}
+	} catch (err) {
+		console.warn("[Serial] Auto-connect check failed:", err);
+	}
+}
+
+// Automatically detect when Arduino USB is plugged in
+if (typeof navigator !== "undefined" && "serial" in navigator) {
+	navigator.serial.addEventListener("connect", async (event) => {
+		console.log("[Serial] Arduino plugged in! Auto-connecting...");
+		if (!isConnected && event.target) {
+			await openSerialPort(event.target);
+		}
+	});
+}
+
+async function openSerialPort(selectedPort) {
+	try {
+		port = selectedPort;
+		await port.open({ baudRate: 9600 });
+
+		const decoder = new TextDecoderStream();
+		port.readable.pipeTo(decoder.writable);
+		reader = decoder.readable.getReader();
+
+		if (connectButton) {
+			connectButton.attribute("disabled", "");
+			connectButton.html("Connected ✓");
+		}
+
+		isConnected = true;
+		connectionTime = Date.now();
+
+		readLoop();
+	} catch (err) {
+		console.error("Failed to open serial port:", err);
+	}
 }
 
 async function connectSerial() {
@@ -47,22 +107,8 @@ async function connectSerial() {
 		return;
 	}
 	try {
-		// user will pick the correct COM/port
-		port = await navigator.serial.requestPort();
-		await port.open({ baudRate: 9600 });
-
-		const decoder = new TextDecoderStream();
-		port.readable.pipeTo(decoder.writable);
-		reader = decoder.readable.getReader();
-
-		connectButton.attribute("disabled", "");
-		connectButton.html("Connected ✓");
-
-		// Mark as connected and set connection time
-		isConnected = true;
-		connectionTime = Date.now();
-
-		readLoop();
+		const selectedPort = await navigator.serial.requestPort();
+		await openSerialPort(selectedPort);
 	} catch (err) {
 		console.error("Serial connection failed:", err);
 		alert("Failed to connect to Arduino: " + err.message);

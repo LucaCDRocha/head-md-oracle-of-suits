@@ -10,6 +10,7 @@ import { generateImage } from "./src/api/generationApi.js";
 import { uploadHybridBase64 } from "./src/api/hybridApi.js";
 import {
   setupSerial,
+  applySerialDebugMode,
   setKnobChangeCallback,
   setButtonPressCallback,
   setButtonReleaseCallback,
@@ -171,12 +172,18 @@ window.setup = function () {
     syncBrainState();
   });
 
-  // Add Enter key hold listener for hybridization
+  // Add Enter key hold listener for hybridization & 'S' key for Shuffle
   document.addEventListener("keydown", (e) => {
     if (e.key === "Enter") {
       e.preventDefault();
       if (!e.repeat) {
         startHold("keyboard");
+      }
+    } else if (e.key === "s" || e.key === "S") {
+      const activeTag = document.activeElement ? document.activeElement.tagName.toLowerCase() : '';
+      if (activeTag !== 'input' && activeTag !== 'textarea') {
+        e.preventDefault();
+        shuffleAllSlots();
       }
     }
   });
@@ -228,6 +235,8 @@ function applyDebugMode() {
   if (shuffleBtn) {
     shuffleBtn.style.display = (DEBUG || DEV_MODE) ? "inline-block" : "none";
   }
+
+  applySerialDebugMode(DEBUG || DEV_MODE);
 }
 
 window.draw = function () {
