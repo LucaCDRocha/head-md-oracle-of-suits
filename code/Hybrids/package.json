@@ -5,7 +5,8 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "node server.js"
+    "dev": "node server.js",
+    "borne": "node launch_borne.js"
   },
   "dependencies": {
     "ws": "^8.18.0"
