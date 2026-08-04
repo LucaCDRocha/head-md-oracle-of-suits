@@ -169,7 +169,7 @@ canvas {
 /* Individual Slot Card */
 .slot-card {
 	background: var(--color-cream);
-	border: none;
+	border: 2px solid transparent;
 	border-radius: 1.2rem;
 	padding: 18px 16px;
 	box-shadow: 0 16px 45px rgba(0, 0, 0, 0.5);
@@ -229,23 +229,30 @@ canvas {
 	text-align: center;
 }
 
-/* Hold Charging Progress Overlay (Liquid fill rising from bottom without squishing content) */
+/* Hold Charging Progress Overlay (Sweeps from bottom to top IN FRONT of card content) */
 .slot-progress-fill {
 	position: absolute;
 	bottom: 0;
 	left: 0;
 	width: 100%;
 	height: 0%;
-	background: linear-gradient(to top, rgba(114, 20, 34, 0.35) 0%, rgba(114, 20, 34, 0.12) 80%, rgba(114, 20, 34, 0) 100%);
+	background: linear-gradient(to top, rgba(114, 20, 34, 0.35) 0%, rgba(114, 20, 34, 0.15) 85%, rgba(114, 20, 34, 0) 100%);
 	border-top: 3px solid var(--color-pearl-ruby);
+	box-shadow: 0 -3px 12px rgba(114, 20, 34, 0.9);
 	pointer-events: none;
-	z-index: 5;
-	transition: height 0.05s linear;
+	z-index: 100;
+	opacity: 0;
+	transition: height 0.15s ease-out, opacity 0.2s ease-out;
 }
 
 .slot-card.slot-charging {
 	border: 2px solid var(--color-pearl-ruby);
 	box-shadow: 0 0 35px rgba(114, 20, 34, 0.7), 0 16px 45px rgba(0, 0, 0, 0.5);
+}
+
+.slot-card.slot-charging .slot-progress-fill {
+	opacity: 1;
+	transition: height 0.05s linear, opacity 0.1s ease;
 }
 
 /* Card Metadata & Information (Always Pinned at Bottom with Uniform Height) */
@@ -258,7 +265,7 @@ canvas {
 	padding: 0 4px;
 	box-sizing: border-box;
 	position: relative;
-	z-index: 10;
+	z-index: 1;
 }
 
 .card-info-columns {

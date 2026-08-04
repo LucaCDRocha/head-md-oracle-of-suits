@@ -353,15 +353,33 @@ function cancelHold(source, completed = false) {
     holdAnimFrame = null;
   }
 
-  // Reset all 3 slot progress fills to 0%
-  for (let i = 1; i <= 3; i++) {
-    const fillEl = document.getElementById(`slot-progress-${i}`);
-    if (fillEl) {
-      fillEl.style.height = "0%";
+  if (completed) {
+    // GENERATION START: Fade out overlay cleanly in place at the top!
+    for (let i = 1; i <= 3; i++) {
+      const slotCard = document.getElementById(`slot-${i}`);
+      if (slotCard) {
+        slotCard.classList.remove("slot-charging");
+      }
     }
-    const slotCard = document.getElementById(`slot-${i}`);
-    if (slotCard) {
-      slotCard.classList.remove("slot-charging");
+    setTimeout(() => {
+      for (let i = 1; i <= 3; i++) {
+        const fillEl = document.getElementById(`slot-progress-${i}`);
+        if (fillEl) {
+          fillEl.style.height = "0%";
+        }
+      }
+    }, 220);
+  } else {
+    // STOPPED HOLDING EARLY: Animate scan line quickly back down to the bottom!
+    for (let i = 1; i <= 3; i++) {
+      const fillEl = document.getElementById(`slot-progress-${i}`);
+      if (fillEl) {
+        fillEl.style.height = "0%";
+      }
+      const slotCard = document.getElementById(`slot-${i}`);
+      if (slotCard) {
+        slotCard.classList.remove("slot-charging");
+      }
     }
   }
 
