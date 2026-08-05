@@ -37,7 +37,9 @@ class HybridController extends Controller
                                 : asset('storage/' . ltrim($card->img_src, '/'))
                             )
                             : null,
-                        'french_equivalence' => $card->french_equivalence,
+                        'suits_en' => $card->suits_en,
+                        'value_en' => $card->value_en,
+                        'name_en' => $card->name_en,
                         // include pivot flag if present (is_base)
                         'is_base' => isset($card->pivot) && isset($card->pivot->is_base) ? (bool) $card->pivot->is_base : false,
                     ];
@@ -132,7 +134,9 @@ class HybridController extends Controller
                             : asset('storage/' . ltrim($card->img_src, '/'))
                         )
                         : null,
-                    'french_equivalence' => $card->french_equivalence,
+                    'suits_en' => $card->suits_en,
+                    'value_en' => $card->value_en,
+                    'name_en' => $card->name_en,
                     'is_base' => isset($card->pivot) && isset($card->pivot->is_base) ? (bool) $card->pivot->is_base : false,
                 ];
             }),
@@ -175,11 +179,17 @@ class HybridController extends Controller
                             : asset('storage/' . ltrim($card->img_src, '/'))
                         )
                         : null,
-                    'french_equivalence' => $card->french_equivalence,
+                    'suits_en' => $card->suits_en,
+                    'value_en' => $card->value_en,
+                    'name_en' => $card->name_en,
                     'game' => $card->game ? [
                         'id' => $card->game->id,
                         'name' => $card->game->name,
+                        'name_en' => $card->game->name_en,
+                        'year' => $card->game->year,
+                        'year_en' => $card->game->year_en,
                         'description' => $card->game->description,
+                        'description_eng' => $card->game->description_eng,
                     ] : null,
                     'is_base' => isset($card->pivot) && isset($card->pivot->is_base) ? (bool) $card->pivot->is_base : false,
                 ];

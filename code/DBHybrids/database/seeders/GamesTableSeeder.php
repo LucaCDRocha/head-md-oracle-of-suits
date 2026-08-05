@@ -47,12 +47,16 @@ class GamesTableSeeder extends Seeder
             }
 
             $year = $this->mapPeriodToYears($period);
+            $yearEn = $this->mapPeriodToYearsEn($period);
+            $nameEn = $this->translateGameNameEn($name);
 
             Game::updateOrCreate(
                 ['id' => (int) $id],
                 [
                     'name' => $name,
+                    'name_en' => $nameEn,
                     'year' => $year,
+                    'year_en' => $yearEn,
                     'description' => $description ?: null,
                     'description_eng' => $descriptionEng ?: null,
                     'nb_cards' => is_numeric($nbCards) ? (int) $nbCards : null,
@@ -83,10 +87,85 @@ class GamesTableSeeder extends Seeder
             case '2ème moitié du 20e':
                 return '1950-2000';
             case '21e siècle':
+                return '2000-présent';
+            default:
+                return $period;
+        }
+    }
+
+    private function mapPeriodToYearsEn($period)
+    {
+        $period = trim($period);
+        switch ($period) {
+            case 'avant le 18e siècle':
+                return 'before 1700';
+            case '18e siècle':
+                return '1700-1800';
+            case '1ère moitié du 19e':
+                return '1800-1850';
+            case '2ème moitié du 19e':
+                return '1850-1900';
+            case '1ère moitié du 20e':
+                return '1900-1950';
+            case '2ème moitié du 20e':
+                return '1950-2000';
+            case '21e siècle':
                 return '2000-present';
             default:
                 return $period;
         }
+    }
+
+    private function translateGameNameEn($name)
+    {
+        $name = trim($name);
+        $map = [
+            'Cartes catalanes' => 'Catalan cards',
+            'Cartes sévillanes' => 'Sevillian cards',
+            'Tarot animalier' => 'Animal Tarot',
+            'Cartes lyonnaises' => 'Lyonnais cards',
+            'Jeu républicain' => 'Republican deck',
+            'Cartes saxonnes' => 'Saxon cards',
+            'Jeu de Plaisance' => 'Plaisance deck',
+            'Cartes Müller' => 'Müller cards',
+            'Doubles enseignes' => 'Double-suited deck',
+            'Jeu de Nuremberg' => 'Nuremberg deck',
+            'Cartes Marisi' => 'Marisi cards',
+            'Jeu de patience' => 'Patience deck',
+            'Jeu Duratone' => 'Duratone deck',
+            'Cartes Gatteaux' => 'Gatteaux cards',
+            'Jeu aux Cantons' => 'Cantons deck',
+            'Cartes Western' => 'Western cards',
+            'Jeu en russe' => 'Russian deck',
+            'Grand Tarrau' => 'Grand Tarrau',
+            'Tarot Burdel' => 'Burdel Tarot',
+            'Tarot Payen' => 'Payen Tarot',
+            'Tarot Gassmann' => 'Gassmann Tarot',
+            'Tarocco Piemontese' => 'Piedmontese Tarocco',
+            'Tarot aux paysages' => 'Landscape Tarot',
+            'Tarot Grimaud' => 'Grimaud Tarot',
+            'Slovanski Tarok' => 'Slovanski Tarok',
+            'Tarot Dondorf' => 'Dondorf Tarot',
+            'Tarot Rider-Waite' => 'Rider-Waite Tarot',
+            'Tarot autrichien' => 'Austrian Tarot',
+            'Tarot à 2 têtes' => 'Double-headed Tarot',
+            'Cartes Gassmann' => 'Gassmann cards',
+            'Jeu de Schaffhouse' => 'Schaffhausen deck',
+            'Tarot enluminé' => 'Illuminated Tarot',
+            'Jeu assemblé' => 'Assembled deck',
+            'Jass de luxe' => 'Luxury Jass',
+            'Jass classique' => 'Classic Jass',
+            'Jeu de Munich' => 'Munich deck',
+            'Jeu Piatnik' => 'Piatnik deck',
+            'Cartes mexicaines' => 'Mexican cards',
+            'Jeu de la chance' => 'Fortune deck',
+            'Jeu musical' => 'Musical deck',
+            'Jass coloré' => 'Colored Jass',
+            'Jeu de vaches' => 'Cow deck',
+            'Cartes du MSJ' => 'MSJ cards',
+        ];
+
+        return $map[$name] ?? $name;
     }
 
     private function parseXlsx($filePath)

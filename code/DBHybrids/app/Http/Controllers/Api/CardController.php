@@ -20,8 +20,9 @@ class CardController extends Controller
                 'game' => $card->game ? $card->game->makeHidden(['created_at', 'updated_at'])->toArray() : null,
                 'suits' => $card->suits,
                 'value' => $card->value,
-                'french_suits' => $card->french_suits,
-                'french_value' => $card->french_value,
+                'suits_en' => $card->suits_en,
+                'value_en' => $card->value_en,
+                'name_en' => $card->name_en,
                 'img_src' => $card->img_src
                     ? (preg_match('/^https?:\/\//', $card->img_src)
                         ? $card->img_src

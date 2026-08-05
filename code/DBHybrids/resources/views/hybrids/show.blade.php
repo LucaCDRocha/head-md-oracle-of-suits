@@ -135,16 +135,19 @@
                                     </div>
                                 @endif
 
-                                <div class="source-card-title">{{ getLocalizedCardName($card->name, $lang) }}</div>
+                                <div class="source-card-title">{{ getLocalizedCardName($card, $lang) }}</div>
 
                                 @if ($card->game)
                                     @php
+                                        $gameName = ($lang === 'en' && !empty($card->game->name_en)) 
+                                            ? $card->game->name_en 
+                                            : $card->game->name;
                                         $gameDesc = ($lang === 'en' && !empty($card->game->description_eng)) 
                                             ? $card->game->description_eng 
                                             : $card->game->description;
                                     @endphp
                                     <div class="source-card-deck">
-                                        <span>{{ $card->game->name }}</span>
+                                        <span>{{ $gameName }}</span>
                                         @if ($gameDesc)
                                             <span class="info-icon-badge">
                                                 i

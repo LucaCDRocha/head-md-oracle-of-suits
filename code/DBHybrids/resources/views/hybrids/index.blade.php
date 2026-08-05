@@ -138,9 +138,12 @@
                                     <ul class="cards-used-list">
                                         @foreach ($expandedCards as $card)
                                             <li class="cards-used-item {{ isset($card->pivot) && $card->pivot->is_base ? 'is-base' : '' }}">
-                                                {{ getLocalizedCardName($card->name, $lang) }}
+                                                {{ getLocalizedCardName($card, $lang) }}
                                                 @if ($card->game)
-                                                    <span class="game-name">({{ $card->game->name }})</span>
+                                                    @php
+                                                        $gName = ($lang === 'en' && !empty($card->game->name_en)) ? $card->game->name_en : $card->game->name;
+                                                    @endphp
+                                                    <span class="game-name">({{ $gName }})</span>
                                                 @endif
                                             </li>
                                         @endforeach

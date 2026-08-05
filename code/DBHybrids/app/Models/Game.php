@@ -11,7 +11,9 @@ class Game extends Model
 
     protected $fillable = [
         'name',
+        'name_en',
         'year',
+        'year_en',
         'description',
         'description_eng',
         'nb_cards',

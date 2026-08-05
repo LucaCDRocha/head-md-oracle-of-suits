@@ -77,10 +77,19 @@ if (!function_exists('getTranslations')) {
 }
 
 if (!function_exists('getLocalizedCardName')) {
-    function getLocalizedCardName($name, $lang = 'fr') {
-        if ($lang !== 'en' || !$name) {
-            return $name;
+    function getLocalizedCardName($card, $lang = 'fr') {
+        if ($lang !== 'en') {
+            return is_object($card) ? $card->name : $card;
         }
+
+        if (is_object($card)) {
+            if (!empty($card->name_en)) {
+                return $card->name_en;
+            }
+            $card = $card->name;
+        }
+
+        if (!$card) return '';
 
         $translations = [
             'Roi' => 'King',
@@ -107,7 +116,7 @@ if (!function_exists('getLocalizedCardName')) {
             'Bouclier' => 'Shields',
         ];
 
-        $translated = preg_replace('/\b(de|du|des)\b/u', 'of', $name);
+        $translated = preg_replace('/\b(de|du|des)\b/u', 'of', $card);
         $translated = preg_replace('/\bd\'/u', 'of ', $translated);
 
         foreach ($translations as $fr => $en) {

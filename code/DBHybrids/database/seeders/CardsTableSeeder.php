@@ -90,6 +90,7 @@ class CardsTableSeeder extends Seeder
                 $ec = $excelCards[$matchedIndex];
 
                 $name = $this->generateCardName($ec['suit'], $ec['value']);
+                $nameEn = $this->generateCardNameEn($ec['suit'], $ec['value']);
                 $imgSrc = $this->findCardImage($ec['game_id'], $ec['ref'], $cardsPath);
 
                 $dbc->update([
@@ -98,9 +99,9 @@ class CardsTableSeeder extends Seeder
                     'suits' => $ec['suit'] ?: null,
                     'value' => $ec['value'] ?: null,
                     'img_src' => $imgSrc ?: $dbc->img_src,
-                    'french_suits' => $ec['suit'] ?: null,
-                    'french_value' => $ec['value'] ?: null,
-                    'french_equivalence' => $name,
+                    'suits_en' => $this->translateSuitEn($ec['suit']),
+                    'value_en' => $this->translateValueEn($ec['value']),
+                    'name_en' => $nameEn,
                 ]);
                 $updatedCount++;
             }
@@ -111,6 +112,7 @@ class CardsTableSeeder extends Seeder
         foreach ($excelCards as $idx => $ec) {
             if (!isset($usedExcelIndices[$idx])) {
                 $name = $this->generateCardName($ec['suit'], $ec['value']);
+                $nameEn = $this->generateCardNameEn($ec['suit'], $ec['value']);
                 $imgSrc = $this->findCardImage($ec['game_id'], $ec['ref'], $cardsPath);
 
                 Card::create([
@@ -119,9 +121,9 @@ class CardsTableSeeder extends Seeder
                     'suits' => $ec['suit'] ?: null,
                     'value' => $ec['value'] ?: null,
                     'img_src' => $imgSrc,
-                    'french_suits' => $ec['suit'] ?: null,
-                    'french_value' => $ec['value'] ?: null,
-                    'french_equivalence' => $name,
+                    'suits_en' => $this->translateSuitEn($ec['suit']),
+                    'value_en' => $this->translateValueEn($ec['value']),
+                    'name_en' => $nameEn,
                 ]);
                 $newCardsCount++;
             }
@@ -167,6 +169,88 @@ class CardsTableSeeder extends Seeder
         }
 
         return ucfirst($value) . ' de ' . $suit;
+    }
+
+    private function translateValueEn($value)
+    {
+        if (!$value) return '';
+        $valMap = [
+            'Roi' => 'King',
+            'Dame' => 'Queen',
+            'Valet' => 'Jack',
+            'Cavalier' => 'Knight',
+            'As' => 'Ace',
+            'Liberté' => 'Freedom',
+            'Génie' => 'Genius',
+            'Égalité' => 'Equality',
+            'Fou' => 'Fool',
+            'Excuse' => 'Excuse',
+            'Mat' => 'Mat',
+            'Joker' => 'Joker',
+        ];
+        return $valMap[trim($value)] ?? trim($value);
+    }
+
+    private function translateSuitEn($suit)
+    {
+        if (!$suit) return '';
+        $suitMap = [
+            'Bâton' => 'Batons',
+            'Bâtons' => 'Batons',
+            'Coupe' => 'Cups',
+            'Coupes' => 'Cups',
+            'Denier' => 'Coins',
+            'Deniers' => 'Coins',
+            'Épée' => 'Swords',
+            'Épées' => 'Swords',
+            'Epée' => 'Swords',
+            'Epées' => 'Swords',
+            'Atout' => 'Trumps',
+            'Atouts' => 'Trumps',
+            'Carreau' => 'Diamonds',
+            'Cœur' => 'Hearts',
+            'Pique' => 'Spades',
+            'Trèfle' => 'Clubs',
+            'Feuille' => 'Leaves',
+            'Gland' => 'Acorns',
+            'Grelot' => 'Bells',
+            'Bouclier' => 'Shields',
+            'Rose' => 'Roses',
+        ];
+        return $suitMap[trim($suit)] ?? trim($suit);
+    }
+
+    private function generateCardNameEn($suit, $value)
+    {
+        $suitTrim = trim($suit);
+        $valueTrim = trim($value);
+
+        if (in_array(mb_strtolower($suitTrim), ['atout', 'atouts'])) {
+            if ($valueTrim && strtolower($valueTrim) !== 'atout') {
+                return "Trump " . $valueTrim;
+            }
+            return "Trump";
+        }
+
+        $vEn = $this->translateValueEn($valueTrim);
+        $sEn = $this->translateSuitEn($suitTrim);
+
+        if (in_array(strtolower($suitTrim), ['joker', 'excuse', 'fou', 'mat'])) {
+            return $vEn ?: ucfirst($suitTrim);
+        }
+        if (in_array(strtolower($valueTrim), ['joker', 'excuse', 'fou', 'mat'])) {
+            return $vEn ?: ucfirst($valueTrim);
+        }
+
+        if (empty($vEn)) {
+            return "Card of " . $sEn;
+        }
+
+        if (empty($sEn)) {
+            return $vEn;
+        }
+
+        return $vEn . ' of ' . $sEn;
     }
 
     private function findCardImage($gameId, $ref, $cardsPath)
