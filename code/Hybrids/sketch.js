@@ -462,7 +462,16 @@ async function onGenerate(bypassDebounce = false) {
     };
 
     statusCallback("Génération de l'image...");
-    const base64 = await generateImage(selected, baseCardId, statusCallback);
+    
+    // Add 3-minute timeout safety net
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error("La génération a pris trop de temps (timeout de 3 minutes). Veuillez réessayer.")), 180000);
+    });
+
+    const base64 = await Promise.race([
+      generateImage(selected, baseCardId, statusCallback),
+      timeoutPromise
+    ]);
 
     clearInterval(processingLoop);
     loadingAnimation.stop();

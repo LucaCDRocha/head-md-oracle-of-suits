@@ -121,8 +121,10 @@ function getScreens() {
 
 let serverProc = null;
 let comfyProc = null;
+let isShuttingDown = false;
 
 function stopAllServices() {
+	isShuttingDown = true;
 	if (serverProc && serverProc.pid) {
 		try {
 			execSync(`taskkill /F /PID ${serverProc.pid} /T`, { stdio: "ignore" });
@@ -166,11 +168,21 @@ async function main() {
 		console.log(` -> Hybrids server is already running on port ${PORT}.`);
 	} else {
 		console.log(` -> Starting Node.js server (server.js) on port ${PORT}...`);
-		serverProc = spawn("node", ["server.js"], {
-			cwd: __dirname,
-			stdio: "ignore",
-		});
-		console.log(` -> Server process spawned (PID: ${serverProc.pid}).`);
+		function spawnServer() {
+			serverProc = spawn("node", ["server.js"], {
+				cwd: __dirname,
+				stdio: "ignore",
+			});
+			console.log(` -> Server process spawned (PID: ${serverProc.pid}).`);
+			
+			serverProc.on("close", (code) => {
+				if (!isShuttingDown) {
+					console.warn(`\n[!] Warning: server.js closed unexpectedly (code ${code}). Auto-restarting in 5s...`);
+					setTimeout(spawnServer, 5000);
+				}
+			});
+		}
+		spawnServer();
 
 		// Wait until server is listening on port
 		for (let i = 0; i < 10; i++) {
@@ -228,12 +240,22 @@ async function main() {
 				}
 			}
 
-			comfyProc = spawn(comfyCmd, comfyArgs, {
-				cwd: spawnCwd,
-				stdio: "ignore",
-				shell: false,
-			});
-			console.log(` -> ComfyUI backend process spawned (PID: ${comfyProc.pid}).`);
+			function spawnComfy() {
+				comfyProc = spawn(comfyCmd, comfyArgs, {
+					cwd: spawnCwd,
+					stdio: "ignore",
+					shell: false,
+				});
+				console.log(` -> ComfyUI backend process spawned (PID: ${comfyProc.pid}).`);
+				
+				comfyProc.on("close", (code) => {
+					if (!isShuttingDown) {
+						console.warn(`\n[!] Warning: ComfyUI closed unexpectedly (code ${code}). Auto-restarting in 5s...`);
+						setTimeout(spawnComfy, 5000);
+					}
+				});
+			}
+			spawnComfy();
 			console.log(" -> Waiting for ComfyUI server to finish booting and reach ready status on port 8188...");
 
 			const maxWaitSeconds = 60;

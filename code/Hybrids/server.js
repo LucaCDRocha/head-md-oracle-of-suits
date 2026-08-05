@@ -147,8 +147,29 @@ const server = http.createServer((req, res) => {
 // Setup WebSocket Server
 const wss = new WebSocket.Server({ server });
 
+// Heartbeat interval to clean up disconnected clients
+const interval = setInterval(() => {
+	wss.clients.forEach((ws) => {
+		if (ws.isAlive === false) {
+			console.log("[WS] Terminating inactive client");
+			return ws.terminate();
+		}
+		ws.isAlive = false;
+		ws.ping();
+	});
+}, 30000);
+
+wss.on("close", () => {
+	clearInterval(interval);
+});
+
 wss.on("connection", (ws, req) => {
 	console.log(`[WS] Client connected from ${req.socket.remoteAddress}`);
+	ws.isAlive = true;
+
+	ws.on("pong", () => {
+		ws.isAlive = true;
+	});
 
 	// Immediately sync current state to new client
 	ws.send(JSON.stringify(currentState));
@@ -186,7 +207,11 @@ wss.on("connection", (ws, req) => {
 			// Broadcast message to all connected clients
 			const broadcastPayload = JSON.stringify(data);
 			wss.clients.forEach((client) => {
-				if (client.readyState === WebSocket.OPEN) {
+				if (client.readyState === WebSocket.OPEN && client !== ws) {
+					client.send(broadcastPayload);
+				} else if (client.readyState === WebSocket.OPEN && client === ws && data.type !== "STATE_CHANGE" && data.type !== "CARDS_UPDATED" && data.type !== "HOLDING_PROGRESS") {
+					// We only avoid echoing back continuous events, but keep it as is for simplicity if needed.
+					// Actually, the original code broadcasted to ALL clients unconditionally:
 					client.send(broadcastPayload);
 				}
 			});
