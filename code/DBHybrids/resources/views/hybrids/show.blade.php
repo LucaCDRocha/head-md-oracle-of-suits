@@ -13,9 +13,6 @@
         <link rel="icon" type="image/png" href="{{ asset('img/logos/favicon-fr.png') }}">
     @endif
 
-    <!-- Fonts: Nippo (Fontshare) & Libre Franklin (Local) -->
-    <link href="https://api.fontshare.com/css?f[]=nippo" rel="stylesheet" />
-
     <!-- Font loading FOUT detection -->
     <script>
         if ('fonts' in document) {

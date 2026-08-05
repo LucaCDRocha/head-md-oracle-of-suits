@@ -20,5 +20,6 @@
 /storage/pail
 /vendor
 Homestead.json
-Homestead.yaml
-Thumbs.db
+# Local fonts excluded from public git repo per EULA
+assets/fonts/Nippo*
+public/fonts/Nippo*

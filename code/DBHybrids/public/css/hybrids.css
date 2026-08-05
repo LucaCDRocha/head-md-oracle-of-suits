@@ -24,6 +24,15 @@ body {
 
 /* Local Fonts */
 @font-face {
+    font-family: "Nippo";
+    font-style: normal;
+    font-weight: 100 900;
+    font-display: block;
+    src: url("../fonts/Nippo-Variable.woff2") format("woff2"),
+         url("../fonts/Nippo-Variable.ttf") format("truetype");
+}
+
+@font-face {
     font-family: "Libre Franklin";
     font-style: normal;
     font-weight: 100 900;

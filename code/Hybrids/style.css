@@ -14,7 +14,14 @@
 	src: url("./assets/fonts/LibreFranklin-Italic-VariableFont.ttf") format("truetype");
 }
 
-@import url("https://api.fontshare.com/css?f[]=nippo");
+@font-face {
+	font-family: "Nippo";
+	font-style: normal;
+	font-weight: 100 900;
+	font-display: block;
+	src: url("./assets/fonts/Nippo-Variable.woff2") format("woff2"),
+	     url("./assets/fonts/Nippo-Variable.ttf") format("truetype");
+}
 
 /* ==========================================================================
    DESIGN TOKENS & GLOBAL RESET
