@@ -152,11 +152,18 @@ class CardsTableSeeder extends Seeder
         }
 
         if (empty($value)) {
+            if (in_array(mb_strtolower($suit), ['épée', 'epée', 'epee', 'épées', 'epées'])) {
+                return "Carte d'Épée";
+            }
             return "Carte de " . $suit;
         }
 
         if (empty($suit)) {
             return ucfirst($value);
+        }
+
+        if (in_array(mb_strtolower($suit), ['épée', 'epée', 'epee', 'épées', 'epées'])) {
+            return ucfirst($value) . " d'Épée";
         }
 
         return ucfirst($value) . ' de ' . $suit;

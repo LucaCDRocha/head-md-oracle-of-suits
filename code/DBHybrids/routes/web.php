@@ -92,27 +92,23 @@ if (!function_exists('getLocalizedCardName')) {
             'Génie' => 'Genius',
             'Égalité' => 'Equality',
             'Fou' => 'Fool',
-            'Bâton' => 'Baton',
-            'Bâtons' => 'Batons',
-            'Coupe' => 'Cup',
-            'Coupes' => 'Cups',
-            'Denier' => 'Coin',
-            'Deniers' => 'Coins',
-            'Épée' => 'Sword',
-            'Épées' => 'Swords',
-            'Atout' => 'Trump',
-            'Atouts' => 'Trumps',
-            'Carreau' => 'Diamond',
-            'Cœur' => 'Heart',
-            'Pique' => 'Spade',
-            'Trèfle' => 'Club',
-            'Feuille' => 'Leaf',
-            'Gland' => 'Acorn',
-            'Grelot' => 'Bell',
-            'Bouclier' => 'Shield',
+            'Bâton' => 'Batons',
+            'Coupe' => 'Cups',
+            'Denier' => 'Coins',
+            'Épée' => 'Swords',
+            'Atout' => 'Trumps',
+            'Carreau' => 'Diamonds',
+            'Cœur' => 'Hearts',
+            'Pique' => 'Spades',
+            'Trèfle' => 'Clubs',
+            'Feuille' => 'Leaves',
+            'Gland' => 'Acorns',
+            'Grelot' => 'Bells',
+            'Bouclier' => 'Shields',
         ];
 
-        $translated = preg_replace('/\b(de|d\'|du|des)\b/u', 'of', $name);
+        $translated = preg_replace('/\b(de|du|des)\b/u', 'of', $name);
+        $translated = preg_replace('/\bd\'/u', 'of ', $translated);
 
         foreach ($translations as $fr => $en) {
             $translated = preg_replace('/\b' . preg_quote($fr, '/') . '\b/u', $en, $translated);
