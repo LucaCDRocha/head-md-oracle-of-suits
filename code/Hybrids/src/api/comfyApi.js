@@ -137,137 +137,13 @@ async function uploadToComfyUI(blob, filename) {
 	return data.name; // Return filename saved in ComfyUI's input folder
 }
 
-// ── French → English translation maps (built from the database Excel) ──
-
-const SUITS_FR_TO_EN = {
-	// French standard suits
-	"pique":     "Spades",
-	"cœur":      "Hearts",
-	"coeur":     "Hearts",
-	"carreau":   "Diamonds",
-	"trèfle":    "Clubs",
-	"trefle":    "Clubs",
-	// Tarot suits
-	"atout":     "Trumps",
-	"épée":      "Swords",
-	"epée":      "Swords",
-	"epee":      "Swords",
-	"coupe":     "Cups",
-	"denier":    "Coins",
-	"bâton":     "Wands",
-	"baton":     "Wands",
-	// Swiss / Jass suits
-	"bouclier":  "Shields",
-	"gland":     "Acorns",
-	"grelot":    "Bells",
-	"rose":      "Roses",
-	"feuille":   "Leaves",
-	// Special
-	"joker":     "Joker",
-	"excuse":    "The Fool",
-	"fou":       "The Fool",
-	"mat":       "The Fool",
-};
-
-const VALUES_FR_TO_EN = {
-	// Court cards
-	"roi":       "King",
-	"dame":      "Queen",
-	"valet":     "Jack",
-	"cavalier":  "Knight",
-	"as":        "Ace",
-	// German-suited court cards
-	"ober":      "Ober",
-	"unter":     "Unter",
-	"daus":      "Deuce",
-	"könig":     "King",
-	"konig":     "King",
-	// Special cards
-	"excuse":    "The Fool",
-	"fou":       "The Fool",
-	"mat":       "The Fool",
-	"joker":     "Joker",
-	// French Revolution deck values
-	"génie":     "Genius",
-	"genie":     "Genius",
-	"liberté":   "Liberty",
-	"liberte":   "Liberty",
-	"égalité":   "Equality",
-	"egalite":   "Equality",
-};
-
-const GAMES_FR_TO_EN = {
-	// Tarot decks
-	"tarot rider-waite":     "Rider-Waite Tarot",
-	"tarot grimaud":         "Grimaud Tarot",
-	"tarot burdel":          "Burdel Tarot",
-	"tarot dondorf":         "Dondorf Tarot",
-	"tarot gassmann":        "Gassmann Tarot",
-	"tarot payen":           "Payen Tarot",
-	"tarot animalier":       "Animal Tarot",
-	"tarot autrichien":      "Austrian Tarot",
-	"tarot aux paysages":    "Landscape Tarot",
-	"tarot enluminé":        "Illuminated Tarot",
-	"tarot enlumine":        "Illuminated Tarot",
-	"tarot à 2 têtes":       "Two-Headed Tarot",
-	"tarot a 2 tetes":       "Two-Headed Tarot",
-	"grand tarrau":          "Grand Tarrau Tarot",
-	"tarocco piemontese":    "Piedmontese Tarocco",
-	"slovenski tarok":       "Slovenian Tarok",
-	"slovanski tarok":       "Slovenian Tarok",
-	// Jass decks
-	"jass classique":        "Classic Jass",
-	"jass coloré":           "Colored Jass",
-	"jass colore":           "Colored Jass",
-	"jass de luxe":          "Deluxe Jass",
-	// Regional French card sets
-	"cartes gassmann":       "Gassmann Cards",
-	"cartes gatteaux":       "Gatteaux Cards",
-	"cartes marisi":         "Marisi Cards",
-	"cartes müller":         "Müller Cards",
-	"cartes muller":         "Müller Cards",
-	"cartes western":        "Western Cards",
-	"cartes catalanes":      "Catalan Cards",
-	"cartes lyonnaises":     "Lyonnais Cards",
-	"cartes mexicaines":     "Mexican Cards",
-	"cartes saxonnes":       "Saxon Cards",
-	"cartes sévillanes":     "Sevillan Cards",
-	"cartes sevillanes":     "Sevillan Cards",
-	// Special / themed decks
-	"doubles enseignes":     "Double-Suited Cards",
-	"jeu duratone":          "Duratone Deck",
-	"jeu piatnik":           "Piatnik Deck",
-	"jeu assemblé":          "Assembled Deck",
-	"jeu assemble":          "Assembled Deck",
-	"jeu aux cantons":       "Canton Deck",
-	"jeu de munich":         "Munich Deck",
-	"jeu de nuremberg":      "Nuremberg Deck",
-	"jeu de plaisance":      "Plaisance Deck",
-	"jeu de schaffhouse":    "Schaffhausen Deck",
-	"jeu de la chance":      "Luck Deck",
-	"jeu de patience":       "Patience Deck",
-	"jeu de vaches":         "Cow Deck",
-	"jeu en russe":          "Russian Deck",
-	"jeu musical":           "Musical Deck",
-	"jeu républicain":       "Republican Deck",
-	"jeu republicain":       "Republican Deck",
-};
-
-/**
- * Translates a French term to English using the provided map.
- * Falls back to the original term if no translation is found.
- */
-function translateTerm(term, map) {
-	if (!term) return "";
-	const key = String(term).toLowerCase().trim();
-	return map[key] || term;
-}
+// ── Database-driven Card & Game Attributes ──
 
 // ── French Tarot Major Arcana Titles & Roman Numerals ──
 const TAROT_MAJOR_ARCANA = {
 	"0":       { num: "0",    name: "LE MAT" },
 	"excuse":  { num: "0",    name: "LE MAT" },
-	"fou":     { num: "0",    name: "LE MAT" },
+	"fou":     { num: "0",    name: "LE FOL" },
 	"mat":     { num: "0",    name: "LE MAT" },
 	"1":       { num: "I",    name: "LE BATELEUR" },
 	"2":       { num: "II",   name: "LA PAPESSE" },
@@ -296,9 +172,9 @@ const TAROT_MAJOR_ARCANA = {
  * Computes exact allowable text and placement strings for a card.
  */
 function getExactCardTextConfig(baseCard) {
-	const rawVal = String(baseCard.value || "").trim();
-	const rawSuit = String(baseCard.suits || "").trim();
-	const rawGame = String(baseCard.game?.name || "").toLowerCase();
+	const rawVal = String(baseCard.value_en || baseCard.value || "").trim();
+	const rawSuit = String(baseCard.suits_en || baseCard.suits || "").trim();
+	const rawGame = String(baseCard.game?.name_en || baseCard.game?.name || "").toLowerCase();
 
 	const suitLowerRaw = rawSuit.toLowerCase();
 	const isTarotAtout = suitLowerRaw === "atout" || suitLowerRaw === "major arcana" || suitLowerRaw === "trumps" || suitLowerRaw === "atouts";
@@ -422,13 +298,9 @@ export function getCardTypographyInfo(baseCard) {
  */
 function formatCardDescription(card) {
 	if (!card) return "";
-	const rawVal  = card.value || "";
-	const rawSuit = card.suits || "";
-	const rawGame = card.game?.name || "";
-
-	const val  = translateTerm(rawVal, VALUES_FR_TO_EN);
-	const suit = translateTerm(rawSuit, SUITS_FR_TO_EN);
-	const game = translateTerm(rawGame, GAMES_FR_TO_EN);
+	const val  = card.value_en || card.value || "";
+	const suit = card.suits_en || card.suits || "";
+	const game = card.game?.name_en || card.game?.name || "";
 
 	const isJoker = val.toLowerCase() === "joker";
 	const isFool  = val.toLowerCase() === "the fool" || suit.toLowerCase() === "the fool";
@@ -559,13 +431,9 @@ export async function generateImage(selected, baseCardId, statusCallback) {
 	if (promptNode) {
 		const textConfig = getExactCardTextConfig(baseCard);
 		
-		const rawSuit = baseCard.suits || "";
-		const rawValue = baseCard.value || "";
-		const rawGameName = baseCard.game?.name || "";
-		
-		const suit = translateTerm(rawSuit, SUITS_FR_TO_EN);
-		const value = translateTerm(rawValue, VALUES_FR_TO_EN);
-		const gameName = translateTerm(rawGameName, GAMES_FR_TO_EN).toLowerCase();
+		const suit = baseCard.suits_en || baseCard.suits || "";
+		const value = baseCard.value_en || baseCard.value || "";
+		const gameName = (baseCard.game?.name_en || baseCard.game?.name || "").toLowerCase();
 		const suitLower = suit.toLowerCase();
 		const suitSymbol = textConfig.suitSymbol || suit;
 

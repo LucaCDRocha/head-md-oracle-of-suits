@@ -342,7 +342,7 @@ function createGameFilter(slot) {
 	});
 
 	select.addEventListener("change", () => {
-		const previousEquivalence = slot.selectedCard?.french_equivalence;
+		const previousEquivalence = slot.selectedCard?.name_en || slot.selectedCard?.name;
 		slot.filters.game = select.value || null;
 
 		if (previousEquivalence && slot.filters.game) {
@@ -648,6 +648,7 @@ function renderSlotInfoHTML(container, slot) {
 
 	const gameName = card.game?.name || "Standard";
 	const gameDesc = card.game?.description || "Tarot / Jeu traditionnel.";
+	const gameDescEng = card.game?.description_eng || card.game?.description || "Tarot / Traditional deck.";
 	const yearVal = slot.filters?.yearRange || card.game?.year || card.year || "1950-2000";
 	const suitVal = card.suits || card.suit || "Cups";
 	const valueVal = card.value || "Queen";
@@ -660,7 +661,7 @@ function renderSlotInfoHTML(container, slot) {
 			</div>
 			<div class="info-col">
 				<strong>Informations - EN</strong>
-				<p>${gameDesc}</p>
+				<p>${gameDescEng}</p>
 			</div>
 		</div>
 		<div class="card-meta-tags">

@@ -173,16 +173,22 @@ function sanitizeCard(card) {
   return {
     id: card.id,
     name: card.name,
+    name_en: card.name_en,
     img_src: card.img_src,
     suits: card.suits || card.suit,
+    suits_en: card.suits_en,
     value: card.value,
+    value_en: card.value_en,
     year: card.year,
-    french_equivalence: card.french_equivalence,
     game: card.game
       ? {
           id: card.game.id,
           name: card.game.name,
+          name_en: card.game.name_en,
+          year: card.game.year,
+          year_en: card.game.year_en,
           description: card.game.description,
+          description_eng: card.game.description_eng,
         }
       : null,
   };

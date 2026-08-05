@@ -328,7 +328,7 @@ export function selectCardForSlot(slot, card) {
  * Auto-select card if all required filters are set
  */
 export function autoSelectCardIfFiltersComplete(slot) {
-	const previousEquivalence = slot.selectedCard?.french_equivalence;
+	const previousEquivalence = slot.selectedCard?.name_en || slot.selectedCard?.name;
 
 	if (!slot.filters.game || !slot.filters.suits || !slot.filters.value) {
 		if (previousEquivalence && slot.filters.game) {
@@ -365,7 +365,7 @@ export function tryMatchByFrenchEquivalence(slot, targetEquivalence) {
 		if (slot.filters.yearRange && !isYearInRange(card.game?.year, slot.filters.yearRange)) return false;
 		if (slot.filters.game && gameId != slot.filters.game) return false;
 
-		return card.french_equivalence === targetEquivalence;
+		return card.name_en === targetEquivalence || card.name === targetEquivalence;
 	});
 
 	if (matchingCards.length === 0) {
@@ -375,7 +375,7 @@ export function tryMatchByFrenchEquivalence(slot, targetEquivalence) {
 			if (slot.filters.yearRange && !isYearInRange(card.game?.year, slot.filters.yearRange)) return false;
 			if (slot.filters.game && gameId != slot.filters.game) return false;
 
-			return card.french_equivalence === targetEquivalence;
+			return card.name_en === targetEquivalence || card.name === targetEquivalence;
 		});
 	}
 
@@ -467,8 +467,8 @@ export function getAvailableSuits(filters) {
 
 	const suitToFrenchMap = new Map();
 	cards.forEach((c) => {
-		if (c.suits && c.french_suits) {
-			suitToFrenchMap.set(c.suits, c.french_suits);
+		if (c.suits) {
+			suitToFrenchMap.set(c.suits, c.suits_en || c.suits);
 		}
 	});
 
@@ -499,8 +499,8 @@ export function getAvailableValues(filters) {
 
 	const valueToFrenchMap = new Map();
 	cards.forEach((c) => {
-		if (c.value && c.french_value) {
-			valueToFrenchMap.set(c.value, c.french_value);
+		if (c.value) {
+			valueToFrenchMap.set(c.value, c.value_en || c.value);
 		}
 	});
 
