@@ -135,7 +135,7 @@
                                     </div>
                                 @endif
 
-                                <div class="source-card-title">{{ $card->name }}</div>
+                                <div class="source-card-title">{{ getLocalizedCardName($card->name, $lang) }}</div>
 
                                 @if ($card->game)
                                     @php

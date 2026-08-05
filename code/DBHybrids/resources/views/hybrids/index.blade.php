@@ -114,8 +114,18 @@
                                     <span class="material-symbols-rounded">favorite</span>
                                     <span class="like-count">{{ $hybrid->nb_like }}</span>
                                 </button>
+                                @php
+                                    $monthsFr = [
+                                        1 => 'Janv.', 2 => 'Févr.', 3 => 'Mars', 4 => 'Avril',
+                                        5 => 'Mai', 6 => 'Juin', 7 => 'Juil.', 8 => 'Août',
+                                        9 => 'Sept.', 10 => 'Oct.', 11 => 'Nov.', 12 => 'Déc.'
+                                    ];
+                                    $dateFormatted = ($lang === 'en')
+                                        ? $hybrid->created_at->format('M d, Y')
+                                        : $hybrid->created_at->format('j') . ' ' . ($monthsFr[(int)$hybrid->created_at->format('n')] ?? $hybrid->created_at->format('F')) . ' ' . $hybrid->created_at->format('Y');
+                                @endphp
                                 <span class="meta-date">
-                                    {{ $hybrid->created_at->format('M d, Y') }}
+                                    {{ $dateFormatted }}
                                 </span>
                             </div>
 
@@ -128,7 +138,7 @@
                                     <ul class="cards-used-list">
                                         @foreach ($expandedCards as $card)
                                             <li class="cards-used-item {{ isset($card->pivot) && $card->pivot->is_base ? 'is-base' : '' }}">
-                                                {{ $card->name }}
+                                                {{ getLocalizedCardName($card->name, $lang) }}
                                                 @if ($card->game)
                                                     <span class="game-name">({{ $card->game->name }})</span>
                                                 @endif

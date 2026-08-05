@@ -76,6 +76,52 @@ if (!function_exists('getTranslations')) {
     }
 }
 
+if (!function_exists('getLocalizedCardName')) {
+    function getLocalizedCardName($name, $lang = 'fr') {
+        if ($lang !== 'en' || !$name) {
+            return $name;
+        }
+
+        $translations = [
+            'Roi' => 'King',
+            'Dame' => 'Queen',
+            'Valet' => 'Jack',
+            'Cavalier' => 'Knight',
+            'As' => 'Ace',
+            'Liberté' => 'Liberty',
+            'Génie' => 'Genius',
+            'Égalité' => 'Equality',
+            'Fou' => 'Fool',
+            'Bâton' => 'Baton',
+            'Bâtons' => 'Batons',
+            'Coupe' => 'Cup',
+            'Coupes' => 'Cups',
+            'Denier' => 'Coin',
+            'Deniers' => 'Coins',
+            'Épée' => 'Sword',
+            'Épées' => 'Swords',
+            'Atout' => 'Trump',
+            'Atouts' => 'Trumps',
+            'Carreau' => 'Diamond',
+            'Cœur' => 'Heart',
+            'Pique' => 'Spade',
+            'Trèfle' => 'Club',
+            'Feuille' => 'Leaf',
+            'Gland' => 'Acorn',
+            'Grelot' => 'Bell',
+            'Bouclier' => 'Shield',
+        ];
+
+        $translated = preg_replace('/\b(de|d\'|du|des)\b/u', 'of', $name);
+
+        foreach ($translations as $fr => $en) {
+            $translated = preg_replace('/\b' . preg_quote($fr, '/') . '\b/u', $en, $translated);
+        }
+
+        return $translated;
+    }
+}
+
 if (!function_exists('getExpandedCards')) {
     function getExpandedCards($hybrid) {
         if (!$hybrid || !$hybrid->cards) return collect([]);
