@@ -181,17 +181,17 @@ function drawVintageCard(ctx, artworkImage, rank, suit, suitColor = CARD_COLORS.
         // Draw Tarot Number Banner on Top Margin (centered)
         if (tarotNumber) {
             ctx.save();
-            ctx.font = 'bold 38px "Nippo", "Cinzel", "Times New Roman", serif';
+            ctx.font = 'bold 52px "Nippo", "Cinzel", "Times New Roman", serif';
             const numText = tarotNumber.toUpperCase();
             const textMetrics = ctx.measureText(numText);
-            const numBannerW = Math.max(130, textMetrics.width + 52);
-            const numBannerH = 64;
+            const numBannerW = Math.max(160, textMetrics.width + 64);
+            const numBannerH = 80;
             const numBannerX = (cardW - numBannerW) / 2;
             const numBannerY = frameY - (numBannerH / 2);
 
             ctx.fillStyle = CARD_COLORS.CREAM;
             ctx.beginPath();
-            ctx.roundRect(numBannerX, numBannerY, numBannerW, numBannerH, 14);
+            ctx.roundRect(numBannerX, numBannerY, numBannerW, numBannerH, 16);
             ctx.fill();
             ctx.strokeStyle = CARD_COLORS.BLACK;
             ctx.lineWidth = 6;
@@ -208,20 +208,20 @@ function drawVintageCard(ctx, artworkImage, rank, suit, suitColor = CARD_COLORS.
         if (tarotName) {
             ctx.save();
             ctx.fillStyle = CARD_COLORS.CREAM;
-            const bannerW = Math.min(840, frameW - 40);
-            const bannerH = 76;
+            const bannerW = Math.min(920, frameW - 20);
+            const bannerH = 96;
             const bannerX = (cardW - bannerW) / 2;
             const bannerY = frameY + frameH - (bannerH / 2);
 
             ctx.beginPath();
-            ctx.roundRect(bannerX, bannerY, bannerW, bannerH, 16);
+            ctx.roundRect(bannerX, bannerY, bannerW, bannerH, 18);
             ctx.fill();
             ctx.strokeStyle = CARD_COLORS.BLACK;
             ctx.lineWidth = 6;
             ctx.stroke();
 
             ctx.fillStyle = CARD_COLORS.BLACK;
-            ctx.font = 'bold 40px "Nippo", "Cinzel", "Times New Roman", serif';
+            ctx.font = 'bold 56px "Nippo", "Cinzel", "Times New Roman", serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText(tarotName.toUpperCase(), cardW / 2, bannerY + (bannerH / 2));
