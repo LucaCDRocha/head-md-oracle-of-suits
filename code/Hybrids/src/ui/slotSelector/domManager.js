@@ -42,7 +42,6 @@ export function renderSlotUI() {
 	}
 
 	updateSelectedArea();
-	updateAllSlotPaginations();
 }
 
 /**
@@ -540,64 +539,58 @@ export function updateKnobPaginationIfChanged(slotId, knobIndex, currentIndex, t
 /**
  * Update pagination dots for a specific knob in a slot
  */
-export function updateKnobPagination(slotId, knobIndex, currentIndex, totalOptions, isDirectUserAction = false) {
+export function updateKnobPagination(slotId, knobIndex, currentIndex, totalOptions) {
 	const paginationEl = document.getElementById(`slot-${slotId}-knob-${knobIndex}-pagination`);
 	if (!paginationEl) return;
 
-	if (totalOptions <= 1) {
-		paginationEl.style.display = "none";
-		paginationEl.dataset.totalOptions = "0";
-		paginationEl.dataset.currentIndex = "-1";
-		return;
-	} else {
-		paginationEl.style.display = "flex";
-	}
-
 	let track = paginationEl.querySelector(".knob-pagination-track");
-	const isBrandNewTrack = !track;
-
 	if (!track) {
+		paginationEl.innerHTML = "";
 		track = document.createElement("div");
 		track.className = "knob-pagination-track";
+
+		const slotsOffsets = [-2, -1, 0, 1, 2];
+		slotsOffsets.forEach((slotKey) => {
+			const dot = document.createElement("div");
+			dot.className = "knob-pagination-dot hidden";
+			dot.dataset.slot = slotKey;
+			track.appendChild(dot);
+		});
+
 		paginationEl.appendChild(track);
 	}
 
-	let dots = Array.from(track.querySelectorAll(".knob-pagination-dot"));
-
-	// Incrementally adjust dot elements without destroying DOM tree
-	while (dots.length < totalOptions) {
-		const dot = document.createElement("div");
-		dot.className = "knob-pagination-dot";
-		track.appendChild(dot);
-		dots.push(dot);
-	}
-	while (dots.length > totalOptions) {
-		const dot = dots.pop();
-		if (dot && dot.parentNode) dot.parentNode.removeChild(dot);
-	}
-
-	const prevTotal = parseInt(paginationEl.dataset.totalOptions || "0");
-	dots.forEach((dot, i) => {
-		const distance = Math.abs(i - currentIndex);
-		const offsetPx = (i - currentIndex) * 12;
-
-		dot.classList.remove("active", "near", "mid", "far");
-
-		if (i === currentIndex) {
-			dot.classList.add("active");
-		} else if (distance === 1) {
-			dot.classList.add("near");
-		} else if (distance === 2) {
-			dot.classList.add("mid");
-		} else {
-			dot.classList.add("far");
-		}
-
-		// Anchor red dot at exact center (translateX 0), space dots to left and right
-		dot.style.transform = `translateX(${offsetPx}px)`;
-	});
-
+	paginationEl.dataset.totalOptions = totalOptions;
 	paginationEl.dataset.currentIndex = currentIndex;
+
+	const slotDots = {
+		"-2": track.querySelector('.knob-pagination-dot[data-slot="-2"]'),
+		"-1": track.querySelector('.knob-pagination-dot[data-slot="-1"]'),
+		"0":  track.querySelector('.knob-pagination-dot[data-slot="0"]'),
+		"1":  track.querySelector('.knob-pagination-dot[data-slot="1"]'),
+		"2":  track.querySelector('.knob-pagination-dot[data-slot="2"]'),
+	};
+
+	const safeIndex = Math.max(0, currentIndex);
+	const safeTotal = Math.max(1, totalOptions);
+
+	const leftAvailable = safeIndex;
+	const rightAvailable = Math.max(0, safeTotal - 1 - safeIndex);
+
+	const targetClasses = {
+		"-2": leftAvailable >= 2 ? "knob-pagination-dot mid" : "knob-pagination-dot hidden",
+		"-1": leftAvailable >= 1 ? "knob-pagination-dot near" : "knob-pagination-dot hidden",
+		"0":  "knob-pagination-dot active",
+		"1":  rightAvailable >= 1 ? "knob-pagination-dot near" : "knob-pagination-dot hidden",
+		"2":  rightAvailable >= 2 ? "knob-pagination-dot mid" : "knob-pagination-dot hidden",
+	};
+
+	Object.keys(slotDots).forEach((key) => {
+		const dot = slotDots[key];
+		if (dot && dot.className !== targetClasses[key]) {
+			dot.className = targetClasses[key];
+		}
+	});
 }
 
 function formatNoBreakHyphen(str) {
@@ -623,18 +616,18 @@ function renderSlotInfoHTML(container, slot) {
 	let metaTags = container.querySelector(".card-meta-tags");
 
 	if (infoCols && metaTags) {
-		// Update text without destroying pagination containers!
+		// Update text only if value changed to prevent unnecessary repaints
 		const frColP = infoCols.querySelector(".info-col:nth-child(1) p");
 		const enColP = infoCols.querySelector(".info-col:nth-child(2) p");
-		if (frColP) frColP.innerHTML = gameDesc;
-		if (enColP) enColP.innerHTML = gameDescEng;
+		if (frColP && frColP.innerHTML !== gameDesc) frColP.innerHTML = gameDesc;
+		if (enColP && enColP.innerHTML !== gameDescEng) enColP.innerHTML = gameDescEng;
 
 		const tagBoxes = metaTags.querySelectorAll(".tag-box");
 		if (tagBoxes.length >= 4) {
-			tagBoxes[0].innerHTML = yearVal;
-			tagBoxes[1].innerHTML = gameName;
-			tagBoxes[2].innerHTML = suitVal;
-			tagBoxes[3].innerHTML = valueVal;
+			if (tagBoxes[0] && tagBoxes[0].innerHTML !== yearVal) tagBoxes[0].innerHTML = yearVal;
+			if (tagBoxes[1] && tagBoxes[1].innerHTML !== gameName) tagBoxes[1].innerHTML = gameName;
+			if (tagBoxes[2] && tagBoxes[2].innerHTML !== suitVal) tagBoxes[2].innerHTML = suitVal;
+			if (tagBoxes[3] && tagBoxes[3].innerHTML !== valueVal) tagBoxes[3].innerHTML = valueVal;
 		}
 		return;
 	}
@@ -675,6 +668,17 @@ function renderSlotInfoHTML(container, slot) {
 	`;
 }
 
+function getPrevIndex(slotId, knobIndex, rawIdx, optionsLength) {
+	if (optionsLength <= 0) return 0;
+	if (rawIdx >= 0) return Math.min(rawIdx, optionsLength - 1);
+	const paginationEl = document.getElementById(`slot-${slotId}-knob-${knobIndex}-pagination`);
+	if (paginationEl) {
+		const prev = parseInt(paginationEl.dataset.currentIndex || "0");
+		if (prev >= 0) return Math.min(prev, optionsLength - 1);
+	}
+	return 0;
+}
+
 export function updateAllSlotPaginations() {
 	slots.forEach((slot) => {
 		const yearRangeOptions = getYearRanges();
@@ -687,10 +691,10 @@ export function updateAllSlotPaginations() {
 		const suitsIdx = suitsOptions.indexOf(slot.filters.suits);
 		const valueIdx = valueOptions.indexOf(slot.filters.value);
 
-		updateKnobPaginationIfChanged(slot.id, 0, yearRangeIdx >= 0 ? yearRangeIdx : 0, yearRangeOptions.length);
-		updateKnobPaginationIfChanged(slot.id, 1, gameIdx >= 0 ? gameIdx : 0, gameOptions.length);
-		updateKnobPaginationIfChanged(slot.id, 2, suitsIdx >= 0 ? suitsIdx : 0, suitsOptions.length);
-		updateKnobPaginationIfChanged(slot.id, 3, valueIdx >= 0 ? valueIdx : 0, valueOptions.length);
+		updateKnobPaginationIfChanged(slot.id, 0, getPrevIndex(slot.id, 0, yearRangeIdx, yearRangeOptions.length), yearRangeOptions.length);
+		updateKnobPaginationIfChanged(slot.id, 1, getPrevIndex(slot.id, 1, gameIdx, gameOptions.length), gameOptions.length);
+		updateKnobPaginationIfChanged(slot.id, 2, getPrevIndex(slot.id, 2, suitsIdx, suitsOptions.length), suitsOptions.length);
+		updateKnobPaginationIfChanged(slot.id, 3, getPrevIndex(slot.id, 3, valueIdx, valueOptions.length), valueOptions.length);
 	});
 }
 

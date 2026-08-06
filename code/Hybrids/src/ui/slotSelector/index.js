@@ -31,6 +31,7 @@ import { drawPreview as compositionDrawPreview } from "./canvasComposition.js";
 export async function initSlotSelector() {
 	await fetchAndInitCards();
 	renderSlotUI();
+	updateAllSlotPaginations();
 }
 
 /**
@@ -39,6 +40,7 @@ export async function initSlotSelector() {
 export function shuffleAllSlots() {
 	stateShuffleAllSlots();
 	renderSlotUI();
+	updateAllSlotPaginations();
 }
 
 /**
@@ -122,10 +124,10 @@ function updateSlotPaginationOnly(slot, knobValues) {
  * Map raw knobs to filter properties and update selection if changed
  */
 function updateSlotFromKnobs(slot, knobValues) {
-	const yearRangeOptions = getYearRanges();
-	const gameOptions = getAvailableGames(slot);
-	const suitsOptions = getAvailableSuits(slot.filters);
-	const valueOptions = getAvailableValues(slot.filters);
+	let yearRangeOptions = getYearRanges();
+	let gameOptions = getAvailableGames(slot);
+	let suitsOptions = getAvailableSuits(slot.filters);
+	let valueOptions = getAvailableValues(slot.filters);
 
 	const knobOffset = (slot.id - 1) * 4;
 
@@ -163,14 +165,52 @@ function updateSlotFromKnobs(slot, knobValues) {
 		if (changedKnobIndex === -1) changedKnobIndex = 3;
 	}
 
-	updateKnobPaginationIfChanged(slot.id, 0, yearRangeIndex, yearRangeOptions.length, changedKnobIndex === 0);
-	updateKnobPaginationIfChanged(slot.id, 1, gameIndex, gameOptions.length, changedKnobIndex === 1);
-	updateKnobPaginationIfChanged(slot.id, 2, suitsIndex, suitsOptions.length, changedKnobIndex === 2);
-	updateKnobPaginationIfChanged(slot.id, 3, valueIndex, valueOptions.length, changedKnobIndex === 3);
-
 	if (changed) {
 		updateSlotFilterUI(slot);
 		autoSelectCardIfFiltersComplete(slot);
+	}
+
+	// Re-evaluate options ONCE after autoSelectCardIfFiltersComplete is done
+	yearRangeOptions = getYearRanges();
+	gameOptions = getAvailableGames(slot);
+	suitsOptions = getAvailableSuits(slot.filters);
+	valueOptions = getAvailableValues(slot.filters);
+
+	const finalYearIdx = yearRangeOptions.findIndex((r) => r.key === slot.filters.yearRange);
+	const finalGameIdx = gameOptions.indexOf(slot.filters.game);
+	const finalSuitsIdx = suitsOptions.indexOf(slot.filters.suits);
+	const finalValueIdx = valueOptions.indexOf(slot.filters.value);
+
+	function getPrevIndex(slotId, knobIndex, rawIdx, fallbackIdx, optionsLength) {
+		if (optionsLength <= 0) return 0;
+		if (rawIdx >= 0) return Math.min(rawIdx, optionsLength - 1);
+		if (fallbackIdx >= 0) return Math.min(fallbackIdx, optionsLength - 1);
+		const paginationEl = document.getElementById(`slot-${slotId}-knob-${knobIndex}-pagination`);
+		if (paginationEl) {
+			const prev = parseInt(paginationEl.dataset.currentIndex || "0");
+			if (prev >= 0) return Math.min(prev, optionsLength - 1);
+		}
+		return 0;
+	}
+
+	if (changedKnobIndex !== -1) {
+		if (changedKnobIndex <= 0) {
+			updateKnobPaginationIfChanged(slot.id, 0, getPrevIndex(slot.id, 0, finalYearIdx, yearRangeIndex, yearRangeOptions.length), yearRangeOptions.length, changedKnobIndex === 0);
+		}
+		if (changedKnobIndex <= 1) {
+			updateKnobPaginationIfChanged(slot.id, 1, getPrevIndex(slot.id, 1, finalGameIdx, gameIndex, gameOptions.length), gameOptions.length, changedKnobIndex === 1);
+		}
+		if (changedKnobIndex <= 2) {
+			updateKnobPaginationIfChanged(slot.id, 2, getPrevIndex(slot.id, 2, finalSuitsIdx, suitsIndex, suitsOptions.length), suitsOptions.length, changedKnobIndex === 2);
+		}
+		if (changedKnobIndex <= 3) {
+			updateKnobPaginationIfChanged(slot.id, 3, getPrevIndex(slot.id, 3, finalValueIdx, valueIndex, valueOptions.length), valueOptions.length, changedKnobIndex === 3);
+		}
+	} else {
+		updateKnobPaginationIfChanged(slot.id, 0, getPrevIndex(slot.id, 0, finalYearIdx, yearRangeIndex, yearRangeOptions.length), yearRangeOptions.length, false);
+		updateKnobPaginationIfChanged(slot.id, 1, getPrevIndex(slot.id, 1, finalGameIdx, gameIndex, gameOptions.length), gameOptions.length, false);
+		updateKnobPaginationIfChanged(slot.id, 2, getPrevIndex(slot.id, 2, finalSuitsIdx, suitsIndex, suitsOptions.length), suitsOptions.length, false);
+		updateKnobPaginationIfChanged(slot.id, 3, getPrevIndex(slot.id, 3, finalValueIdx, valueIndex, valueOptions.length), valueOptions.length, false);
 	}
 
 	return changed;

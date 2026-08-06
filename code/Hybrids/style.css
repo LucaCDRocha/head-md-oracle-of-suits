@@ -376,16 +376,16 @@ canvas {
 	text-transform: capitalize;
 }
 
-/* Knob Pagination (Anchored Center Red Dot) */
+/* Knob Pagination (Fixed 5-Slot In-Place Scale & Opacity Indicator) */
 .tag-group .knob-pagination {
 	display: flex;
 	align-items: center;
 	justify-content: center;
 	width: 72px;
 	height: 14px;
-	overflow: hidden;
 	margin-top: 6px;
 	position: relative;
+	overflow: hidden;
 }
 
 .knob-pagination-track {
@@ -399,42 +399,51 @@ canvas {
 
 .knob-pagination-dot {
 	position: absolute;
-	left: -3px;
-	top: -3px;
-	width: 6px;
-	height: 6px;
+	top: -2.5px;
+	width: 5px;
+	height: 5px;
 	border-radius: 50%;
 	background: rgba(0, 0, 0, 0.4);
-	transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), background 0.2s ease, opacity 0.2s ease;
+	transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), 
+	            opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1), 
+	            background 0.25s ease;
 	opacity: 0;
 	will-change: transform, opacity;
+}
+
+/* Fixed Slot X-Positions relative to Center (0px) */
+.knob-pagination-dot[data-slot="-2"] { left: -25px; }
+.knob-pagination-dot[data-slot="-1"] { left: -14px; }
+.knob-pagination-dot[data-slot="0"]  { left: -3.5px; top: -3.5px; width: 7px; height: 7px; }
+.knob-pagination-dot[data-slot="1"]  { left: 9px; }
+.knob-pagination-dot[data-slot="2"]  { left: 20px; }
+
+/* Slot States: scale(0) & opacity(0) for hidden in-place fade */
+.knob-pagination-dot.hidden {
+	opacity: 0 !important;
+	transform: scale(0) !important;
+	pointer-events: none;
 }
 
 .knob-pagination-dot.active {
 	background: var(--color-pearl-ruby);
 	opacity: 1;
-	width: 8px;
-	height: 8px;
-	left: -4px;
-	top: -4px;
+	transform: scale(1.15);
 	z-index: 3;
 }
 
 .knob-pagination-dot.near {
 	background: rgba(0, 0, 0, 0.6);
 	opacity: 0.7;
+	transform: scale(1);
 	z-index: 2;
 }
 
 .knob-pagination-dot.mid {
 	background: rgba(0, 0, 0, 0.35);
 	opacity: 0.35;
+	transform: scale(0.7);
 	z-index: 1;
-}
-
-.knob-pagination-dot.far {
-	opacity: 0;
-	z-index: 0;
 }
 
 /* App 1 Footer & Generate Action */

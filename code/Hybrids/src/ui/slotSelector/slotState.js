@@ -459,10 +459,12 @@ export function getAvailableSuits(filters) {
 	let cards = allCards;
 
 	if (filters.yearRange) {
-		cards = cards.filter((c) => isYearInRange(c.game?.year, filters.yearRange));
+		const yearCards = cards.filter((c) => isYearInRange(c.game?.year, filters.yearRange));
+		if (yearCards.length > 0) cards = yearCards;
 	}
 	if (filters.game) {
-		cards = cards.filter((c) => (c.game_id || c.game?.id) == filters.game);
+		const gameCards = cards.filter((c) => (c.game_id || c.game?.id) == filters.game);
+		if (gameCards.length > 0) cards = gameCards;
 	}
 
 	const suitToFrenchMap = new Map();
@@ -488,13 +490,16 @@ export function getAvailableValues(filters) {
 	let cards = allCards;
 
 	if (filters.yearRange) {
-		cards = cards.filter((c) => isYearInRange(c.game?.year, filters.yearRange));
+		const yearCards = cards.filter((c) => isYearInRange(c.game?.year, filters.yearRange));
+		if (yearCards.length > 0) cards = yearCards;
 	}
 	if (filters.game) {
-		cards = cards.filter((c) => (c.game_id || c.game?.id) == filters.game);
+		const gameCards = cards.filter((c) => (c.game_id || c.game?.id) == filters.game);
+		if (gameCards.length > 0) cards = gameCards;
 	}
 	if (filters.suits) {
-		cards = cards.filter((c) => c.suits == filters.suits);
+		const suitCards = cards.filter((c) => c.suits == filters.suits);
+		if (suitCards.length > 0) cards = suitCards;
 	}
 
 	const valueToFrenchMap = new Map();
