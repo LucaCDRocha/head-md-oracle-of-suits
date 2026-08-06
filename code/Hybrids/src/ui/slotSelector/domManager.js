@@ -544,59 +544,62 @@ export function updateKnobPagination(slotId, knobIndex, currentIndex, totalOptio
 	const paginationEl = document.getElementById(`slot-${slotId}-knob-${knobIndex}-pagination`);
 	if (!paginationEl) return;
 
-	let dotsToShow = [];
-	if (totalOptions <= 5) {
-		for (let i = 0; i < totalOptions; i++) {
-			dotsToShow.push(i);
-		}
-	} else {
-		const maxDots = 5;
-		const halfWindow = Math.floor(maxDots / 2);
-
-		let windowStart = Math.max(0, currentIndex - halfWindow);
-		let windowEnd = Math.min(totalOptions, windowStart + maxDots);
-
-		if (windowEnd - windowStart < maxDots) {
-			windowStart = Math.max(0, windowEnd - maxDots);
-		}
-
-		for (let i = windowStart; i < windowEnd; i++) {
-			dotsToShow.push(i);
-		}
+	if (totalOptions <= 1) {
+		paginationEl.innerHTML = "";
+		paginationEl.dataset.totalOptions = "0";
+		paginationEl.dataset.currentIndex = "-1";
+		return;
 	}
 
+	let track = paginationEl.querySelector(".knob-pagination-track");
 	const prevTotal = parseInt(paginationEl.dataset.totalOptions || "0");
-	const prevDotsToShow = paginationEl.dataset.dotsToShow ? JSON.parse(paginationEl.dataset.dotsToShow) : [];
-	const structureChanged = prevTotal !== totalOptions || JSON.stringify(prevDotsToShow) !== JSON.stringify(dotsToShow);
+	const isNewTrack = !track || prevTotal !== totalOptions;
 
-	if (structureChanged) {
+	if (isNewTrack) {
 		paginationEl.innerHTML = "";
-		dotsToShow.forEach((i) => {
+		track = document.createElement("div");
+		track.className = "knob-pagination-track";
+
+		for (let i = 0; i < totalOptions; i++) {
 			const dot = document.createElement("div");
 			dot.className = "knob-pagination-dot";
 			dot.dataset.index = i;
-			paginationEl.appendChild(dot);
-		});
+			track.appendChild(dot);
+		}
 
+		paginationEl.appendChild(track);
 		paginationEl.dataset.totalOptions = totalOptions;
-		paginationEl.dataset.dotsToShow = JSON.stringify(dotsToShow);
 	}
 
-	const dots = paginationEl.querySelectorAll(".knob-pagination-dot");
-	dots.forEach((dot, idx) => {
-		const i = dotsToShow[idx];
+	const dots = track.querySelectorAll(".knob-pagination-dot");
+	dots.forEach((dot, i) => {
 		const distance = Math.abs(i - currentIndex);
-
-		dot.classList.remove("active", "near", "far");
+		dot.classList.remove("active", "near", "mid", "far");
 
 		if (i === currentIndex) {
 			dot.classList.add("active");
 		} else if (distance === 1) {
 			dot.classList.add("near");
-		} else if (distance >= 2 || idx === 0 || idx === dots.length - 1) {
+		} else if (distance === 2) {
+			dot.classList.add("mid");
+		} else {
 			dot.classList.add("far");
 		}
 	});
+
+	const translateX = (totalOptions / 2 - currentIndex - 0.5) * 12;
+	const targetTransform = `translate(-50%, -50%) translateX(${translateX}px)`;
+
+	if (isNewTrack) {
+		// Set position instantly on initial creation without animating from 0
+		track.style.transition = "none";
+		track.style.transform = targetTransform;
+		void track.offsetHeight; // Force reflow
+		track.style.transition = "";
+	} else {
+		// Smoothly glide from current position to next position
+		track.style.transform = targetTransform;
+	}
 
 	paginationEl.dataset.currentIndex = currentIndex;
 }
@@ -613,50 +616,32 @@ function renderSlotInfoHTML(container, slot) {
 	if (!container) return;
 	const card = slot.selectedCard;
 
-	if (!card) {
-		container.innerHTML = `
-			<div class="card-info-columns">
-				<div class="info-col">
-					<strong>Informations - FR</strong>
-					<p>Sélectionnez une carte</p>
-				</div>
-				<div class="info-col">
-					<strong>Informations - EN</strong>
-					<p>Select a card</p>
-				</div>
-			</div>
-			<div class="card-meta-tags">
-				<div class="tag-group">
-					<div class="tag-box">-</div>
-					<span class="tag-label">Années</span>
-					<div class="knob-pagination" id="slot-${slot.id}-knob-0-pagination"></div>
-				</div>
-				<div class="tag-group">
-					<div class="tag-box">-</div>
-					<span class="tag-label">Jeu</span>
-					<div class="knob-pagination" id="slot-${slot.id}-knob-1-pagination"></div>
-				</div>
-				<div class="tag-group">
-					<div class="tag-box">-</div>
-					<span class="tag-label">Enseigne</span>
-					<div class="knob-pagination" id="slot-${slot.id}-knob-2-pagination"></div>
-				</div>
-				<div class="tag-group">
-					<div class="tag-box">-</div>
-					<span class="tag-label">Valeur</span>
-					<div class="knob-pagination" id="slot-${slot.id}-knob-3-pagination"></div>
-				</div>
-			</div>
-		`;
+	const gameName = formatNoBreakHyphen(card?.game?.name || "Standard");
+	const gameDesc = formatNoBreakHyphen(card?.game?.description || (card ? "Tarot / Jeu traditionnel." : "Sélectionnez une carte"));
+	const gameDescEng = formatNoBreakHyphen(card?.game?.description_eng || card?.game?.description || (card ? "Tarot / Traditional deck." : "Select a card"));
+	const yearVal = formatNoBreakHyphen(slot.filters?.yearRange || card?.game?.year || card?.year || (card ? "1950-2000" : "-"));
+	const suitVal = formatNoBreakHyphen(card?.suits || card?.suit || (card ? "Cups" : "-"));
+	const valueVal = formatNoBreakHyphen(card?.value || (card ? "Queen" : "-"));
+
+	let infoCols = container.querySelector(".card-info-columns");
+	let metaTags = container.querySelector(".card-meta-tags");
+
+	if (infoCols && metaTags) {
+		// Update text without destroying pagination containers!
+		const frColP = infoCols.querySelector(".info-col:nth-child(1) p");
+		const enColP = infoCols.querySelector(".info-col:nth-child(2) p");
+		if (frColP) frColP.innerHTML = gameDesc;
+		if (enColP) enColP.innerHTML = gameDescEng;
+
+		const tagBoxes = metaTags.querySelectorAll(".tag-box");
+		if (tagBoxes.length >= 4) {
+			tagBoxes[0].innerHTML = yearVal;
+			tagBoxes[1].innerHTML = gameName;
+			tagBoxes[2].innerHTML = suitVal;
+			tagBoxes[3].innerHTML = valueVal;
+		}
 		return;
 	}
-
-	const gameName = formatNoBreakHyphen(card.game?.name || "Standard");
-	const gameDesc = formatNoBreakHyphen(card.game?.description || "Tarot / Jeu traditionnel.");
-	const gameDescEng = formatNoBreakHyphen(card.game?.description_eng || card.game?.description || "Tarot / Traditional deck.");
-	const yearVal = formatNoBreakHyphen(slot.filters?.yearRange || card.game?.year || card.year || "1950-2000");
-	const suitVal = formatNoBreakHyphen(card.suits || card.suit || "Cups");
-	const valueVal = formatNoBreakHyphen(card.value || "Queen");
 
 	container.innerHTML = `
 		<div class="card-info-columns">
