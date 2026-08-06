@@ -28,8 +28,9 @@ body {
     font-style: normal;
     font-weight: 100 900;
     font-display: block;
-    src: url("../fonts/Nippo-Variable.woff2") format("woff2"),
-         url("../fonts/Nippo-Variable.ttf") format("truetype");
+    src:
+        url("../fonts/Nippo-Variable.woff2") format("woff2"),
+        url("../fonts/Nippo-Variable.ttf") format("truetype");
 }
 
 @font-face {
@@ -1079,7 +1080,7 @@ body {
     border-radius: 20px;
     width: 100%;
     max-width: 440px;
-    padding: 28px 24px;
+    padding: 24px;
     box-shadow: 0 12px 36px rgba(0, 0, 0, 0.35);
     transform: scale(0.92);
     transition: transform 0.25s ease;
@@ -1092,7 +1093,7 @@ body {
 
 .modal-header {
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     align-items: center;
     margin-bottom: 16px;
 }
@@ -1116,6 +1117,9 @@ body {
     border-radius: 50%;
     padding: 6px;
     transition: background-color 0.2s ease;
+    position: absolute;
+    top: 18px;
+    right: 18px;
 }
 
 .modal-close-btn:hover {
