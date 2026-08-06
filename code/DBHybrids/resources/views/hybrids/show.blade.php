@@ -163,26 +163,28 @@
 
     <!-- Custom Share Modal -->
     <div id="share-modal" class="modal-overlay" aria-hidden="true">
-        <div class="modal-card">
-            <div class="modal-header">
-                <h3 class="modal-title">{{ $t['share_title'] }}</h3>
-                <button id="close-modal-btn" class="modal-close-btn" aria-label="Fermer">
-                    <span class="material-symbols-rounded">close</span>
-                </button>
+        <div class="modal-container">
+            <div class="modal-card">
+                <div class="modal-header">
+                    <h3 class="modal-title">{{ $t['share_title'] }}</h3>
+                </div>
+                <div class="modal-subtext">
+                    {{ $t['share_subtext'] }}
+                </div>
+                <div class="modal-qr-wrapper">
+                    <div id="modal-qrcode"></div>
+                </div>
+                <div class="copy-url-group">
+                    <input type="text" id="share-url-input" class="copy-url-input" readonly>
+                    <button id="copy-url-btn" class="copy-url-btn">
+                        <span class="material-symbols-rounded" id="copy-icon">content_copy</span>
+                        <span id="copy-btn-text">{{ $t['copy'] }}</span>
+                    </button>
+                </div>
             </div>
-            <div class="modal-subtext">
-                {{ $t['share_subtext'] }}
-            </div>
-            <div class="modal-qr-wrapper">
-                <div id="modal-qrcode"></div>
-            </div>
-            <div class="copy-url-group">
-                <input type="text" id="share-url-input" class="copy-url-input" readonly>
-                <button id="copy-url-btn" class="copy-url-btn">
-                    <span class="material-symbols-rounded" id="copy-icon">content_copy</span>
-                    <span id="copy-btn-text">{{ $t['copy'] }}</span>
-                </button>
-            </div>
+            <button id="close-modal-btn" class="modal-close-btn" aria-label="Fermer">
+                <span class="material-symbols-rounded">close</span>
+            </button>
         </div>
     </div>
 
@@ -310,7 +312,9 @@
 
             closeModalBtn.addEventListener('click', closeModal);
             shareModal.addEventListener('click', (e) => {
-                if (e.target === shareModal) closeModal();
+                if (!e.target.closest('.modal-card')) {
+                    closeModal();
+                }
             });
 
             copyUrlBtn.addEventListener('click', function() {

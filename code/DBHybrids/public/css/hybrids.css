@@ -1075,20 +1075,30 @@ body {
     pointer-events: auto;
 }
 
+.modal-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+    width: 100%;
+    max-width: 440px;
+    transform: scale(0.92);
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    box-sizing: border-box;
+}
+
+.modal-overlay.active .modal-container {
+    transform: scale(1);
+}
+
 .modal-card {
     background-color: var(--color-cream);
     border-radius: 20px;
     width: 100%;
-    max-width: 440px;
     padding: 24px;
     box-shadow: 0 12px 36px rgba(0, 0, 0, 0.35);
-    transform: scale(0.92);
-    transition: transform 0.25s ease;
     box-sizing: border-box;
-}
-
-.modal-overlay.active .modal-card {
-    transform: scale(1);
 }
 
 .modal-header {
@@ -1096,6 +1106,7 @@ body {
     justify-content: center;
     align-items: center;
     margin-bottom: 16px;
+    text-align: center;
 }
 
 .modal-title {
@@ -1104,10 +1115,11 @@ body {
     font-weight: 700;
     color: var(--color-black);
     margin: 0;
+    text-align: center;
 }
 
 .modal-close-btn {
-    background: none;
+    background-color: var(--color-cream);
     border: none;
     cursor: pointer;
     color: var(--color-black);
@@ -1115,15 +1127,22 @@ body {
     align-items: center;
     justify-content: center;
     border-radius: 50%;
-    padding: 6px;
-    transition: background-color 0.2s ease;
-    position: absolute;
-    top: 18px;
-    right: 18px;
+    width: 48px;
+    height: 48px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    transition: transform 0.2s ease, background-color 0.2s ease;
+    box-sizing: border-box;
+    position: relative;
+}
+
+.modal-close-btn .material-symbols-rounded {
+    font-size: 26px;
+    font-weight: 700;
 }
 
 .modal-close-btn:hover {
-    background-color: rgba(0, 0, 0, 0.08);
+    background-color: var(--color-white-cream);
+    transform: scale(1.08);
 }
 
 .modal-subtext {
