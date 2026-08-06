@@ -103,4 +103,22 @@ class SecurityApiTest extends TestCase
             'device_id' => $deviceId1,
         ]);
     }
+
+    public function test_hybrids_index_supports_limit_and_sorting()
+    {
+        for ($i = 1; $i <= 15; $i++) {
+            Hybrid::create([
+                'name' => "Hybrid {$i}",
+                'nb_like' => $i,
+            ]);
+        }
+
+        $res = $this->getJson('/api/hybrids?limit=10&sort_by=nb_like');
+        $res->assertStatus(200);
+
+        $data = $res->json('data');
+        $this->assertCount(10, $data);
+        $this->assertEquals(15, $data[0]['nb_like']);
+        $this->assertEquals(6, $data[9]['nb_like']);
+    }
 }

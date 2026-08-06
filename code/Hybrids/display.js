@@ -27,7 +27,6 @@ let qrDownloadObj = null;
 document.addEventListener("DOMContentLoaded", () => {
   initQRCodes();
   initWebSocket();
-  fetchAndRenderFloatingCards();
   setViewState("IDLE");
   initDebugPanel();
 });
@@ -248,6 +247,7 @@ function showResultView(payload) {
 
 let floatingCardsRenderToken = 0;
 let isFloatingCardsRendered = false;
+let isFetchingFloatingCards = false;
 
 /**
  * Fetch top 5-10 most-liked hybrids from API_BASE and animate them across screen
@@ -255,27 +255,32 @@ let isFloatingCardsRendered = false;
 async function fetchAndRenderFloatingCards(forceReRender = false) {
   if (!floatingContainer) return;
 
-  // If already rendered and not forced, maintain single clean slot instance
-  if (isFloatingCardsRendered && floatingContainer.children.length > 0 && !forceReRender) {
+  // If already rendered or fetch is currently in-flight, maintain single clean slot instance
+  if ((isFloatingCardsRendered || isFetchingFloatingCards) && floatingContainer.children.length > 0 && !forceReRender) {
     return;
   }
 
+  isFetchingFloatingCards = true;
   const currentToken = ++floatingCardsRenderToken;
   let rawList = [];
 
-  // 1. Try fetching generated hybrids from backend API
-  if (API_BASE) {
-    try {
-      const url = `${API_BASE.replace(/\/$/, "")}/api/hybrids`;
-      const res = await fetch(url);
-      if (res.ok) {
-        const json = await res.json();
-        rawList = json.data || [];
-        rawList.sort((a, b) => (b.nb_like || 0) - (a.nb_like || 0));
+  try {
+    // 1. Try fetching top 10 generated hybrids from backend API directly
+    if (API_BASE) {
+      try {
+        const url = `${API_BASE.replace(/\/$/, "")}/api/hybrids?limit=10&sort_by=nb_like`;
+        const res = await fetch(url);
+        if (res.ok) {
+          const json = await res.json();
+          rawList = json.data || [];
+          console.log(`[Display] Loaded ${rawList.length} floating hybrids from API`);
+        }
+      } catch (e) {
+        console.warn("Could not fetch hybrids for idle floating background:", e);
       }
-    } catch (e) {
-      console.warn("Could not fetch hybrids for idle floating background:", e);
     }
+  } finally {
+    isFetchingFloatingCards = false;
   }
 
   // Cancel if another render process started while fetching
@@ -314,8 +319,6 @@ async function fetchAndRenderFloatingCards(forceReRender = false) {
       seenImageUrls.add(normalizedKey);
       uniqueHybrids.push({ ...item, img_src: src });
     }
-
-    if (uniqueHybrids.length >= 8) break;
   }
 
   if (uniqueHybrids.length === 0) return;
@@ -342,10 +345,9 @@ async function fetchAndRenderFloatingCards(forceReRender = false) {
   }
 
   uniqueHybrids.forEach((item, idx) => {
-    const cardEl = document.createElement("div");
+    const cardEl = document.createElement("img");
     cardEl.className = "floating-card";
-
-    cardEl.style.backgroundImage = `url('${item.img_src}')`;
+    cardEl.src = item.img_src;
 
     const isLeftToRight = idx % 2 === 0;
     const initialTop = getDistributedTop(bandIndices[idx], count);

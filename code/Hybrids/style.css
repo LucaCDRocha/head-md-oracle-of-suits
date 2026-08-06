@@ -528,11 +528,10 @@ canvas {
 
 .floating-card {
 	position: absolute;
-	width: 135px;
-	height: 200px;
+	width: 200px;
+	height: auto;
+	object-fit: cover;
 	border-radius: 10px;
-	background-size: cover;
-	background-position: center;
 	box-shadow: 0 10px 25px rgba(0, 0, 0, 0.22);
 	opacity: 0.2;
 	left: 0;

@@ -10,11 +10,26 @@ use App\Models\Card;
 class HybridController extends Controller
 {
     /**
-     * Return a JSON list of all hybrids with their related cards and image URLs.
+     * Return a JSON list of hybrids with their related cards and image URLs.
+     * Supports ?limit=N and ?sort_by=nb_like
      */
     public function index(Request $request)
     {
-        $hybrids = Hybrid::with('cards.game')->get()->map(function ($hybrid) {
+        $query = Hybrid::with('cards.game');
+
+        $sortBy = $request->query('sort_by');
+        if ($sortBy === 'nb_like') {
+            $query->orderBy('nb_like', 'desc')->orderBy('id', 'desc');
+        } elseif ($request->has('limit') && !$sortBy) {
+            $query->orderBy('nb_like', 'desc')->orderBy('id', 'desc');
+        }
+
+        if ($request->has('limit')) {
+            $limit = max(1, (int) $request->query('limit'));
+            $query->limit($limit);
+        }
+
+        $hybrids = $query->get()->map(function ($hybrid) {
             return [
                 'id' => $hybrid->id,
                 'name' => $hybrid->name,
