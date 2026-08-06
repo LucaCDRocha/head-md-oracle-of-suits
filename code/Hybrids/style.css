@@ -73,7 +73,7 @@ canvas {
 }
 
 .text-en-sub {
-	font-family: var(--font-body);
+	font-family: var(--font-title);
 	font-size: 1.6rem;
 	font-weight: 600;
 	margin-top: 8px;
