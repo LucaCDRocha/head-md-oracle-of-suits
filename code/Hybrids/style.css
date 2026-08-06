@@ -218,7 +218,7 @@ canvas {
 
 .slot-preview img {
 	max-width: 90%;
-	max-height: 90%;
+	max-height: 70%;
 	width: auto;
 	height: auto;
 	object-fit: contain;
@@ -348,7 +348,7 @@ canvas {
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	background: #ffffff;
+	background: var(--color-white-cream);
 	border: 2px solid var(--color-pearl-ruby);
 	color: var(--color-black);
 	font-family: var(--font-title);
@@ -581,7 +581,8 @@ canvas {
 }
 
 #display-logo {
-	max-height: 140px;
+	max-height: 16vh;
+	margin: 1.5rem;
 	width: auto;
 	object-fit: contain;
 }
