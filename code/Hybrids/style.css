@@ -376,7 +376,7 @@ canvas {
 	text-transform: capitalize;
 }
 
-/* Knob Pagination (Physical Moving Dots Track) */
+/* Knob Pagination (Anchored Center Red Dot) */
 .tag-group .knob-pagination {
 	display: flex;
 	align-items: center;
@@ -389,49 +389,52 @@ canvas {
 }
 
 .knob-pagination-track {
-	display: flex;
-	align-items: center;
 	position: absolute;
 	left: 50%;
 	top: 50%;
+	width: 0;
+	height: 0;
 	transform: translate(-50%, -50%);
-	transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
-	will-change: transform;
 }
 
 .knob-pagination-dot {
-	flex-shrink: 0;
-	width: 5px;
-	height: 5px;
-	margin: 0 3px;
+	position: absolute;
+	left: -3px;
+	top: -3px;
+	width: 6px;
+	height: 6px;
 	border-radius: 50%;
 	background: rgba(0, 0, 0, 0.4);
-	transition: background 0.25s ease, opacity 0.25s ease, transform 0.25s ease;
+	transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), background 0.2s ease, opacity 0.2s ease;
 	opacity: 0;
-	transform: scale(0.4);
+	will-change: transform, opacity;
 }
 
 .knob-pagination-dot.active {
 	background: var(--color-pearl-ruby);
 	opacity: 1;
-	transform: scale(1.4);
+	width: 8px;
+	height: 8px;
+	left: -4px;
+	top: -4px;
+	z-index: 3;
 }
 
 .knob-pagination-dot.near {
 	background: rgba(0, 0, 0, 0.6);
 	opacity: 0.7;
-	transform: scale(1);
+	z-index: 2;
 }
 
 .knob-pagination-dot.mid {
 	background: rgba(0, 0, 0, 0.35);
 	opacity: 0.35;
-	transform: scale(0.7);
+	z-index: 1;
 }
 
 .knob-pagination-dot.far {
 	opacity: 0;
-	transform: scale(0.3);
+	z-index: 0;
 }
 
 /* App 1 Footer & Generate Action */

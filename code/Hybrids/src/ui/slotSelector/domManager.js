@@ -525,7 +525,7 @@ export function updateSelectedArea() {
 /**
  * Optimized pagination wrapper
  */
-export function updateKnobPaginationIfChanged(slotId, knobIndex, currentIndex, totalOptions) {
+export function updateKnobPaginationIfChanged(slotId, knobIndex, currentIndex, totalOptions, isDirectUserAction = false) {
 	const paginationEl = document.getElementById(`slot-${slotId}-knob-${knobIndex}-pagination`);
 	if (!paginationEl) return;
 
@@ -533,47 +533,54 @@ export function updateKnobPaginationIfChanged(slotId, knobIndex, currentIndex, t
 	const prevTotal = parseInt(paginationEl.dataset.totalOptions || "0");
 
 	if (prevIndex !== currentIndex || prevTotal !== totalOptions) {
-		updateKnobPagination(slotId, knobIndex, currentIndex, totalOptions);
+		updateKnobPagination(slotId, knobIndex, currentIndex, totalOptions, isDirectUserAction);
 	}
 }
 
 /**
  * Update pagination dots for a specific knob in a slot
  */
-export function updateKnobPagination(slotId, knobIndex, currentIndex, totalOptions) {
+export function updateKnobPagination(slotId, knobIndex, currentIndex, totalOptions, isDirectUserAction = false) {
 	const paginationEl = document.getElementById(`slot-${slotId}-knob-${knobIndex}-pagination`);
 	if (!paginationEl) return;
 
 	if (totalOptions <= 1) {
-		paginationEl.innerHTML = "";
+		paginationEl.style.display = "none";
 		paginationEl.dataset.totalOptions = "0";
 		paginationEl.dataset.currentIndex = "-1";
 		return;
+	} else {
+		paginationEl.style.display = "flex";
 	}
 
 	let track = paginationEl.querySelector(".knob-pagination-track");
-	const prevTotal = parseInt(paginationEl.dataset.totalOptions || "0");
-	const isNewTrack = !track || prevTotal !== totalOptions;
+	const isBrandNewTrack = !track;
 
-	if (isNewTrack) {
-		paginationEl.innerHTML = "";
+	if (!track) {
 		track = document.createElement("div");
 		track.className = "knob-pagination-track";
-
-		for (let i = 0; i < totalOptions; i++) {
-			const dot = document.createElement("div");
-			dot.className = "knob-pagination-dot";
-			dot.dataset.index = i;
-			track.appendChild(dot);
-		}
-
 		paginationEl.appendChild(track);
-		paginationEl.dataset.totalOptions = totalOptions;
 	}
 
-	const dots = track.querySelectorAll(".knob-pagination-dot");
+	let dots = Array.from(track.querySelectorAll(".knob-pagination-dot"));
+
+	// Incrementally adjust dot elements without destroying DOM tree
+	while (dots.length < totalOptions) {
+		const dot = document.createElement("div");
+		dot.className = "knob-pagination-dot";
+		track.appendChild(dot);
+		dots.push(dot);
+	}
+	while (dots.length > totalOptions) {
+		const dot = dots.pop();
+		if (dot && dot.parentNode) dot.parentNode.removeChild(dot);
+	}
+
+	const prevTotal = parseInt(paginationEl.dataset.totalOptions || "0");
 	dots.forEach((dot, i) => {
 		const distance = Math.abs(i - currentIndex);
+		const offsetPx = (i - currentIndex) * 12;
+
 		dot.classList.remove("active", "near", "mid", "far");
 
 		if (i === currentIndex) {
@@ -585,21 +592,10 @@ export function updateKnobPagination(slotId, knobIndex, currentIndex, totalOptio
 		} else {
 			dot.classList.add("far");
 		}
+
+		// Anchor red dot at exact center (translateX 0), space dots to left and right
+		dot.style.transform = `translateX(${offsetPx}px)`;
 	});
-
-	const translateX = (totalOptions / 2 - currentIndex - 0.5) * 12;
-	const targetTransform = `translate(-50%, -50%) translateX(${translateX}px)`;
-
-	if (isNewTrack) {
-		// Set position instantly on initial creation without animating from 0
-		track.style.transition = "none";
-		track.style.transform = targetTransform;
-		void track.offsetHeight; // Force reflow
-		track.style.transition = "";
-	} else {
-		// Smoothly glide from current position to next position
-		track.style.transform = targetTransform;
-	}
 
 	paginationEl.dataset.currentIndex = currentIndex;
 }

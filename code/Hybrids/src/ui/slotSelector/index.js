@@ -112,10 +112,10 @@ function updateSlotPaginationOnly(slot, knobValues) {
 	let suitsIndex = mapKnobToIndexWithHysteresis(knobValues[2], suitsOptions.length, knobOffset + 2);
 	let valueIndex = mapKnobToIndexWithHysteresis(knobValues[3], valueOptions.length, knobOffset + 3);
 
-	updateKnobPaginationIfChanged(slot.id, 0, yearRangeIndex, yearRangeOptions.length);
-	updateKnobPaginationIfChanged(slot.id, 1, gameIndex, gameOptions.length);
-	updateKnobPaginationIfChanged(slot.id, 2, suitsIndex, suitsOptions.length);
-	updateKnobPaginationIfChanged(slot.id, 3, valueIndex, valueOptions.length);
+	updateKnobPaginationIfChanged(slot.id, 0, yearRangeIndex, yearRangeOptions.length, true);
+	updateKnobPaginationIfChanged(slot.id, 1, gameIndex, gameOptions.length, true);
+	updateKnobPaginationIfChanged(slot.id, 2, suitsIndex, suitsOptions.length, true);
+	updateKnobPaginationIfChanged(slot.id, 3, valueIndex, valueOptions.length, true);
 }
 
 /**
@@ -134,33 +134,39 @@ function updateSlotFromKnobs(slot, knobValues) {
 	let suitsIndex = mapKnobToIndexWithHysteresis(knobValues[2], suitsOptions.length, knobOffset + 2);
 	let valueIndex = mapKnobToIndexWithHysteresis(knobValues[3], valueOptions.length, knobOffset + 3);
 
-	updateKnobPaginationIfChanged(slot.id, 0, yearRangeIndex, yearRangeOptions.length);
-	updateKnobPaginationIfChanged(slot.id, 1, gameIndex, gameOptions.length);
-	updateKnobPaginationIfChanged(slot.id, 2, suitsIndex, suitsOptions.length);
-	updateKnobPaginationIfChanged(slot.id, 3, valueIndex, valueOptions.length);
-
 	const newYearRange = yearRangeOptions[yearRangeIndex]?.key || null;
 	const newGame = gameOptions[gameIndex] || null;
 	const newSuits = suitsOptions[suitsIndex] || null;
 	const newValue = valueOptions[valueIndex] || null;
 
+	let changedKnobIndex = -1;
 	let changed = false;
+
 	if (String(slot.filters.yearRange) !== String(newYearRange)) {
 		slot.filters.yearRange = newYearRange;
 		changed = true;
+		changedKnobIndex = 0;
 	}
 	if (String(slot.filters.game) !== String(newGame)) {
 		slot.filters.game = newGame;
 		changed = true;
+		if (changedKnobIndex === -1) changedKnobIndex = 1;
 	}
 	if (String(slot.filters.suits) !== String(newSuits)) {
 		slot.filters.suits = newSuits;
 		changed = true;
+		if (changedKnobIndex === -1) changedKnobIndex = 2;
 	}
 	if (String(slot.filters.value) !== String(newValue)) {
 		slot.filters.value = newValue;
 		changed = true;
+		if (changedKnobIndex === -1) changedKnobIndex = 3;
 	}
+
+	updateKnobPaginationIfChanged(slot.id, 0, yearRangeIndex, yearRangeOptions.length, changedKnobIndex === 0);
+	updateKnobPaginationIfChanged(slot.id, 1, gameIndex, gameOptions.length, changedKnobIndex === 1);
+	updateKnobPaginationIfChanged(slot.id, 2, suitsIndex, suitsOptions.length, changedKnobIndex === 2);
+	updateKnobPaginationIfChanged(slot.id, 3, valueIndex, valueOptions.length, changedKnobIndex === 3);
 
 	if (changed) {
 		updateSlotFilterUI(slot);
