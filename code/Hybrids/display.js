@@ -133,17 +133,13 @@ let preloadedImageSrc = null;
 function startProgressBar() {
   resetProgressBar();
 
-  const durationMs = 15000; // 15 seconds
-  const targetSubMax = 92; // fill up to 92% over 15s
   const intervalMs = 100;
-  const increment = (targetSubMax / (durationMs / intervalMs));
-
   currentProgress = 0;
 
   progressTimer = setInterval(() => {
-    // Only rapidly complete fill when the image is 100% preloaded in memory
+    // Rapidly & smoothly complete fill when the image payload is 100% loaded
     if (isPayloadLoaded) {
-      currentProgress += 5;
+      currentProgress += 4;
       if (currentProgress >= 100) {
         currentProgress = 100;
         if (progressBarFill) progressBarFill.style.width = "100%";
@@ -151,16 +147,20 @@ function startProgressBar() {
         progressTimer = null;
         setTimeout(() => {
           showResultView(pendingPayload);
-        }, 300);
+        }, 250);
       } else {
         if (progressBarFill) progressBarFill.style.width = currentProgress.toFixed(1) + "%";
       }
     } else {
-      // Normal 15-second progress up to 92%
-      if (currentProgress < targetSubMax) {
-        currentProgress += increment;
-        if (currentProgress > targetSubMax) currentProgress = targetSubMax;
+      // Never fully stop: fast up to ~65%, then asymptotically slow down as it approaches 99%
+      if (currentProgress < 65) {
+        currentProgress += 0.7;
+      } else {
+        const remaining = 99 - currentProgress;
+        currentProgress += Math.max(0.02, remaining * 0.03);
       }
+
+      if (currentProgress > 99) currentProgress = 99;
       if (progressBarFill) progressBarFill.style.width = currentProgress.toFixed(1) + "%";
     }
   }, intervalMs);

@@ -657,6 +657,8 @@ canvas {
 	background: var(--color-pearl-ruby, #661823);
 	border-radius: 0;
 	transition: width 0.1s linear;
+	will-change: width;
+	transform: translateZ(0);
 }
 
 /* Result View Container */
