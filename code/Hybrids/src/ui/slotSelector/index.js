@@ -21,6 +21,7 @@ import {
 	renderSlotUI,
 	updateSlotFilterUI,
 	updateKnobPaginationIfChanged,
+	updateAllSlotPaginations,
 } from "./domManager.js";
 
 import { drawPreview as compositionDrawPreview } from "./canvasComposition.js";
