@@ -88,24 +88,23 @@ function createOverlayDOM() {
                 Premier lancement de la borne
             </p>
 
-            <!-- Progress Bar Outer Container -->
+            <!-- Progress Bar Outer Container (Matching design image) -->
             <div style="
                 width: 100%;
-                height: 12px;
-                background: rgba(0, 0, 0, 0.1);
-                border: 1px solid rgba(0, 0, 0, 0.15);
-                border-radius: 6px;
+                height: 24px;
+                background: var(--color-cream, #fdf4e3);
+                border: 2.5px solid var(--color-pearl-ruby, #661823);
+                border-radius: 7px;
                 overflow: hidden;
                 margin-bottom: 24px;
-                box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
+                box-sizing: border-box;
+                position: relative;
             ">
                 <div id="cache-progress-fill" style="
                     width: 0%;
                     height: 100%;
-                    background: var(--color-pearl-ruby, #721422);
-                    border-radius: 6px;
+                    background: var(--color-pearl-ruby, #661823);
                     transition: width 0.15s ease-out;
-                    box-shadow: 0 0 10px rgba(114, 20, 34, 0.4);
                 "></div>
             </div>
 
