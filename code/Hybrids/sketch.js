@@ -101,10 +101,12 @@ window.setup = function () {
 
   // Set callbacks for serial button press/release
   setButtonPressCallback(() => {
+    if (isGenerating) return;
     markUserInteracted();
     startHold("serial");
   });
   setButtonReleaseCallback(() => {
+    if (isGenerating) return;
     cancelHold("serial");
   });
 
@@ -115,6 +117,7 @@ window.setup = function () {
   const devBatchBtn = document.getElementById("dev-batch-btn");
   if (devBatchBtn) {
     devBatchBtn.addEventListener("click", () => {
+      if (isGenerating) return;
       markUserInteracted();
       runDevBatchGeneration();
     });
@@ -124,6 +127,7 @@ window.setup = function () {
   const shuffleBtn = document.getElementById("shuffle-btn");
   if (shuffleBtn) {
     shuffleBtn.addEventListener("click", () => {
+      if (isGenerating) return;
       markUserInteracted();
       shuffleAllSlots();
       syncBrainState();
@@ -133,13 +137,17 @@ window.setup = function () {
   // Wire screen generate button with 3-second hold logic
   const genBtn = document.getElementById("generate-btn");
   if (genBtn) {
-    genBtn.addEventListener("mousedown", () => startHold("mouse"));
+    genBtn.addEventListener("mousedown", () => {
+      if (isGenerating) return;
+      startHold("mouse");
+    });
     genBtn.addEventListener("mouseup", () => cancelHold("mouse"));
     genBtn.addEventListener("mouseleave", () => cancelHold("mouse"));
     genBtn.addEventListener(
       "touchstart",
       (e) => {
         e.preventDefault();
+        if (isGenerating) return;
         startHold("mouse");
       },
       { passive: false }
@@ -174,6 +182,7 @@ window.setup = function () {
 
   // Add Enter key hold listener for hybridization & 'S' key for Shuffle
   document.addEventListener("keydown", (e) => {
+    if (isGenerating) return;
     if (e.key === "Enter") {
       e.preventDefault();
       if (!e.repeat) {
@@ -285,6 +294,14 @@ function updateSlotFills(elapsed) {
 }
 
 function startHold(source) {
+  const idleOverlay = document.getElementById("app1-idle-overlay");
+  const isIdleActive = currentApp1State === "IDLE" || !userHasInteracted || (idleOverlay && idleOverlay.classList.contains("active"));
+
+  if (isIdleActive) {
+    markUserInteracted();
+    return;
+  }
+
   if (isGenerating) {
     const status = document.getElementById("status");
     if (status) status.innerText = "Generation in progress, please wait...";
@@ -429,6 +446,7 @@ async function onGenerate(bypassDebounce = false) {
 
   if (btn) {
     btn.disabled = true;
+    btn.style.pointerEvents = "none";
     btn.setAttribute("data-generating", "true");
   }
   if (btnText) {
@@ -569,6 +587,7 @@ async function onGenerate(bypassDebounce = false) {
     lastGenerateTime = Date.now();
     if (btn) {
       btn.removeAttribute("data-generating");
+      btn.style.pointerEvents = "auto";
       const selected = getSelectedCards();
       const count = selected ? selected.length : 0;
       const isReady = count === 3;
