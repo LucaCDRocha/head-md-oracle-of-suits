@@ -601,6 +601,11 @@ export function updateKnobPagination(slotId, knobIndex, currentIndex, totalOptio
 	paginationEl.dataset.currentIndex = currentIndex;
 }
 
+function formatNoBreakHyphen(str) {
+	if (!str) return '';
+	return String(str).replace(/-/g, '&#8209;');
+}
+
 /**
  * Render card info & tags (Années, Jeu, Enseigne, Valeur) matching DBHybrids design
  */
@@ -646,21 +651,21 @@ function renderSlotInfoHTML(container, slot) {
 		return;
 	}
 
-	const gameName = card.game?.name || "Standard";
-	const gameDesc = card.game?.description || "Tarot / Jeu traditionnel.";
-	const gameDescEng = card.game?.description_eng || card.game?.description || "Tarot / Traditional deck.";
-	const yearVal = slot.filters?.yearRange || card.game?.year || card.year || "1950-2000";
-	const suitVal = card.suits || card.suit || "Cups";
-	const valueVal = card.value || "Queen";
+	const gameName = formatNoBreakHyphen(card.game?.name || "Standard");
+	const gameDesc = formatNoBreakHyphen(card.game?.description || "Tarot / Jeu traditionnel.");
+	const gameDescEng = formatNoBreakHyphen(card.game?.description_eng || card.game?.description || "Tarot / Traditional deck.");
+	const yearVal = formatNoBreakHyphen(slot.filters?.yearRange || card.game?.year || card.year || "1950-2000");
+	const suitVal = formatNoBreakHyphen(card.suits || card.suit || "Cups");
+	const valueVal = formatNoBreakHyphen(card.value || "Queen");
 
 	container.innerHTML = `
 		<div class="card-info-columns">
 			<div class="info-col">
-				<strong>Informations - FR</strong>
+				<strong>Informations &#8209; FR</strong>
 				<p>${gameDesc}</p>
 			</div>
 			<div class="info-col">
-				<strong>Informations - EN</strong>
+				<strong>Informations &#8209; EN</strong>
 				<p>${gameDescEng}</p>
 			</div>
 		</div>

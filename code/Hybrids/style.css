@@ -161,7 +161,7 @@ canvas {
 .slots-container {
 	display: flex;
 	flex-direction: row;
-	gap: 4.5rem;
+	gap: 3.5rem;
 	justify-content: center;
 	align-items: center;
 	flex-wrap: nowrap;
@@ -173,18 +173,17 @@ canvas {
 	height: 100%;
 }
 
-/* Individual Slot Card */
+/* Individual Slot Card (Locked equal size for all 3 cards) */
 .slot-card {
 	background: var(--color-cream);
 	border: 2px solid transparent;
 	border-radius: 1.2rem;
 	padding: 18px 16px;
 	box-shadow: 0 16px 45px rgba(0, 0, 0, 0.5);
-	width: 33.333%;
-	max-width: 33.333vw;
+	flex: 1 1 0;
+	width: 0;
+	min-width: 0;
 	height: 100%;
-	flex-shrink: 1;
-	flex-grow: 0;
 	display: flex;
 	flex-direction: column;
 	align-items: center;
@@ -282,6 +281,7 @@ canvas {
 	margin-bottom: 12px;
 	text-align: left;
 	width: 100%;
+	min-width: 0;
 }
 
 .info-col {
@@ -295,6 +295,7 @@ canvas {
 	flex-direction: column;
 	justify-content: flex-start;
 	overflow: hidden;
+	min-width: 0;
 }
 
 .info-col strong {
@@ -326,18 +327,22 @@ canvas {
 	gap: 8px;
 	justify-content: space-between;
 	width: 100%;
+	min-width: 0;
 }
 
 .tag-group {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
-	flex: 1;
+	flex: 1 1 0;
+	min-width: 0;
 	text-align: center;
 }
 
 .tag-box {
 	width: 100%;
+	max-width: 100%;
+	min-width: 0;
 	height: 44px;
 	min-height: 44px;
 	display: flex;
@@ -349,12 +354,16 @@ canvas {
 	font-family: var(--font-title);
 	font-size: 0.85rem;
 	font-weight: 800;
-	line-height: 1.15;
-	padding: 4px 2px;
+	line-height: 1.1;
+	padding: 2px 4px;
 	border-radius: 8px;
 	text-align: center;
 	text-transform: capitalize;
-	word-break: break-word;
+	white-space: normal;
+	word-break: normal;
+	overflow-wrap: normal;
+	hyphens: none;
+	overflow: hidden;
 	box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
 }
 
