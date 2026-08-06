@@ -136,8 +136,13 @@ class CardsTableSeeder extends Seeder
     {
         $suit = trim($suit);
         $value = trim($value);
+        $suitLower = mb_strtolower($suit);
 
-        if (strtolower($suit) === 'atout') {
+        if (in_array($suitLower, ['arcane majeur', 'arcane majeure', 'arcanes majeurs', 'arcanes majeures'])) {
+            return "Arcane majeur " . $value;
+        }
+
+        if ($suitLower === 'atout' || $suitLower === 'atouts') {
             return "Atout " . $value;
         }
 
@@ -207,6 +212,10 @@ class CardsTableSeeder extends Seeder
             'Epées' => 'Swords',
             'Atout' => 'Trumps',
             'Atouts' => 'Trumps',
+            'Arcane majeur' => 'Major Arcana',
+            'Arcane majeure' => 'Major Arcana',
+            'Arcanes majeurs' => 'Major Arcana',
+            'Arcanes majeures' => 'Major Arcana',
             'Carreau' => 'Diamonds',
             'Cœur' => 'Hearts',
             'Pique' => 'Spades',
@@ -224,8 +233,16 @@ class CardsTableSeeder extends Seeder
     {
         $suitTrim = trim($suit);
         $valueTrim = trim($value);
+        $suitLower = mb_strtolower($suitTrim);
 
-        if (in_array(mb_strtolower($suitTrim), ['atout', 'atouts'])) {
+        if (in_array($suitLower, ['arcane majeur', 'arcane majeure', 'arcanes majeurs', 'arcanes majeures', 'major arcana'])) {
+            if ($valueTrim && !in_array(mb_strtolower($valueTrim), ['arcane majeur', 'arcane majeure', 'arcanes majeurs', 'arcanes majeures'])) {
+                return "Major Arcana " . $valueTrim;
+            }
+            return "Major Arcana";
+        }
+
+        if (in_array($suitLower, ['atout', 'atouts'])) {
             if ($valueTrim && strtolower($valueTrim) !== 'atout') {
                 return "Trump " . $valueTrim;
             }
