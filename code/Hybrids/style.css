@@ -630,6 +630,63 @@ canvas {
 	height: auto;
 }
 
+/* Animated Physical Button Visual on EXPLORE View (Matching Exhibition Line-Art Illustration Style) */
+#view-explore .instruction-text-container {
+	height: auto;
+	margin-bottom: 2.2rem;
+}
+
+.explore-physical-button {
+	position: relative;
+	width: 380px;
+	height: 64px;
+	border: 3.5px solid var(--color-pearl-ruby, #721422);
+	border-radius: 12px;
+	background-color: var(--color-cream, #fdf4e3);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	margin-top: 0.5rem;
+	box-shadow: 0 5px 0px var(--color-pearl-ruby, #721422);
+	animation: smoothLineArtPress 1.6s ease-in-out infinite alternate;
+	transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.2s ease, box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+	box-sizing: border-box;
+	will-change: transform, box-shadow;
+}
+
+@keyframes smoothLineArtPress {
+	0% {
+		transform: translate3d(0, 0px, 0);
+		box-shadow: 0 5px 0px var(--color-pearl-ruby, #721422);
+	}
+	100% {
+		transform: translate3d(0, 4px, 0);
+		box-shadow: 0 1px 0px var(--color-pearl-ruby, #721422);
+	}
+}
+
+.explore-physical-button.is-pressed {
+	animation: none !important;
+	transform: translate3d(0, 5px, 0) !important;
+	box-shadow: 0 0px 0px var(--color-pearl-ruby, #721422) !important;
+	background-color: var(--color-pearl-ruby, #721422) !important;
+}
+
+.explore-button-hybrid-text {
+	font-family: var(--font-title, 'Nippo', sans-serif);
+	font-size: 1.4rem;
+	font-weight: 800;
+	color: var(--color-pearl-ruby, #721422);
+	letter-spacing: 0.22em;
+	transition: color 0.2s ease;
+	line-height: 1;
+	pointer-events: none;
+}
+
+.explore-physical-button.is-pressed .explore-button-hybrid-text {
+	color: var(--color-cream, #fdf4e3) !important;
+}
+
 /* Smart Progress Bar Styling (Matching design image) */
 .progress-bar-wrapper {
 	width: 80%;

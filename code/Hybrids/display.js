@@ -177,6 +177,19 @@ function initWebSocket() {
     }
   });
 
+  wsClient.on("HOLDING_PROGRESS", (data) => {
+    const progress = typeof data.progress === "number" ? data.progress : 0;
+    const btnEl = document.getElementById("explore-button-visual");
+
+    if (btnEl) {
+      if (progress > 0) {
+        btnEl.classList.add("is-pressed");
+      } else {
+        btnEl.classList.remove("is-pressed");
+      }
+    }
+  });
+
   wsClient.on("HYBRID_GENERATED", (data) => {
     console.log("[App2 Display] HYBRID_GENERATED received:", data);
     const payload = data.payload || data;

@@ -275,6 +275,10 @@ function updateSlotFills(elapsed) {
   const progress = Math.min(1.0, elapsed / HOLD_DURATION);
   const heightPercent = (progress * 100).toFixed(1) + "%";
 
+  if (wsClient && wsClient.sendHoldingProgress) {
+    wsClient.sendHoldingProgress(progress);
+  }
+
   for (let i = 1; i <= 3; i++) {
     const fillEl = document.getElementById(`slot-progress-${i}`);
     const slotCard = document.getElementById(`slot-${i}`);
@@ -364,6 +368,10 @@ function cancelHold(source, completed = false) {
 
   isHolding = false;
   holdSource = null;
+
+  if (wsClient && wsClient.sendHoldingProgress) {
+    wsClient.sendHoldingProgress(0);
+  }
 
   if (holdAnimFrame) {
     cancelAnimationFrame(holdAnimFrame);
