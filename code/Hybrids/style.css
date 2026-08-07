@@ -110,8 +110,8 @@ canvas {
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	background: rgba(0, 0, 0, 0.75);
-	backdrop-filter: blur(12px);
+	background: rgba(0, 0, 0, 0.78);
+	backdrop-filter: blur(14px);
 	opacity: 0;
 	pointer-events: none;
 	transition: opacity 0.4s ease;
@@ -122,16 +122,155 @@ canvas {
 	pointer-events: auto;
 }
 
+.idle-overlay-content {
+	width: 100vw;
+	height: 100vh;
+	position: relative;
+	box-sizing: border-box;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+}
+
+/* Center Text Box Alone in White Cream */
 .app1-idle-message {
+	width: 100%;
+	max-width: 48vw;
+	padding: 0;
+	background: transparent;
+	border: none;
+	box-shadow: none;
 	text-align: center;
 }
 
 #app1-idle-overlay .text-fr-title {
-	color: var(--color-white-cream);
+	font-family: var(--font-title);
+	font-size: clamp(1.6rem, 2.8vw, 2.6rem);
+	font-weight: 800;
+	color: var(--color-white-cream, #fefbf5);
+	margin: 0;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	letter-spacing: 0.06em;
 }
 
 #app1-idle-overlay .text-en-sub {
-	color: rgba(254, 251, 245, 0.7);
+	font-family: var(--font-body);
+	font-size: clamp(0.95rem, 1.3vw, 1.25rem);
+	font-weight: 600;
+	color: var(--color-white-cream, #fefbf5);
+	margin: 10px 0 0 0;
+	text-transform: uppercase;
+	letter-spacing: 0.15em;
+}
+
+/* Knob Dials & Turning Arrows Positioned Higher Up Over Cards */
+.idle-knobs-bottom-row {
+	position: absolute;
+	bottom: 110px;
+	left: 0;
+	width: 100vw;
+	padding: 0 calc(2vw + 2rem);
+	box-sizing: border-box;
+	display: flex;
+	flex-direction: row;
+	gap: 3.5rem;
+	justify-content: center;
+	align-items: center;
+}
+
+.idle-slot-column {
+	flex: 1 1 0;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 12px;
+}
+
+/* Knob Dials & Curved 2-Way Rotational Arrow Representation */
+.idle-knob-dials {
+	display: flex;
+	gap: 72px;
+	align-items: flex-end;
+	justify-content: center;
+	width: 100%;
+}
+
+.idle-dial-wrapper {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+}
+
+.svg-defs-hidden {
+	position: absolute;
+	width: 0;
+	height: 0;
+	overflow: hidden;
+}
+
+.curved-two-way-arrow {
+	display: block;
+	width: 40px;
+	height: 20px;
+	color: var(--color-cream, #fdf4e3);
+	filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.6));
+	pointer-events: none;
+}
+
+.idle-dial {
+	position: relative;
+	width: 40px;
+	height: 40px;
+	border-radius: 50%;
+	background: var(--color-cream, #fdf4e3);
+	border: 3px solid var(--color-pearl-ruby, #721422);
+	box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+	box-sizing: border-box;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.idle-dial-marker {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	width: 3.5px;
+	height: 12px;
+	background: var(--color-pearl-ruby, #721422);
+	border-radius: 2px;
+	transform-origin: 50% 100%;
+	margin-left: -1.75px;
+	margin-top: -12px;
+	animation: dialTurn 4s ease-in-out infinite alternate;
+}
+
+.idle-dial:nth-child(2) .idle-dial-marker {
+	animation-delay: -1s;
+}
+
+.idle-dial:nth-child(3) .idle-dial-marker {
+	animation-delay: -2s;
+}
+
+.idle-dial:nth-child(4) .idle-dial-marker {
+	animation-delay: -3s;
+}
+
+@keyframes dialTurn {
+	0% {
+		transform: translateX(-50%) rotate(-60deg);
+	}
+	100% {
+		transform: translateX(-50%) rotate(150deg);
+	}
 }
 
 /* App 1 Main Cards Layout */

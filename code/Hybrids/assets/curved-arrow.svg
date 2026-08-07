@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 25" width="40" height="20">
+	<defs>
+		<marker id="arr-rev" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="4.2" markerHeight="4.2" orient="auto-start-reverse">
+			<path d="M 2 1 L 9 5 L 2 9" fill="none" stroke="#fdf4e3" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+		</marker>
+		<marker id="arr-fwd" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="4.2" markerHeight="4.2" orient="auto">
+			<path d="M 2 1 L 9 5 L 2 9" fill="none" stroke="#fdf4e3" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+		</marker>
+	</defs>
+	<path d="M 9 17 Q 25 4 41 17" fill="none" stroke="#fdf4e3" stroke-width="3" stroke-linecap="round" marker-start="url(#arr-rev)" marker-end="url(#arr-fwd)"/>
+</svg>

@@ -22,9 +22,93 @@
 
 			<!-- Idle State Overlay for App 1 -->
 			<div id="app1-idle-overlay" class="app1-overlay active">
-				<div class="app1-idle-message">
-					<h1 class="text-fr-title">Choisissez 3 cartes</h1>
-					<p class="text-en-sub">Choose 3 cards</p>
+				<!-- Shared SVG Marker Defs (100% reliable, zero CORS/file protocol issues) -->
+				<svg class="svg-defs-hidden">
+					<defs>
+						<marker id="idle-arr-rev" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="4.2" markerHeight="4.2" orient="auto-start-reverse">
+							<path d="M 2 1 L 9 5 L 2 9" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+						</marker>
+						<marker id="idle-arr-fwd" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="4.2" markerHeight="4.2" orient="auto">
+							<path d="M 2 1 L 9 5 L 2 9" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+						</marker>
+					</defs>
+				</svg>
+
+				<div class="idle-overlay-content">
+					<!-- Center Text Alone -->
+					<div class="app1-idle-message">
+						<h1 class="text-fr-title">Choisissez 3 cartes</h1>
+						<p class="text-en-sub">Choose 3 cards</p>
+					</div>
+
+					<!-- Knob Representation at Bottom -->
+					<div class="idle-knobs-bottom-row">
+						<!-- Slot 1 Knob Group -->
+						<div class="idle-slot-column">
+							<div class="idle-knob-dials">
+								<div class="idle-dial-wrapper">
+									<svg class="curved-two-way-arrow" viewBox="0 0 50 25"><path d="M 9 17 Q 25 4 41 17" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" marker-start="url(#idle-arr-rev)" marker-end="url(#idle-arr-fwd)"/></svg>
+									<div class="idle-dial"><div class="idle-dial-marker"></div></div>
+								</div>
+								<div class="idle-dial-wrapper">
+									<svg class="curved-two-way-arrow" viewBox="0 0 50 25"><path d="M 9 17 Q 25 4 41 17" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" marker-start="url(#idle-arr-rev)" marker-end="url(#idle-arr-fwd)"/></svg>
+									<div class="idle-dial"><div class="idle-dial-marker"></div></div>
+								</div>
+								<div class="idle-dial-wrapper">
+									<svg class="curved-two-way-arrow" viewBox="0 0 50 25"><path d="M 9 17 Q 25 4 41 17" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" marker-start="url(#idle-arr-rev)" marker-end="url(#idle-arr-fwd)"/></svg>
+									<div class="idle-dial"><div class="idle-dial-marker"></div></div>
+								</div>
+								<div class="idle-dial-wrapper">
+									<svg class="curved-two-way-arrow" viewBox="0 0 50 25"><path d="M 9 17 Q 25 4 41 17" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" marker-start="url(#idle-arr-rev)" marker-end="url(#idle-arr-fwd)"/></svg>
+									<div class="idle-dial"><div class="idle-dial-marker"></div></div>
+								</div>
+							</div>
+						</div>
+
+						<!-- Slot 2 Knob Group -->
+						<div class="idle-slot-column">
+							<div class="idle-knob-dials">
+								<div class="idle-dial-wrapper">
+									<svg class="curved-two-way-arrow" viewBox="0 0 50 25"><path d="M 9 17 Q 25 4 41 17" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" marker-start="url(#idle-arr-rev)" marker-end="url(#idle-arr-fwd)"/></svg>
+									<div class="idle-dial"><div class="idle-dial-marker"></div></div>
+								</div>
+								<div class="idle-dial-wrapper">
+									<svg class="curved-two-way-arrow" viewBox="0 0 50 25"><path d="M 9 17 Q 25 4 41 17" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" marker-start="url(#idle-arr-rev)" marker-end="url(#idle-arr-fwd)"/></svg>
+									<div class="idle-dial"><div class="idle-dial-marker"></div></div>
+								</div>
+								<div class="idle-dial-wrapper">
+									<svg class="curved-two-way-arrow" viewBox="0 0 50 25"><path d="M 9 17 Q 25 4 41 17" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" marker-start="url(#idle-arr-rev)" marker-end="url(#idle-arr-fwd)"/></svg>
+									<div class="idle-dial"><div class="idle-dial-marker"></div></div>
+								</div>
+								<div class="idle-dial-wrapper">
+									<svg class="curved-two-way-arrow" viewBox="0 0 50 25"><path d="M 9 17 Q 25 4 41 17" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" marker-start="url(#idle-arr-rev)" marker-end="url(#idle-arr-fwd)"/></svg>
+									<div class="idle-dial"><div class="idle-dial-marker"></div></div>
+								</div>
+							</div>
+						</div>
+
+						<!-- Slot 3 Knob Group -->
+						<div class="idle-slot-column">
+							<div class="idle-knob-dials">
+								<div class="idle-dial-wrapper">
+									<svg class="curved-two-way-arrow" viewBox="0 0 50 25"><path d="M 9 17 Q 25 4 41 17" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" marker-start="url(#idle-arr-rev)" marker-end="url(#idle-arr-fwd)"/></svg>
+									<div class="idle-dial"><div class="idle-dial-marker"></div></div>
+								</div>
+								<div class="idle-dial-wrapper">
+									<svg class="curved-two-way-arrow" viewBox="0 0 50 25"><path d="M 9 17 Q 25 4 41 17" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" marker-start="url(#idle-arr-rev)" marker-end="url(#idle-arr-fwd)"/></svg>
+									<div class="idle-dial"><div class="idle-dial-marker"></div></div>
+								</div>
+								<div class="idle-dial-wrapper">
+									<svg class="curved-two-way-arrow" viewBox="0 0 50 25"><path d="M 9 17 Q 25 4 41 17" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" marker-start="url(#idle-arr-rev)" marker-end="url(#idle-arr-fwd)"/></svg>
+									<div class="idle-dial"><div class="idle-dial-marker"></div></div>
+								</div>
+								<div class="idle-dial-wrapper">
+									<svg class="curved-two-way-arrow" viewBox="0 0 50 25"><path d="M 9 17 Q 25 4 41 17" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" marker-start="url(#idle-arr-rev)" marker-end="url(#idle-arr-fwd)"/></svg>
+									<div class="idle-dial"><div class="idle-dial-marker"></div></div>
+								</div>
+							</div>
+						</div>
+					</div>
 				</div>
 			</div>
 
