@@ -20,8 +20,16 @@
 
 			<!-- Main central cream card container -->
 			<main id="display-content-card">
+				<!-- State 0: CONNECTING / INITIALIZING VIEW -->
+				<section id="view-connecting" class="display-state-view active">
+					<div class="generating-text-container" style="text-align: center;">
+						<h2 class="text-fr-title" id="display-connecting-title">Attente du chargement des cartes...</h2>
+						<p class="text-en-sub" id="display-connecting-sub">Waiting for card loading...</p>
+					</div>
+				</section>
+
 				<!-- State 1: IDLE VIEW -->
-				<section id="view-idle" class="display-state-view active">
+				<section id="view-idle" class="display-state-view">
 					<!-- Floating cards passing through container in Idle state -->
 					<div id="floating-hybrids-container"></div>
 

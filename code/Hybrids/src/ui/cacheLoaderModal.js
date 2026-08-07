@@ -146,6 +146,62 @@ export function showCacheProgress(current, total) {
     }
 }
 
+let retryCountdownTimer = null;
+
+export function showCacheError(errorMsg, onRetry) {
+    if (typeof document === 'undefined') return;
+    createOverlayDOM();
+
+    if (retryCountdownTimer) {
+        clearInterval(retryCountdownTimer);
+        retryCountdownTimer = null;
+    }
+
+    if (progressBarEl) {
+        progressBarEl.style.width = '0%';
+    }
+
+    let secondsLeft = 10;
+
+    const renderCountdownText = () => {
+        if (statusTextEl) {
+            statusTextEl.innerHTML = `
+                <div style="color: #661823; font-size: 1.1rem; font-weight: 800; margin-bottom: 8px;">
+                    ⚠️ ${errorMsg || "Échec de connexion à la base de données"}
+                </div>
+                <div style="font-size: 1.05rem; color: #222222; font-family: var(--font-title, sans-serif); font-weight: 700; margin-top: 14px;">
+                    Nouvelle tentative dans <span style="color: #661823; font-size: 1.3rem;">${secondsLeft}s</span>...
+                </div>
+                <div style="font-size: 0.85rem; color: #666666; margin-top: 8px; font-family: var(--font-body, sans-serif);">
+                    Reconnexion automatique au serveur
+                </div>
+            `;
+        }
+    };
+
+    renderCountdownText();
+
+    retryCountdownTimer = setInterval(() => {
+        secondsLeft--;
+        if (secondsLeft <= 0) {
+            clearInterval(retryCountdownTimer);
+            retryCountdownTimer = null;
+            if (statusTextEl) {
+                statusTextEl.innerHTML = `
+                    <div style="color: #661823; font-size: 1.1rem; font-weight: 800;">
+                        🔄 Tentative de reconnexion au serveur...
+                    </div>
+                `;
+            }
+            if (typeof onRetry === 'function') {
+                onRetry();
+            }
+        } else {
+            renderCountdownText();
+        }
+    }, 1000);
+}
+
 export function hideCacheProgress() {
     if (!overlayEl) return;
     overlayEl.style.opacity = '0';

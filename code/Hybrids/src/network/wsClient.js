@@ -149,6 +149,14 @@ class HybridsWSClient {
       timestamp: Date.now(),
     });
   }
+
+  sendBorneCachingStatus(cachingData = {}) {
+    this.send({
+      type: "BORNE_CACHING_STATUS",
+      timestamp: Date.now(),
+      ...cachingData,
+    });
+  }
 }
 
 function getCircularReplacer() {

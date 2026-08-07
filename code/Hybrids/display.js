@@ -4,6 +4,7 @@ import { compositeCardCanvas } from "./src/utils/cardCanvas.js";
 
 // State elements
 const views = {
+  CONNECTING: document.getElementById("view-connecting"),
   IDLE: document.getElementById("view-idle"),
   EXPLORE: document.getElementById("view-explore"),
   GENERATING: document.getElementById("view-generating"),
@@ -11,10 +12,12 @@ const views = {
 };
 
 const progressBarFill = document.getElementById("progress-bar-fill");
+const connectingBarFill = document.getElementById("display-connecting-bar-fill");
+const connectingStatusEl = document.getElementById("display-connecting-status");
 const resultHybridImg = document.getElementById("result-hybrid-img");
 const floatingContainer = document.getElementById("floating-hybrids-container");
 
-let currentState = "IDLE";
+let currentState = "CONNECTING";
 let progressTimer = null;
 let currentProgress = 0;
 let isPayloadReceived = false;
@@ -27,9 +30,55 @@ let qrDownloadObj = null;
 document.addEventListener("DOMContentLoaded", () => {
   initQRCodes();
   initWebSocket();
-  setViewState("IDLE");
+  setViewState("CONNECTING");
+  checkSystemConnectionAndInit();
   initDebugPanel();
 });
+
+async function checkSystemConnectionAndInit() {
+  if (isBorneCaching) return;
+
+  const titleEl = document.getElementById("display-connecting-title");
+  const subEl = document.getElementById("display-connecting-sub");
+  if (titleEl) titleEl.textContent = "Initialisation du système...";
+  if (subEl) subEl.textContent = "System connection & card check...";
+
+  if (connectingBarFill) connectingBarFill.style.width = "30%";
+  if (connectingStatusEl) connectingStatusEl.textContent = "Vérification de la base de données...";
+
+  try {
+    const res = await fetch((API_BASE ? API_BASE : "") + "/api/cards");
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    const cards = data.data || data;
+
+    if (!Array.isArray(cards) || cards.length === 0) {
+      throw new Error("Base de données vide (0 cartes).");
+    }
+
+    if (!isBorneCaching) {
+      if (connectingBarFill) connectingBarFill.style.width = "100%";
+      if (connectingStatusEl) connectingStatusEl.textContent = "Connexion établie! Démarrage...";
+
+      setTimeout(() => {
+        if (!isBorneCaching) {
+          setViewState("IDLE");
+        }
+      }, 400);
+    }
+  } catch (err) {
+    console.warn("[Display Connection Check Deferred to Borne]", err);
+    if (!isBorneCaching) {
+      if (connectingBarFill) connectingBarFill.style.width = "15%";
+      if (connectingStatusEl) {
+        connectingStatusEl.innerHTML = `
+          <span style="color: #661823;">⚠️ En attente du démarrage de la borne...</span><br/>
+          <span style="font-size: 0.85rem; font-weight: 500; color: #555;">La borne initialise la base de données.</span>
+        `;
+      }
+    }
+  }
+}
 
 function initQRCodes() {
   const qrExploreEl = document.getElementById("qr-explore-idle");
@@ -69,13 +118,36 @@ function updateDownloadQR(hybridId) {
   qrDownloadObj.makeCode(downloadUrl);
 }
 
+let isBorneCaching = false;
+
 function initWebSocket() {
   wsClient.connect("display");
 
   wsClient.on("STATE_CHANGE", (data) => {
     console.log("[App2 Display] STATE_CHANGE received:", data);
-    if (data.state) {
+    if (data.state && !isBorneCaching) {
       setViewState(data.state, data);
+    }
+  });
+
+  wsClient.on("BORNE_CACHING_STATUS", (data) => {
+    console.log("[App2 Display] BORNE_CACHING_STATUS received:", data);
+    const titleEl = document.getElementById("display-connecting-title");
+    const subEl = document.getElementById("display-connecting-sub");
+
+    if (data.isCaching) {
+      isBorneCaching = true;
+      if (currentState !== "CONNECTING") {
+        setViewState("CONNECTING");
+      }
+      if (titleEl) titleEl.textContent = "Chargement des cartes par la borne...";
+      if (subEl) subEl.textContent = "Waiting for card loading...";
+    } else if (data.isDone) {
+      isBorneCaching = false;
+      if (titleEl) titleEl.textContent = "Borne prête ! Démarrage...";
+      setTimeout(() => {
+        setViewState("IDLE");
+      }, 400);
     }
   });
 
@@ -106,13 +178,16 @@ function setViewState(nextState, extraData = {}) {
   });
 
   // Handle state-specific logic
-  if (nextState === "IDLE") {
+  if (nextState === "CONNECTING") {
+    if (floatingContainer) floatingContainer.style.display = "none";
+  } else if (nextState === "IDLE") {
     if (floatingContainer) floatingContainer.style.display = "block";
     resetProgressBar();
     fetchAndRenderFloatingCards();
   } else if (nextState === "EXPLORE") {
     if (floatingContainer) floatingContainer.style.display = "none";
     resetProgressBar();
+    fetchAndRenderFloatingCards();
   } else if (nextState === "GENERATING") {
     if (floatingContainer) floatingContainer.style.display = "none";
     startProgressBar();

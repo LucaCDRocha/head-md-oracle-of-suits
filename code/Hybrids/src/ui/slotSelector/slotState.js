@@ -3,8 +3,10 @@ import {
 	isAlreadyCached, 
 	setAlreadyCached, 
 	showCacheProgress, 
+	showCacheError,
 	hideCacheProgress 
 } from "../../ui/cacheLoaderModal.js";
+import wsClient from "../../network/wsClient.js";
 
 export let allCards = [];
 export let allGames = [];
@@ -51,19 +53,46 @@ async function saveToCache(key, response) {
 let isProgressivePreloading = false;
 
 export async function fetchAndInitCards() {
-	allCards = await fetchCards();
-	extractGameData();
+	try {
+		allCards = await fetchCards();
 
-	// Initialize each slot with a random card
-	slots.forEach((slot) => {
-		selectRandomCard(slot);
-	});
+		if (!allCards || !Array.isArray(allCards) || allCards.length === 0) {
+			throw new Error("Base de données vide ou indisponible (0 cartes reçues).");
+		}
 
-	// Check if this is the first launch (un-cached)
-	if (!isAlreadyCached()) {
-		startProgressivePreloader();
-	} else {
-		console.log(`[Cache] Borne already cached! Skipping loading screen for instant 0-latency launch.`);
+		extractGameData();
+
+		// Initialize each slot with a random card
+		slots.forEach((slot) => {
+			selectRandomCard(slot);
+		});
+
+		// Check if this is the first launch (un-cached)
+		if (!isAlreadyCached()) {
+			if (wsClient && wsClient.sendBorneCachingStatus) {
+				wsClient.sendBorneCachingStatus({ isCaching: true, current: 0, total: allCards.length });
+			}
+			await startProgressivePreloader();
+		} else {
+			console.log(`[Cache] Borne already cached! Skipping loading screen for instant 0-latency launch.`);
+			if (wsClient && wsClient.sendBorneCachingStatus) {
+				wsClient.sendBorneCachingStatus({ isCaching: false, isDone: true });
+			}
+		}
+	} catch (err) {
+		console.error("[Cache/DB Connection Error]", err);
+		if (wsClient && wsClient.sendBorneCachingStatus) {
+			wsClient.sendBorneCachingStatus({ isCaching: true, error: true, message: err.message });
+		}
+		// DO NOT LAUNCH APP OR MARK AS CACHED! Show error screen with retry button!
+		showCacheError(
+			"Connexion à la base de données impossible.",
+			() => {
+				fetchAndInitCards().then(() => {
+					if (typeof window !== 'undefined' && window.renderSlotUI) window.renderSlotUI();
+				});
+			}
+		);
 	}
 }
 
@@ -73,9 +102,13 @@ async function startProgressivePreloader() {
 	console.log(`[Cache] First launch detected! Preloading ${allCards.length} cards...`);
 
 	showCacheProgress(0, allCards.length);
+	if (wsClient && wsClient.sendBorneCachingStatus) {
+		wsClient.sendBorneCachingStatus({ isCaching: true, current: 0, total: allCards.length });
+	}
 
 	const total = allCards.length;
 	let completed = 0;
+	let errorCount = 0;
 	const BATCH_SIZE = 5;
 
 	for (let i = 0; i < total; i += BATCH_SIZE) {
@@ -109,24 +142,46 @@ async function startProgressivePreloader() {
 						const response = await fetch(targetUrl);
 						if (response.ok) {
 							await saveToCache(targetUrl, response.clone());
+						} else {
+							errorCount++;
 						}
 					}
 				}
 			} catch (e) {
 				console.warn(`[Cache] Preloader error for ${card.id}:`, e);
+				errorCount++;
 			}
 
 			completed++;
 			showCacheProgress(completed, total);
+			if (wsClient && wsClient.sendBorneCachingStatus) {
+				wsClient.sendBorneCachingStatus({ isCaching: true, current: completed, total: total });
+			}
 		}));
 
 		// Small 30ms gap between 5-card batches for maximum speed & stability
 		await new Promise(resolve => setTimeout(resolve, 30));
 	}
 
+	isProgressivePreloading = false;
+
+	if (errorCount > total * 0.4) {
+		console.warn(`[Cache] Preloading failed for ${errorCount}/${total} cards. Not marking as cached.`);
+		if (wsClient && wsClient.sendBorneCachingStatus) {
+			wsClient.sendBorneCachingStatus({ isCaching: true, error: true });
+		}
+		showCacheError("Échec du téléchargement des cartes. Connexion instable.", () => {
+			startProgressivePreloader();
+		});
+		return;
+	}
+
 	console.log(`[Cache] First launch preloading complete! Saving cache flag.`);
 	setAlreadyCached(true);
 	hideCacheProgress();
+	if (wsClient && wsClient.sendBorneCachingStatus) {
+		wsClient.sendBorneCachingStatus({ isCaching: false, isDone: true });
+	}
 }
 
 async function decodeTiffToDataUrl(url, signal) {
