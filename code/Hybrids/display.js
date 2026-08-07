@@ -177,6 +177,10 @@ function setViewState(nextState, extraData = {}) {
     }
   });
 
+  if (nextState !== "RESULT") {
+    stopResultCamembertTimer();
+  }
+
   // Handle state-specific logic
   if (nextState === "CONNECTING") {
     if (floatingContainer) floatingContainer.style.display = "none";
@@ -193,7 +197,52 @@ function setViewState(nextState, extraData = {}) {
     startProgressBar();
   } else if (nextState === "RESULT") {
     if (floatingContainer) floatingContainer.style.display = "none";
+    startResultCamembertTimer();
   }
+}
+
+let resultCamembertTimer = null;
+
+function startResultCamembertTimer() {
+  stopResultCamembertTimer();
+
+  const fillEl = document.getElementById("result-camembert-fill");
+  const textEl = document.getElementById("result-camembert-text");
+  const containerEl = document.getElementById("result-camembert-container");
+
+  if (containerEl) containerEl.style.display = "flex";
+
+  const totalDurationMs = 60000; // 60 seconds matching App 1 PHASE_TIMEOUT_MS
+  const fullCircumference = 113.1;
+  const startTime = Date.now();
+
+  resultCamembertTimer = setInterval(() => {
+    const elapsedMs = Date.now() - startTime;
+    const remainingMs = Math.max(0, totalDurationMs - elapsedMs);
+    const remainingSec = Math.ceil(remainingMs / 1000);
+    const progressRatio = remainingMs / totalDurationMs;
+
+    // Calculate SVG stroke offset (unwinds clockwise from 12 o'clock)
+    const dashOffset = fullCircumference * (1 - progressRatio);
+
+    if (fillEl) fillEl.style.strokeDashoffset = dashOffset.toFixed(2);
+    if (textEl) textEl.textContent = `${remainingSec}s`;
+
+    if (remainingMs <= 0) {
+      stopResultCamembertTimer();
+      console.log("[App2 Display] Result Camembert timer complete. Transitioning to EXPLORE.");
+      setViewState("EXPLORE");
+    }
+  }, 100);
+}
+
+function stopResultCamembertTimer() {
+  if (resultCamembertTimer) {
+    clearInterval(resultCamembertTimer);
+    resultCamembertTimer = null;
+  }
+  const containerEl = document.getElementById("result-camembert-container");
+  if (containerEl) containerEl.style.display = "none";
 }
 
 let isPayloadLoaded = false;
