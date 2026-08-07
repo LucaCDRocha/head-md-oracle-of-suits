@@ -3,8 +3,8 @@ int buttonPrint = 10;
 
 void setup() {
   Serial.begin(9600);
-  pinMode(buttonMerge, INPUT);
-  pinMode(buttonPrint, INPUT);
+  pinMode(buttonMerge, INPUT_PULLUP);
+  pinMode(buttonPrint, INPUT_PULLUP);
   pinMode(13, OUTPUT);
 }
 

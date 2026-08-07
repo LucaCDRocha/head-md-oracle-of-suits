@@ -25,6 +25,7 @@ let pendingPayload = null;
 
 let qrExploreObj = null;
 let qrDownloadObj = null;
+let qrLastExploreObj = null;
 
 // Initialize App 2
 document.addEventListener("DOMContentLoaded", () => {
@@ -107,15 +108,40 @@ function initQRCodes() {
       correctLevel: QRCode.CorrectLevel.H,
     });
   }
+
+  const qrLastExploreEl = document.getElementById("qr-last-explore");
+  if (qrLastExploreEl && window.QRCode) {
+    const galleryUrl = API_BASE ? `${API_BASE.replace(/\/$/, "")}` : `${window.location.origin}/`;
+    qrLastExploreEl.innerHTML = "";
+    qrLastExploreObj = new QRCode(qrLastExploreEl, {
+      text: galleryUrl,
+      width: 100,
+      height: 100,
+      colorDark: "#721422",
+      colorLight: "#fefbf5",
+      correctLevel: QRCode.CorrectLevel.H,
+    });
+  }
 }
 
 function updateDownloadQR(hybridId) {
-  if (!qrDownloadObj) return;
   const downloadUrl = API_BASE
     ? `${API_BASE.replace(/\/$/, "")}/${hybridId}`
     : `${window.location.origin}/${hybridId}`;
-  qrDownloadObj.clear();
-  qrDownloadObj.makeCode(downloadUrl);
+
+  if (qrDownloadObj) {
+    qrDownloadObj.clear();
+    qrDownloadObj.makeCode(downloadUrl);
+  }
+  if (qrLastExploreObj) {
+    qrLastExploreObj.clear();
+    qrLastExploreObj.makeCode(downloadUrl);
+
+    const frLabelEl = document.getElementById("explore-qr-fr-label");
+    const enLabelEl = document.getElementById("explore-qr-en-label");
+    if (frLabelEl) frLabelEl.textContent = "Voir le dernier hybride créé";
+    if (enLabelEl) enLabelEl.textContent = "See the last created hybrid";
+  }
 }
 
 let isBorneCaching = false;
