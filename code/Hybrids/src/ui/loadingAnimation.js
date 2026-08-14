@@ -30,7 +30,9 @@ class LoadingAnimation {
 			this.ctx = this.canvas.getContext("2d");
 		}
 
-		const size = Math.min(window.innerWidth * 0.8, window.innerHeight * 0.6, 600);
+		const winW = window.innerWidth || 1920;
+		const winH = window.innerHeight || 1080;
+		const size = Math.max(300, Math.min(winW * 0.8, winH * 0.6, 600));
 		this.canvas.width = size;
 		this.canvas.height = size;
 

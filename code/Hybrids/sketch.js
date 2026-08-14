@@ -94,9 +94,11 @@ window.setup = function () {
 
   // Set callback for knob changes
   setKnobChangeCallback((knobValues) => {
-    handleKnobChange(knobValues);
-    markUserInteracted();
-    syncBrainState();
+    const changed = handleKnobChange(knobValues);
+    if (changed) {
+      markUserInteracted(true);
+      syncBrainState();
+    }
   });
 
   // Set callbacks for serial button press/release
@@ -581,6 +583,7 @@ async function onGenerate(bypassDebounce = false) {
 
       statusCallback("Terminé!");
       isSuccess = true;
+      syncBrainState("RESULT");
     }
   } catch (err) {
     clearInterval(processingLoop);
@@ -712,7 +715,17 @@ export function resetInactivityTimer() {
   }
 }
 
-export function markUserInteracted() {
+export function markUserInteracted(isFilterChanged = false) {
+  if (isGenerating) return;
+
+  if (currentApp1State === "RESULT") {
+    const timeInResult = Date.now() - lastGenerateTime;
+    // Don't leave RESULT state unless a knob filter actually changed AND at least 3s passed
+    if (timeInResult < 3000 || !isFilterChanged) {
+      return;
+    }
+  }
+
   if (!userHasInteracted || currentApp1State === "RESULT") {
     userHasInteracted = true;
     console.log("[App1 Controller] User interaction detected! Transitioning to EXPLORE.");
@@ -733,6 +746,8 @@ export function syncBrainState(forcedState = null) {
   if (!state) {
     if (isGenerating) {
       state = "GENERATING";
+    } else if (currentApp1State === "RESULT") {
+      state = "RESULT";
     } else if (!userHasInteracted) {
       state = "IDLE";
     } else {
