@@ -88,9 +88,17 @@ export async function autoConnectSerial(interactiveFallback = false) {
 		if (ports.length > 0) {
 			console.log("[Serial] Auto-connecting to paired Arduino device...");
 			await openSerialPort(ports[0]);
-		} else if (interactiveFallback) {
-			console.log("[Serial] First interaction detected & no paired ports found. Triggering port request prompt...");
-			await connectSerial();
+		} else {
+			// Try requesting port automatically (Chrome policies will auto-grant if policy is active)
+			try {
+				console.log("[Serial] Requesting Arduino Mega 2560 port...");
+				const selectedPort = await navigator.serial.requestPort();
+				if (selectedPort) {
+					await openSerialPort(selectedPort);
+				}
+			} catch (e) {
+				// Requires user gesture or waiting for paired port enumeration
+			}
 		}
 	} catch (err) {
 		console.warn("[Serial] Auto-connect check failed:", err);

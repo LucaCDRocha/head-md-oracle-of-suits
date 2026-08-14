@@ -4,6 +4,7 @@ const path = require("path");
 const net = require("net");
 const os = require("os");
 const http = require("http");
+const { applyChromeSerialPolicies } = require("./src/utils/set_chrome_policy.js");
 
 const PORT = 8080;
 const URL_DISPLAY1 = `http://localhost:${PORT}/index.html`;
@@ -284,11 +285,8 @@ async function main() {
 	// --- STEP 3: Multi-Monitor Chrome Placement ---
 	console.log("\n[3/3] Detecting screens & launching 2 Chrome browser instances...");
 
-	// Ensure Chrome HKCU policy for Web Serial auto-grant is set for port 8080 (silently in background)
-	try {
-		const policyPsCmd = `powershell -Command "New-Item -Path 'HKCU:\\SOFTWARE\\Policies\\Google\\Chrome\\SerialAllowAllPortsForUrls' -Force -ErrorAction SilentlyContinue | Out-Null; Set-ItemProperty -Path 'HKCU:\\SOFTWARE\\Policies\\Google\\Chrome\\SerialAllowAllPortsForUrls' -Name '1' -Value '[\\\"http://localhost:8080\\\", \\\"http://127.0.0.1:8080\\\"]' -ErrorAction SilentlyContinue; New-Item -Path 'HKCU:\\SOFTWARE\\Policies\\Google\\Chrome\\SerialAllowUsbDevicesForUrls' -Force -ErrorAction SilentlyContinue | Out-Null; Set-ItemProperty -Path 'HKCU:\\SOFTWARE\\Policies\\Google\\Chrome\\SerialAllowUsbDevicesForUrls' -Name '1' -Value '[{\\\"devices\\\":[{}],\\\"urls\\\":[\\\"http://localhost:8080\\\",\\\"http://127.0.0.1:8080\\\"]}]' -ErrorAction SilentlyContinue"`;
-		execSync(policyPsCmd, { stdio: "ignore" });
-	} catch (e) {}
+	// Automatically apply Chrome HKCU policy for Web Serial auto-grant on port 8080
+	applyChromeSerialPolicies();
 
 	const screens = getScreens();
 	console.log(` -> Total displays detected: ${screens.length}`);
