@@ -283,6 +283,16 @@ async function main() {
 
 	// --- STEP 3: Multi-Monitor Chrome Placement ---
 	console.log("\n[3/3] Detecting screens & launching 2 Chrome browser instances...");
+	
+	// Ensure Chrome policy SerialAllowAllPortsForUrls is set for port 8080 so Arduino auto-connects without prompt
+	try {
+		const policyPsCmd = `powershell -Command "New-Item -Path 'HKLM:\\SOFTWARE\\Policies\\Google\\Chrome\\SerialAllowAllPortsForUrls' -Force -ErrorAction SilentlyContinue | Out-Null; Set-ItemProperty -Path 'HKLM:\\SOFTWARE\\Policies\\Google\\Chrome\\SerialAllowAllPortsForUrls' -Name '1' -Value '[\\\"http://localhost:8080\\\", \\\"http://127.0.0.1:8080\\\"]' -ErrorAction SilentlyContinue"`;
+		execSync(policyPsCmd, { stdio: "ignore" });
+		console.log(" -> Web Serial policy applied for port 8080 (auto-connect enabled).");
+	} catch (e) {
+		console.log(" -> Note: Could not auto-apply Chrome policy silently (run setup_auto_connect.bat as Admin if needed).");
+	}
+
 	const screens = getScreens();
 	console.log(` -> Total displays detected: ${screens.length}`);
 
