@@ -284,13 +284,13 @@ async function main() {
 	// --- STEP 3: Multi-Monitor Chrome Placement ---
 	console.log("\n[3/3] Detecting screens & launching 2 Chrome browser instances...");
 	
-	// Ensure Chrome policy SerialAllowAllPortsForUrls is set for port 8080 so Arduino auto-connects without prompt
+	// Ensure Chrome policy SerialAllowAllPortsForUrls is set in HKCU (user level, no admin required) for port 8080
 	try {
-		const policyPsCmd = `powershell -Command "New-Item -Path 'HKLM:\\SOFTWARE\\Policies\\Google\\Chrome\\SerialAllowAllPortsForUrls' -Force -ErrorAction SilentlyContinue | Out-Null; Set-ItemProperty -Path 'HKLM:\\SOFTWARE\\Policies\\Google\\Chrome\\SerialAllowAllPortsForUrls' -Name '1' -Value '[\\\"http://localhost:8080\\\", \\\"http://127.0.0.1:8080\\\"]' -ErrorAction SilentlyContinue"`;
+		const policyPsCmd = `powershell -Command "New-Item -Path 'HKCU:\\SOFTWARE\\Policies\\Google\\Chrome\\SerialAllowAllPortsForUrls' -Force -ErrorAction SilentlyContinue | Out-Null; Set-ItemProperty -Path 'HKCU:\\SOFTWARE\\Policies\\Google\\Chrome\\SerialAllowAllPortsForUrls' -Name '1' -Value '[\\\"http://localhost:8080\\\", \\\"http://127.0.0.1:8080\\\"]' -ErrorAction SilentlyContinue"`;
 		execSync(policyPsCmd, { stdio: "ignore" });
 		console.log(" -> Web Serial policy applied for port 8080 (auto-connect enabled).");
 	} catch (e) {
-		console.log(" -> Note: Could not auto-apply Chrome policy silently (run setup_auto_connect.bat as Admin if needed).");
+		console.log(" -> Note: Could not auto-apply Chrome policy.");
 	}
 
 	const screens = getScreens();
@@ -319,15 +319,7 @@ async function main() {
 	const p1 = path.join(profileBase, "Display1");
 	const p2 = path.join(profileBase, "Display2");
 
-	// Purge previous browser cache and user data for THIS APP ONLY on start
-	console.log(" -> Clearing cache and temporary profile data for Borne application...");
-	try {
-		if (fs.existsSync(p1)) fs.rmSync(p1, { recursive: true, force: true });
-		if (fs.existsSync(p2)) fs.rmSync(p2, { recursive: true, force: true });
-	} catch (e) {
-		console.warn("    (Note: previous cache lock pending, continuing clean start...)");
-	}
-
+	// Ensure profile directories exist (preserving Web Serial paired device permissions across sessions)
 	fs.mkdirSync(p1, { recursive: true });
 	fs.mkdirSync(p2, { recursive: true });
 
