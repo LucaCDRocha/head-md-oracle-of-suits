@@ -94,9 +94,10 @@ window.setup = function () {
 
   // Set callback for knob changes
   setKnobChangeCallback((knobValues) => {
-    const changed = handleKnobChange(knobValues);
-    if (changed) {
-      markUserInteracted(true);
+    const { anyFilterChanged, hasPhysicalMovement } = handleKnobChange(knobValues) || {};
+    // Only react if there is genuine physical movement (>= 15 raw units) or a filter change
+    if (hasPhysicalMovement || (anyFilterChanged && currentApp1State !== "IDLE")) {
+      markUserInteracted(anyFilterChanged);
       syncBrainState();
     }
   });
@@ -726,7 +727,7 @@ export function markUserInteracted(isFilterChanged = false) {
     }
   }
 
-  if (!userHasInteracted || currentApp1State === "RESULT") {
+  if (!userHasInteracted || currentApp1State === "IDLE" || currentApp1State === "RESULT") {
     userHasInteracted = true;
     console.log("[App1 Controller] User interaction detected! Transitioning to EXPLORE.");
     syncBrainState("EXPLORE");

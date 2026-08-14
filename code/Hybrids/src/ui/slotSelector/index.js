@@ -65,12 +65,28 @@ export function drawPreview(p5Instance) {
 	compositionDrawPreview(p5Instance, getSelectedCards());
 }
 
+let lastKnownRawKnobs = Array(12).fill(-1);
+const RAW_NOISE_THRESHOLD = 15; // Ignore electrical noise fluctuations below 15 units (out of 1023)
+
 /**
  * Handle raw knob values from Arduino (0-1023)
  * Maps 12 knobs: 4 knobs per card slot (Year range, Game, Suit, Rank)
  */
 export function handleKnobChange(knobValues) {
-	let anyChanged = false;
+	let anyFilterChanged = false;
+	let hasPhysicalMovement = false;
+
+	for (let i = 0; i < 12; i++) {
+		if (lastKnownRawKnobs[i] === -1) {
+			lastKnownRawKnobs[i] = knobValues[i];
+		} else {
+			const delta = Math.abs(knobValues[i] - lastKnownRawKnobs[i]);
+			if (delta >= RAW_NOISE_THRESHOLD) {
+				hasPhysicalMovement = true;
+				lastKnownRawKnobs[i] = knobValues[i];
+			}
+		}
+	}
 
 	for (let cardIndex = 0; cardIndex < 3; cardIndex++) {
 		const slot = slots[cardIndex];
@@ -80,10 +96,10 @@ export function handleKnobChange(knobValues) {
 		const cardKnobs = knobValues.slice(startIdx, startIdx + 4);
 
 		const changed = updateSlotFromKnobs(slot, cardKnobs);
-		if (changed) anyChanged = true;
+		if (changed) anyFilterChanged = true;
 	}
 
-	if (anyChanged) {
+	if (anyFilterChanged) {
 		renderSlotUI();
 	} else {
 		// Just update paginations without complete redrawing
@@ -97,6 +113,8 @@ export function handleKnobChange(knobValues) {
 			updateSlotPaginationOnly(slot, cardKnobs);
 		}
 	}
+
+	return { anyFilterChanged, hasPhysicalMovement };
 }
 
 /**
