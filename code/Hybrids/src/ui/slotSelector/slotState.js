@@ -48,12 +48,25 @@ async function saveToCache(key, response) {
 		console.warn("Cache write error:", e);
 	}
 }
+async function clearImageCache() {
+	if (typeof window !== 'undefined' && window.caches) {
+		try {
+			await caches.delete(CACHE_NAME);
+		} catch (e) {
+			console.warn("Could not clear image cache:", e);
+		}
+	}
+	setAlreadyCached(false);
+}
 // ----------------------------------------------------
 
 let isProgressivePreloading = false;
 
 export async function fetchAndInitCards() {
 	try {
+		// Clear previous image cache on launch to fetch latest cards data & show loading screen on every startup
+		await clearImageCache();
+
 		allCards = await fetchCards();
 
 		if (!allCards || !Array.isArray(allCards) || allCards.length === 0) {
