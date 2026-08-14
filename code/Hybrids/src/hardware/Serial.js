@@ -34,13 +34,40 @@ export function setButtonReleaseCallback(callback) {
 	onButtonReleaseCallback = callback;
 }
 
+let autoConnectInterval = null;
+
 export function setupSerial() {
 	connectButton = createButton("Connect Arduino");
 	connectButton.position(10, 10);
 	connectButton.mousePressed(connectSerial);
 
-	// Attempt auto-connection to already paired Arduino
+	// Start auto-connect polling loop
+	startAutoConnectLoop();
+
+	// Fallback sur 1ere interaction utilisateur si non connecté
+	if (typeof window !== "undefined") {
+		const handleFirstInteraction = () => {
+			if (!isConnected) {
+				autoConnectSerial(true);
+			}
+		};
+		window.addEventListener("click", handleFirstInteraction, { once: true });
+		window.addEventListener("touchstart", handleFirstInteraction, { once: true });
+	}
+}
+
+function startAutoConnectLoop() {
 	autoConnectSerial();
+	if (!autoConnectInterval) {
+		autoConnectInterval = setInterval(() => {
+			if (!isConnected) {
+				autoConnectSerial();
+			} else if (autoConnectInterval) {
+				clearInterval(autoConnectInterval);
+				autoConnectInterval = null;
+			}
+		}, 2000);
+	}
 }
 
 export function applySerialDebugMode(showButton) {
@@ -53,27 +80,40 @@ export function applySerialDebugMode(showButton) {
 	}
 }
 
-export async function autoConnectSerial() {
-	if (typeof navigator === "undefined" || !("serial" in navigator)) return;
+export async function autoConnectSerial(interactiveFallback = false) {
+	if (typeof navigator === "undefined" || !("serial" in navigator) || isConnected) return;
 
 	try {
 		const ports = await navigator.serial.getPorts();
 		if (ports.length > 0) {
 			console.log("[Serial] Auto-connecting to paired Arduino device...");
 			await openSerialPort(ports[0]);
+		} else if (interactiveFallback) {
+			console.log("[Serial] First interaction detected & no paired ports found. Triggering port request prompt...");
+			await connectSerial();
 		}
 	} catch (err) {
 		console.warn("[Serial] Auto-connect check failed:", err);
 	}
 }
 
-// Automatically detect when Arduino USB is plugged in
+// Automatically detect when Arduino USB is plugged in / unplugged
 if (typeof navigator !== "undefined" && "serial" in navigator) {
 	navigator.serial.addEventListener("connect", async (event) => {
 		console.log("[Serial] Arduino plugged in! Auto-connecting...");
 		if (!isConnected && event.target) {
 			await openSerialPort(event.target);
 		}
+	});
+
+	navigator.serial.addEventListener("disconnect", () => {
+		console.warn("[Serial] Arduino disconnected!");
+		isConnected = false;
+		if (connectButton) {
+			connectButton.removeAttribute("disabled");
+			connectButton.html("Connect Arduino");
+		}
+		startAutoConnectLoop();
 	});
 }
 
