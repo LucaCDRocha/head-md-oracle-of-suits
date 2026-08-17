@@ -5,6 +5,7 @@ import {
   drawPreview,
   handleKnobChange,
   shuffleAllSlots,
+  setSlotSelectionLock,
 } from "./src/ui/slotSelector/index.js";
 import { generateImage } from "./src/api/generationApi.js";
 import { uploadHybridBase64 } from "./src/api/hybridApi.js";
@@ -770,12 +771,17 @@ export function syncBrainState(forcedState = null) {
     }
   }
 
-  // Freeze displayed cards to lastGeneratedCards while in GENERATING or RESULT state
-  if ((state === "RESULT" || state === "GENERATING") && lastGeneratedCards && lastGeneratedCards.length === 3) {
-    selected = lastGeneratedCards;
-  } else if (state === "EXPLORE") {
-    // When returning to EXPLORE, clear frozen cards
+  // Freeze displayed cards & slots while in GENERATING or RESULT state
+  if (state === "RESULT" || state === "GENERATING") {
+    setSlotSelectionLock(true);
+    if (lastGeneratedCards && lastGeneratedCards.length === 3) {
+      selected = lastGeneratedCards;
+    }
+  } else if (state === "EXPLORE" || state === "IDLE") {
+    // When returning to EXPLORE or IDLE, clear frozen cards & unlock slot selection
     lastGeneratedCards = null;
+    setSlotSelectionLock(false);
+    selected = getSelectedCards();
   }
 
   currentApp1State = state;

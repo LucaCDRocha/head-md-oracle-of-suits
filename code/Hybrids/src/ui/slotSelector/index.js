@@ -67,6 +67,14 @@ export function drawPreview(p5Instance) {
 
 let lastKnownRawKnobs = Array(12).fill(-1);
 const RAW_NOISE_THRESHOLD = 15; // Ignore electrical noise fluctuations below 15 units (out of 1023)
+let isSlotSelectionLocked = false;
+
+export function setSlotSelectionLock(isLocked) {
+	isSlotSelectionLocked = !!isLocked;
+	if (!isSlotSelectionLocked && lastKnownRawKnobs.some((v) => v !== -1)) {
+		handleKnobChange(lastKnownRawKnobs);
+	}
+}
 
 /**
  * Handle raw knob values from Arduino (0-1023)
@@ -86,6 +94,10 @@ export function handleKnobChange(knobValues) {
 				lastKnownRawKnobs[i] = knobValues[i];
 			}
 		}
+	}
+
+	if (isSlotSelectionLocked) {
+		return { anyFilterChanged: false, hasPhysicalMovement };
 	}
 
 	for (let cardIndex = 0; cardIndex < 3; cardIndex++) {
