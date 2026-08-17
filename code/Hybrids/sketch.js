@@ -105,7 +105,6 @@ window.setup = function () {
   // Set callbacks for serial button press/release
   setButtonPressCallback(() => {
     if (isGenerating) return;
-    markUserInteracted();
     startHold("serial");
   });
   setButtonReleaseCallback(() => {

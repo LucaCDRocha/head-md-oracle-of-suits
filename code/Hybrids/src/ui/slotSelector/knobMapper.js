@@ -30,7 +30,7 @@ export function mapKnobToIndexWithHysteresis(knobValue, numOptions, knobId) {
 	if (numOptions <= 1) return 0;
 
 	let { min, max } = knobSlidingWindows[knobId];
-	let slidingWindowSize = Math.min(numOptions * 55, 1023);
+	let slidingWindowSize = Math.min(numOptions * 146, 1023);
 	min = Math.min(min, 1023 - slidingWindowSize);
 	max = min + slidingWindowSize;
 
