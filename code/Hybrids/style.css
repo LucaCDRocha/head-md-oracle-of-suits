@@ -131,6 +131,7 @@ canvas {
 	flex-direction: column;
 	justify-content: center;
 	align-items: center;
+	margin-top: 7rem;
 }
 
 /* Center Text Box Alone in White Cream */
@@ -172,11 +173,11 @@ canvas {
 	bottom: 110px;
 	left: 0;
 	width: 100vw;
-	padding: 0 calc(2vw + 2rem);
+	padding: 0 2vw;
 	box-sizing: border-box;
 	display: flex;
 	flex-direction: row;
-	gap: 3.5rem;
+	gap: 5.5rem;
 	justify-content: center;
 	align-items: center;
 }
@@ -194,7 +195,7 @@ canvas {
 /* Knob Dials & Curved 2-Way Rotational Arrow Representation */
 .idle-knob-dials {
 	display: flex;
-	gap: 72px;
+	gap: 105px;
 	align-items: flex-end;
 	justify-content: center;
 	width: 100%;
@@ -279,7 +280,7 @@ canvas {
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	padding: 2vh 2vw;
+	padding: 15vh 2vw 2vh 2vw;
 	width: 100vw;
 	height: calc(100vh - 80px);
 	transition:
@@ -300,14 +301,14 @@ canvas {
 .slots-container {
 	display: flex;
 	flex-direction: row;
-	gap: 3.5rem;
+	gap: 5.5rem;
 	justify-content: center;
 	align-items: center;
 	flex-wrap: nowrap;
 	width: 100%;
 	max-width: 100vw;
 	margin: 0;
-	padding: 0 2rem;
+	padding: 0 0.6rem;
 	box-sizing: border-box;
 	height: 100%;
 }
@@ -316,7 +317,7 @@ canvas {
 .slot-card {
 	background: var(--color-cream);
 	border: 2px solid transparent;
-	border-radius: 1.2rem;
+	border-radius: 2.2rem;
 	padding: 18px 16px;
 	box-shadow: 0 16px 45px rgba(0, 0, 0, 0.5);
 	flex: 1 1 0;
@@ -588,7 +589,6 @@ canvas {
 
 /* App 1 Footer & Generate Action */
 #app1-footer-controls {
-	padding: 15px 30px;
 	background: var(--color-black);
 	display: flex;
 	align-items: center;
