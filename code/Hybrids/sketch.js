@@ -103,11 +103,11 @@ window.setup = function () {
 
   // Set callback for knob changes
   setKnobChangeCallback((knobValues) => {
-    if (isCacheLoading() || isGenerating || currentApp1State === "GENERATING" || currentApp1State === "RESULT") return;
+    if (isCacheLoading() || isGenerating || currentApp1State === "GENERATING") return;
     const { anyFilterChanged, hasPhysicalMovement } = handleKnobChange(knobValues) || {};
     // Only react if there is genuine physical movement (>= 15 raw units) or a filter change
     if (hasPhysicalMovement || (anyFilterChanged && currentApp1State !== "IDLE")) {
-      markUserInteracted(anyFilterChanged);
+      markUserInteracted(hasPhysicalMovement || anyFilterChanged);
       syncBrainState();
     }
   });
