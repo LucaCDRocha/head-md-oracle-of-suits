@@ -103,7 +103,7 @@ window.setup = function () {
 
   // Set callback for knob changes
   setKnobChangeCallback((knobValues) => {
-    if (isCacheLoading()) return;
+    if (isCacheLoading() || isGenerating) return;
     const { anyFilterChanged, hasPhysicalMovement } = handleKnobChange(knobValues) || {};
     // Only react if there is genuine physical movement (>= 15 raw units) or a filter change
     if (hasPhysicalMovement || (anyFilterChanged && currentApp1State !== "IDLE")) {
