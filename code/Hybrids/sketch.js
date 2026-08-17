@@ -103,7 +103,7 @@ window.setup = function () {
 
   // Set callback for knob changes
   setKnobChangeCallback((knobValues) => {
-    if (isCacheLoading() || isGenerating) return;
+    if (isCacheLoading() || isGenerating || currentApp1State === "GENERATING" || currentApp1State === "RESULT") return;
     const { anyFilterChanged, hasPhysicalMovement } = handleKnobChange(knobValues) || {};
     // Only react if there is genuine physical movement (>= 15 raw units) or a filter change
     if (hasPhysicalMovement || (anyFilterChanged && currentApp1State !== "IDLE")) {
@@ -754,7 +754,7 @@ export function markUserInteracted(isFilterChanged = false) {
  * Synchronize App 1 state and selected cards to WebSocket server & App 2
  */
 export function syncBrainState(forcedState = null) {
-  let selected = getSelectedCards();
+  const selected = getSelectedCards();
   const baseId = getBaseCardId();
 
   let state = forcedState;
@@ -768,11 +768,6 @@ export function syncBrainState(forcedState = null) {
     } else {
       state = "EXPLORE";
     }
-  }
-
-  // If in RESULT state, lock displayed cards to the 3 exact source cards used for generation
-  if (state === "RESULT" && lastGeneratedCards && lastGeneratedCards.length === 3) {
-    selected = lastGeneratedCards;
   }
 
   currentApp1State = state;
