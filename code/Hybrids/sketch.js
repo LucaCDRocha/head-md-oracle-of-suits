@@ -47,6 +47,11 @@ window.addEventListener("error", function (e) {
   return false;
 });
 
+function isCacheLoading() {
+  const cacheOverlay = document.getElementById("cache-loading-overlay");
+  return cacheOverlay !== null;
+}
+
 window.setup = function () {
   // Make p5 functions globally available for the slot selector
   window.loadImage = loadImage;
@@ -94,6 +99,7 @@ window.setup = function () {
 
   // Set callback for knob changes
   setKnobChangeCallback((knobValues) => {
+    if (isCacheLoading()) return;
     const { anyFilterChanged, hasPhysicalMovement } = handleKnobChange(knobValues) || {};
     // Only react if there is genuine physical movement (>= 15 raw units) or a filter change
     if (hasPhysicalMovement || (anyFilterChanged && currentApp1State !== "IDLE")) {
@@ -104,11 +110,11 @@ window.setup = function () {
 
   // Set callbacks for serial button press/release
   setButtonPressCallback(() => {
-    if (isGenerating) return;
+    if (isGenerating || isCacheLoading()) return;
     startHold("serial");
   });
   setButtonReleaseCallback(() => {
-    if (isGenerating) return;
+    if (isGenerating || isCacheLoading()) return;
     cancelHold("serial");
   });
 
@@ -300,6 +306,8 @@ function updateSlotFills(elapsed) {
 }
 
 function startHold(source) {
+  if (isCacheLoading()) return;
+
   const idleOverlay = document.getElementById("app1-idle-overlay");
   const isIdleActive = currentApp1State === "IDLE" || !userHasInteracted || (idleOverlay && idleOverlay.classList.contains("active"));
 

@@ -143,41 +143,48 @@ function updateSlotPaginationOnly(slot, knobValues) {
  * Map raw knobs to filter properties and update selection if changed
  */
 function updateSlotFromKnobs(slot, knobValues) {
-	let yearRangeOptions = getYearRanges();
-	let gameOptions = getAvailableGames(slot);
-	let suitsOptions = getAvailableSuits(slot.filters);
-	let valueOptions = getAvailableValues(slot.filters);
-
 	const knobOffset = (slot.id - 1) * 4;
-
-	let yearRangeIndex = mapKnobToIndexWithHysteresis(knobValues[0], yearRangeOptions.length, knobOffset + 0);
-	let gameIndex = mapKnobToIndexWithHysteresis(knobValues[1], gameOptions.length, knobOffset + 1);
-	let suitsIndex = mapKnobToIndexWithHysteresis(knobValues[2], suitsOptions.length, knobOffset + 2);
-	let valueIndex = mapKnobToIndexWithHysteresis(knobValues[3], valueOptions.length, knobOffset + 3);
-
-	const newYearRange = yearRangeOptions[yearRangeIndex]?.key || null;
-	const newGame = gameOptions[gameIndex] || null;
-	const newSuits = suitsOptions[suitsIndex] || null;
-	const newValue = valueOptions[valueIndex] || null;
-
-	let changedKnobIndex = -1;
 	let changed = false;
+	let changedKnobIndex = -1;
+
+	// 1. Year Range (Knob 0)
+	let yearRangeOptions = getYearRanges();
+	let yearRangeIndex = mapKnobToIndexWithHysteresis(knobValues[0], yearRangeOptions.length, knobOffset + 0);
+	const newYearRange = yearRangeOptions[yearRangeIndex]?.key || null;
 
 	if (String(slot.filters.yearRange) !== String(newYearRange)) {
 		slot.filters.yearRange = newYearRange;
 		changed = true;
 		changedKnobIndex = 0;
 	}
+
+	// 2. Game (Knob 1) - Depends on updated Year Range
+	let gameOptions = getAvailableGames(slot);
+	let gameIndex = mapKnobToIndexWithHysteresis(knobValues[1], gameOptions.length, knobOffset + 1);
+	const newGame = gameOptions[gameIndex] || null;
+
 	if (String(slot.filters.game) !== String(newGame)) {
 		slot.filters.game = newGame;
 		changed = true;
 		if (changedKnobIndex === -1) changedKnobIndex = 1;
 	}
+
+	// 3. Suit (Knob 2) - Depends on updated Year Range & Game
+	let suitsOptions = getAvailableSuits(slot.filters);
+	let suitsIndex = mapKnobToIndexWithHysteresis(knobValues[2], suitsOptions.length, knobOffset + 2);
+	const newSuits = suitsOptions[suitsIndex] || null;
+
 	if (String(slot.filters.suits) !== String(newSuits)) {
 		slot.filters.suits = newSuits;
 		changed = true;
 		if (changedKnobIndex === -1) changedKnobIndex = 2;
 	}
+
+	// 4. Value (Knob 3) - Depends on updated Year Range, Game & Suit
+	let valueOptions = getAvailableValues(slot.filters);
+	let valueIndex = mapKnobToIndexWithHysteresis(knobValues[3], valueOptions.length, knobOffset + 3);
+	const newValue = valueOptions[valueIndex] || null;
+
 	if (String(slot.filters.value) !== String(newValue)) {
 		slot.filters.value = newValue;
 		changed = true;
