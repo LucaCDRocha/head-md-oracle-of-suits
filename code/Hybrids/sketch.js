@@ -430,6 +430,8 @@ function cancelHold(source, completed = false) {
   }
 }
 
+let lastGeneratedCards = null;
+
 async function onGenerate(bypassDebounce = false) {
   let isSuccess = false;
   const selected = getSelectedCards();
@@ -438,6 +440,7 @@ async function onGenerate(bypassDebounce = false) {
     if (status) status.innerText = "Error: Please select exactly 3 cards before generating.";
     return false;
   }
+  lastGeneratedCards = [...selected];
 
   const currentTime = Date.now();
   const timeSinceLastGenerate = currentTime - lastGenerateTime;
@@ -751,7 +754,7 @@ export function markUserInteracted(isFilterChanged = false) {
  * Synchronize App 1 state and selected cards to WebSocket server & App 2
  */
 export function syncBrainState(forcedState = null) {
-  const selected = getSelectedCards();
+  let selected = getSelectedCards();
   const baseId = getBaseCardId();
 
   let state = forcedState;
@@ -765,6 +768,11 @@ export function syncBrainState(forcedState = null) {
     } else {
       state = "EXPLORE";
     }
+  }
+
+  // If in RESULT state, lock displayed cards to the 3 exact source cards used for generation
+  if (state === "RESULT" && lastGeneratedCards && lastGeneratedCards.length === 3) {
+    selected = lastGeneratedCards;
   }
 
   currentApp1State = state;
