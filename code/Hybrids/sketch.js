@@ -754,7 +754,7 @@ export function markUserInteracted(isFilterChanged = false) {
  * Synchronize App 1 state and selected cards to WebSocket server & App 2
  */
 export function syncBrainState(forcedState = null) {
-  const selected = getSelectedCards();
+  let selected = getSelectedCards();
   const baseId = getBaseCardId();
 
   let state = forcedState;
@@ -768,6 +768,14 @@ export function syncBrainState(forcedState = null) {
     } else {
       state = "EXPLORE";
     }
+  }
+
+  // Freeze displayed cards to lastGeneratedCards while in GENERATING or RESULT state
+  if ((state === "RESULT" || state === "GENERATING") && lastGeneratedCards && lastGeneratedCards.length === 3) {
+    selected = lastGeneratedCards;
+  } else if (state === "EXPLORE") {
+    // When returning to EXPLORE, clear frozen cards
+    lastGeneratedCards = null;
   }
 
   currentApp1State = state;
