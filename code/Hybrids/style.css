@@ -533,33 +533,29 @@ canvas {
 	position: absolute;
 	left: 50%;
 	top: 50%;
-	width: 0;
-	height: 0;
+	height: 14px;
 	transform: translate(-50%, -50%);
+	transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+	will-change: transform;
 }
 
 .knob-pagination-dot {
 	position: absolute;
-	top: -2.5px;
-	width: 5px;
-	height: 5px;
+	top: 50%;
+	width: 6px;
+	height: 6px;
+	margin-top: -3px;
+	margin-left: -3px;
 	border-radius: 50%;
 	background: rgba(0, 0, 0, 0.4);
-	transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), 
-	            opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1), 
-	            background 0.25s ease;
+	transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), 
+	            opacity 0.28s cubic-bezier(0.16, 1, 0.3, 1), 
+	            background-color 0.25s ease;
 	opacity: 0;
 	will-change: transform, opacity;
 }
 
-/* Fixed Slot X-Positions relative to Center (0px) */
-.knob-pagination-dot[data-slot="-2"] { left: -25px; }
-.knob-pagination-dot[data-slot="-1"] { left: -14px; }
-.knob-pagination-dot[data-slot="0"]  { left: -3.5px; top: -3.5px; width: 7px; height: 7px; }
-.knob-pagination-dot[data-slot="1"]  { left: 9px; }
-.knob-pagination-dot[data-slot="2"]  { left: 20px; }
-
-/* Slot States: scale(0) & opacity(0) for hidden in-place fade */
+/* Slot States for Smooth Sliding Track */
 .knob-pagination-dot.hidden {
 	opacity: 0 !important;
 	transform: scale(0) !important;
@@ -567,14 +563,14 @@ canvas {
 }
 
 .knob-pagination-dot.active {
-	background: var(--color-pearl-ruby);
+	background: var(--color-pearl-ruby, #721422);
 	opacity: 1;
-	transform: scale(1.15);
+	transform: scale(1.35);
 	z-index: 3;
 }
 
 .knob-pagination-dot.near {
-	background: rgba(0, 0, 0, 0.6);
+	background: rgba(0, 0, 0, 0.65);
 	opacity: 0.7;
 	transform: scale(1);
 	z-index: 2;

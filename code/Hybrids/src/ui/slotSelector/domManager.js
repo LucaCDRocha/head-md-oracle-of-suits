@@ -543,52 +543,50 @@ export function updateKnobPagination(slotId, knobIndex, currentIndex, totalOptio
 	const paginationEl = document.getElementById(`slot-${slotId}-knob-${knobIndex}-pagination`);
 	if (!paginationEl) return;
 
+	const safeTotal = Math.max(1, totalOptions);
+	const safeIndex = Math.max(0, Math.min(currentIndex, safeTotal - 1));
+
 	let track = paginationEl.querySelector(".knob-pagination-track");
-	if (!track) {
+	const prevTotal = parseInt(paginationEl.dataset.totalOptions || "0");
+
+	// Recreate track if totalOptions changed or track doesn't exist
+	if (!track || prevTotal !== safeTotal) {
 		paginationEl.innerHTML = "";
 		track = document.createElement("div");
 		track.className = "knob-pagination-track";
 
-		const slotsOffsets = [-2, -1, 0, 1, 2];
-		slotsOffsets.forEach((slotKey) => {
+		for (let i = 0; i < safeTotal; i++) {
 			const dot = document.createElement("div");
 			dot.className = "knob-pagination-dot hidden";
-			dot.dataset.slot = slotKey;
+			dot.dataset.index = i;
+			dot.style.left = `${i * 12}px`;
 			track.appendChild(dot);
-		});
+		}
 
 		paginationEl.appendChild(track);
 	}
 
-	paginationEl.dataset.totalOptions = totalOptions;
-	paginationEl.dataset.currentIndex = currentIndex;
+	paginationEl.dataset.totalOptions = safeTotal;
+	paginationEl.dataset.currentIndex = safeIndex;
 
-	const slotDots = {
-		"-2": track.querySelector('.knob-pagination-dot[data-slot="-2"]'),
-		"-1": track.querySelector('.knob-pagination-dot[data-slot="-1"]'),
-		"0":  track.querySelector('.knob-pagination-dot[data-slot="0"]'),
-		"1":  track.querySelector('.knob-pagination-dot[data-slot="1"]'),
-		"2":  track.querySelector('.knob-pagination-dot[data-slot="2"]'),
-	};
+	// Translate track smoothly so that safeIndex is centered at 0px inside the container
+	const trackOffset = -safeIndex * 12;
+	track.style.transform = `translate(calc(-50% + ${trackOffset}px), -50%)`;
 
-	const safeIndex = Math.max(0, currentIndex);
-	const safeTotal = Math.max(1, totalOptions);
+	// Update dot states based on distance from safeIndex
+	const dots = track.querySelectorAll(".knob-pagination-dot");
+	dots.forEach((dot) => {
+		const idx = parseInt(dot.dataset.index);
+		const dist = Math.abs(idx - safeIndex);
 
-	const leftAvailable = safeIndex;
-	const rightAvailable = Math.max(0, safeTotal - 1 - safeIndex);
-
-	const targetClasses = {
-		"-2": leftAvailable >= 2 ? "knob-pagination-dot mid" : "knob-pagination-dot hidden",
-		"-1": leftAvailable >= 1 ? "knob-pagination-dot near" : "knob-pagination-dot hidden",
-		"0":  "knob-pagination-dot active",
-		"1":  rightAvailable >= 1 ? "knob-pagination-dot near" : "knob-pagination-dot hidden",
-		"2":  rightAvailable >= 2 ? "knob-pagination-dot mid" : "knob-pagination-dot hidden",
-	};
-
-	Object.keys(slotDots).forEach((key) => {
-		const dot = slotDots[key];
-		if (dot && dot.className !== targetClasses[key]) {
-			dot.className = targetClasses[key];
+		if (dist === 0) {
+			dot.className = "knob-pagination-dot active";
+		} else if (dist === 1) {
+			dot.className = "knob-pagination-dot near";
+		} else if (dist === 2) {
+			dot.className = "knob-pagination-dot mid";
+		} else {
+			dot.className = "knob-pagination-dot hidden";
 		}
 	});
 }
