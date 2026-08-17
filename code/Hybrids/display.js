@@ -269,8 +269,8 @@ function startResultCamembertTimer() {
 
     if (remainingMs <= 0) {
       stopResultCamembertTimer();
-      console.log("[App2 Display] Result Camembert timer complete. Transitioning to EXPLORE.");
-      setViewState("EXPLORE");
+      console.log("[App2 Display] Result Camembert timer complete. Notifying Brain to transition to EXPLORE.");
+      wsClient.sendStateChange("EXPLORE");
     }
   }, 100);
 }

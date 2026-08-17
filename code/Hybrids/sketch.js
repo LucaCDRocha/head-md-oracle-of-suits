@@ -91,6 +91,10 @@ window.setup = function () {
       currentApp1State = "RESULT";
       updateApp1State("RESULT");
       resetInactivityTimer();
+    } else if (data.state === "EXPLORE" && currentApp1State === "RESULT") {
+      currentApp1State = "EXPLORE";
+      updateApp1State("EXPLORE");
+      resetInactivityTimer();
     }
   });
 
