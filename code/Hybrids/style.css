@@ -172,7 +172,7 @@ canvas {
 	position: absolute;
 	bottom: 110px;
 	left: 0;
-	width: 100vw;
+	width: 140vw;
 	padding: 0 2vw;
 	box-sizing: border-box;
 	display: flex;
@@ -280,7 +280,7 @@ canvas {
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	padding: 15vh 2vw 2vh 2vw;
+	padding: 13.5vh 2vw 2vh 2.5vw;
 	width: 100vw;
 	height: calc(100vh - 80px);
 	transition:
@@ -589,6 +589,7 @@ canvas {
 	display: flex;
 	align-items: center;
 	justify-content: center;
+	margin-top: 1.5rem;
 }
 
 #generate-btn {
@@ -769,6 +770,10 @@ canvas {
 #view-explore .instruction-text-container {
 	height: auto;
 	margin-bottom: 2.2rem;
+}
+
+#view-explore{
+padding: 1rem;
 }
 
 .explore-physical-button {
