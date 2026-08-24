@@ -295,28 +295,33 @@
 
                 <div class="info-modal-section">
                     <div class="info-section-label">{{ $t['exhibition_section_title'] }}</div>
-                    <a href="{{ $t['exhibition_url'] }}" target="_blank" rel="noopener noreferrer" class="info-inline-link">
-                        <span>Exposition « {{ $t['exhibition_name'] }} »</span>
-                        <span class="material-symbols-rounded icon-inline">open_in_new</span>
+                    <a href="{{ $t['exhibition_url'] }}" target="_blank" rel="noopener noreferrer" class="info-exhibition-block">
+                        <div class="info-exhibition-title">
+                            <span>{{ $t['exhibition_title'] }}</span>
+                            <span class="material-symbols-rounded icon-inline">open_in_new</span>
+                        </div>
+                        <div class="info-exhibition-subtitle">{{ $t['exhibition_subtitle'] }}</div>
                     </a>
                 </div>
 
                 <div class="info-modal-section">
                     <div class="info-section-label">{{ $t['partners_section_title'] }}</div>
-                    <ul class="info-links-list">
-                        <li>
+                    <div class="info-partners-stacked">
+                        <div class="partner-item">
                             <a href="{{ $t['museum_url'] }}" target="_blank" rel="noopener noreferrer" class="info-inline-link">
                                 <span>{{ $t['museum_name'] }}</span>
                                 <span class="material-symbols-rounded icon-inline">open_in_new</span>
                             </a>
-                        </li>
-                        <li>
+                            <div class="partner-subtext">{{ $t['museum_location'] }}</div>
+                        </div>
+                        <div class="partner-item">
                             <a href="{{ $t['head_url'] }}" target="_blank" rel="noopener noreferrer" class="info-inline-link">
                                 <span>{{ $t['head_name'] }}</span>
                                 <span class="material-symbols-rounded icon-inline">open_in_new</span>
                             </a>
-                        </li>
-                    </ul>
+                            <div class="partner-subtext">{{ $t['head_subtext'] }}</div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="info-modal-section">

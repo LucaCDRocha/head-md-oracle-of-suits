@@ -207,25 +207,7 @@
                     {{ $t['share_subtext'] }}
                 </div>
 
-                <!-- Web Share API Button (Visible on supported mobile/desktop browsers) -->
-                <button type="button" id="native-share-btn" class="btn-web-share" style="display: none;">
-                    <span class="material-symbols-rounded">ios_share</span>
-                    <span>{{ $t['share_via_app'] }}</span>
-                </button>
-
-                <!-- Direct Social Share Buttons -->
-                <div class="share-social-grid">
-                    <a href="https://api.whatsapp.com/send?text={{ urlencode($shareText) }}" target="_blank" rel="noopener noreferrer" class="btn-social-share btn-whatsapp">
-                        <span>{{ $t['share_whatsapp'] }}</span>
-                    </a>
-                    <a href="https://t.me/share/url?url={{ urlencode(request()->url()) }}&text={{ urlencode($t['share_message_prefix']) }}" target="_blank" rel="noopener noreferrer" class="btn-social-share btn-telegram">
-                        <span>{{ $t['share_telegram'] }}</span>
-                    </a>
-                </div>
-
-                <div class="modal-qr-wrapper">
-                    <div id="modal-qrcode"></div>
-                </div>
+                <!-- 1. URL Bar & Copier le lien button -->
                 <div class="copy-url-group">
                     <input type="text" id="share-url-input" class="copy-url-input" readonly>
                     <button id="copy-url-btn" class="copy-url-btn">
@@ -233,6 +215,17 @@
                         <span id="copy-btn-text">{{ $t['copy'] }}</span>
                     </button>
                 </div>
+
+                <!-- 2. QR Code -->
+                <div class="modal-qr-wrapper">
+                    <div id="modal-qrcode"></div>
+                </div>
+
+                <!-- 3. Partager sur les réseaux button -->
+                <button type="button" id="share-socials-btn" class="btn-share-socials">
+                    <span class="material-symbols-rounded">share</span>
+                    <span>{{ $t['share_socials'] }}</span>
+                </button>
             </div>
             <button id="close-modal-btn" class="modal-close-btn" aria-label="Fermer">
                 <span class="material-symbols-rounded">close</span>
@@ -259,28 +252,33 @@
 
                 <div class="info-modal-section">
                     <div class="info-section-label">{{ $t['exhibition_section_title'] }}</div>
-                    <a href="{{ $t['exhibition_url'] }}" target="_blank" rel="noopener noreferrer" class="info-inline-link">
-                        <span>Exposition « {{ $t['exhibition_name'] }} »</span>
-                        <span class="material-symbols-rounded icon-inline">open_in_new</span>
+                    <a href="{{ $t['exhibition_url'] }}" target="_blank" rel="noopener noreferrer" class="info-exhibition-block">
+                        <div class="info-exhibition-title">
+                            <span>{{ $t['exhibition_title'] }}</span>
+                            <span class="material-symbols-rounded icon-inline">open_in_new</span>
+                        </div>
+                        <div class="info-exhibition-subtitle">{{ $t['exhibition_subtitle'] }}</div>
                     </a>
                 </div>
 
                 <div class="info-modal-section">
                     <div class="info-section-label">{{ $t['partners_section_title'] }}</div>
-                    <ul class="info-links-list">
-                        <li>
+                    <div class="info-partners-stacked">
+                        <div class="partner-item">
                             <a href="{{ $t['museum_url'] }}" target="_blank" rel="noopener noreferrer" class="info-inline-link">
                                 <span>{{ $t['museum_name'] }}</span>
                                 <span class="material-symbols-rounded icon-inline">open_in_new</span>
                             </a>
-                        </li>
-                        <li>
+                            <div class="partner-subtext">{{ $t['museum_location'] }}</div>
+                        </div>
+                        <div class="partner-item">
                             <a href="{{ $t['head_url'] }}" target="_blank" rel="noopener noreferrer" class="info-inline-link">
                                 <span>{{ $t['head_name'] }}</span>
                                 <span class="material-symbols-rounded icon-inline">open_in_new</span>
                             </a>
-                        </li>
-                    </ul>
+                            <div class="partner-subtext">{{ $t['head_subtext'] }}</div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="info-modal-section">
@@ -493,21 +491,31 @@
             });
         }
 
-        // Web Share API Support Check & Action
-        const nativeShareBtn = document.getElementById('native-share-btn');
-        if (navigator.share && nativeShareBtn) {
-            nativeShareBtn.style.display = 'flex';
-            nativeShareBtn.addEventListener('click', async () => {
-                try {
-                    await navigator.share({
-                        title: "Hybrid #{{ $hybrid->id }} - Oracle of Suits",
-                        text: "{{ $t['share_message_prefix'] }}",
-                        url: window.location.href
+        // Single Share on Socials Button (Native Phone Share Dialog)
+        const shareSocialsBtn = document.getElementById('share-socials-btn');
+        if (shareSocialsBtn) {
+            shareSocialsBtn.addEventListener('click', function() {
+                const currentUrl = window.location.href;
+                const shareData = {
+                    title: "Hybrid #{{ $hybrid->id }}",
+                    text: "{{ $t['share_message_prefix'] }}",
+                    url: currentUrl
+                };
+
+                if (navigator.share) {
+                    navigator.share(shareData).catch(err => {
+                        if (err.name !== 'AbortError') {
+                            console.warn('Native share failed with full data, retrying url only:', err);
+                            // Retry with url only (fixes some iOS Safari / Android HTTP edge cases)
+                            navigator.share({ url: currentUrl }).catch(e => {
+                                console.error('Native share failed:', e);
+                                if (copyUrlBtn) copyUrlBtn.click();
+                            });
+                        }
                     });
-                } catch (err) {
-                    if (err.name !== 'AbortError') {
-                        console.error('Web Share API error:', err);
-                    }
+                } else {
+                    // Fallback for desktop / insecure HTTP contexts where Web Share API is unavailable
+                    if (copyUrlBtn) copyUrlBtn.click();
                 }
             });
         }
