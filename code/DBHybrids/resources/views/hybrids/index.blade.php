@@ -6,6 +6,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ $t['hybrids'] }} {{ $t['gallery'] }} - Oracle of Suits</title>
 
+    <!-- SEO & Open Graph Meta Tags for WhatsApp, Instagram, Telegram, Twitter -->
+    <meta name="description" content="{{ $t['about_description'] }}">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Oracle of Suits - Galerie Hybrids">
+    <meta property="og:description" content="{{ $t['about_description'] }}">
+    <meta property="og:image" content="{{ asset('img/logos/SF-Hybrids-Galerie.png') }}">
+    <meta property="og:url" content="{{ request()->url() }}">
+    <meta property="og:site_name" content="Oracle of Suits - Musée suisse du jeu x HEAD – Genève">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Oracle of Suits - Galerie Hybrids">
+    <meta name="twitter:description" content="{{ $t['about_description'] }}">
+    <meta name="twitter:image" content="{{ asset('img/logos/SF-Hybrids-Galerie.png') }}">
+
     <!-- Favicon -->
     @if(($lang ?? 'fr') === 'en')
         <link rel="icon" type="image/png" href="{{ asset('img/logos/favicon-en.png') }}">
@@ -26,7 +40,7 @@
     <link rel="stylesheet" href="{{ asset('css/hybrids.css') }}">
 </head>
 
-<body>
+<body class="has-sticky-bar">
     <!-- Transparent Backdrop when Dropdown is Open -->
     <div id="dropdown-backdrop" class="dropdown-backdrop"></div>
 
@@ -152,6 +166,25 @@
                 @endforeach
             </div>
         @endif
+
+        <!-- Site Footer -->
+        <footer class="site-footer">
+            <div class="footer-project-name">{{ $t['project_name'] }}</div>
+            <div class="footer-partners-row">
+                <a href="{{ $t['museum_url'] }}" target="_blank" rel="noopener noreferrer">{{ $t['museum_short_name'] }}</a>
+                <span class="footer-cross">×</span>
+                <a href="{{ $t['head_url'] }}" target="_blank" rel="noopener noreferrer">{{ $t['head_short_name'] }}</a>
+            </div>
+            <div class="footer-by">by</div>
+            <div class="footer-authors-row">
+                @foreach ($t['authors'] as $index => $author)
+                    @if ($index > 0)
+                        <span class="footer-amp">&amp;</span>
+                    @endif
+                    <a href="{{ $author['url'] }}" target="_blank" rel="noopener noreferrer">{{ $author['name'] }}</a>
+                @endforeach
+            </div>
+        </footer>
     </main>
 
     <!-- Sticky Bottom Controls & Pagination Bar -->
@@ -242,6 +275,72 @@
             @endif
         </div>
     </div>
+
+    <!-- Info / About Modal -->
+    <div id="info-modal" class="modal-overlay" aria-hidden="true">
+        <div class="modal-container">
+            <div class="modal-card info-modal-card">
+                <div class="modal-header">
+                    <h3 class="modal-title">{{ $t['about_title'] }}</h3>
+                </div>
+                <div class="modal-subtext" style="margin-bottom: 14px; font-weight: 600; color: var(--color-pearl-ruby);">
+                    {{ $t['about_subtitle'] }}
+                </div>
+
+                <div class="info-modal-section">
+                    <p class="info-section-content">
+                        {{ $t['about_description'] }}
+                    </p>
+                </div>
+
+                <div class="info-modal-section">
+                    <div class="info-section-label">{{ $t['exhibition_section_title'] }}</div>
+                    <a href="{{ $t['exhibition_url'] }}" target="_blank" rel="noopener noreferrer" class="info-inline-link">
+                        <span>Exposition « {{ $t['exhibition_name'] }} »</span>
+                        <span class="material-symbols-rounded icon-inline">open_in_new</span>
+                    </a>
+                </div>
+
+                <div class="info-modal-section">
+                    <div class="info-section-label">{{ $t['partners_section_title'] }}</div>
+                    <ul class="info-links-list">
+                        <li>
+                            <a href="{{ $t['museum_url'] }}" target="_blank" rel="noopener noreferrer" class="info-inline-link">
+                                <span>{{ $t['museum_name'] }}</span>
+                                <span class="material-symbols-rounded icon-inline">open_in_new</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ $t['head_url'] }}" target="_blank" rel="noopener noreferrer" class="info-inline-link">
+                                <span>{{ $t['head_name'] }}</span>
+                                <span class="material-symbols-rounded icon-inline">open_in_new</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="info-modal-section">
+                    <div class="info-section-label">{{ $t['authors_title'] }}</div>
+                    <div class="info-authors-list">
+                        @foreach ($t['authors'] as $author)
+                            <a href="{{ $author['url'] }}" target="_blank" rel="noopener noreferrer" class="info-author-chip">
+                                <span>{{ $author['name'] }}</span>
+                                <span class="material-symbols-rounded icon-inline">open_in_new</span>
+                            </a>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+            <button id="close-info-modal-btn" class="modal-close-btn" aria-label="Fermer">
+                <span class="material-symbols-rounded">close</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Floating Sticky Info Button -->
+    <button type="button" id="info-btn" class="floating-info-btn" aria-label="{{ $t['about'] }}" title="{{ $t['about'] }}">
+        <span class="material-symbols-rounded">info</span>
+    </button>
 
     <!-- Scripts -->
     <script>
@@ -354,7 +453,6 @@
             });
         });
 
-
         // Instant check for cached images
         document.querySelectorAll('.hybrid-card-img').forEach(img => {
             if (img.complete && img.naturalHeight !== 0) {
@@ -363,6 +461,33 @@
                 if (img.parentElement) img.parentElement.classList.remove('skeleton-loader');
             }
         });
+
+        // Info Modal Functionality
+        const infoBtn = document.getElementById('info-btn');
+        const infoModal = document.getElementById('info-modal');
+        const closeInfoModalBtn = document.getElementById('close-info-modal-btn');
+
+        if (infoBtn && infoModal) {
+            const openInfoModal = () => {
+                infoModal.classList.add('active');
+                infoModal.setAttribute('aria-hidden', 'false');
+                document.body.style.overflow = 'hidden';
+            };
+
+            const closeInfoModal = () => {
+                infoModal.classList.remove('active');
+                infoModal.setAttribute('aria-hidden', 'true');
+                document.body.style.overflow = '';
+            };
+
+            infoBtn.addEventListener('click', openInfoModal);
+            if (closeInfoModalBtn) closeInfoModalBtn.addEventListener('click', closeInfoModal);
+            infoModal.addEventListener('click', (e) => {
+                if (!e.target.closest('.modal-card')) {
+                    closeInfoModal();
+                }
+            });
+        }
     </script>
 </body>
 

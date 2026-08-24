@@ -16,10 +16,26 @@ if (!function_exists('getAppLocale')) {
 
 if (!function_exists('getTranslations')) {
     function getTranslations($lang) {
+        $authors = [
+            [
+                'name' => 'Luca Correia da Rocha',
+                'url'  => 'https://github.com/lucacorreia', // Modify link here
+            ],
+            [
+                'name' => 'Vincent Paley',
+                'url'  => 'https://github.com/Vinipae', // Modify link here
+            ],
+        ];
+
+        $exhibitionUrl = 'https://museedujeu.ch/exposition/cartes-a-jouer/';
+        $museumUrl = 'https://museedujeu.ch/';
+        $headUrl = 'https://www.hesge.ch/head/';
+
         if ($lang === 'en') {
             return [
                 'hybrids' => 'Hybrids',
                 'gallery' => 'Gallery',
+                'project_name' => 'Hybrids Gallery',
                 'explore' => 'Explore all generated hybrid cards',
                 'cards_used' => 'CARDS USED:',
                 'of' => 'of',
@@ -40,15 +56,38 @@ if (!function_exists('getTranslations')) {
                 'source_cards' => 'Source cards',
                 'base_card' => '★ BASE CARD',
                 'share_title' => 'Share this Hybrid',
-                'share_subtext' => 'Scan the QR Code or copy the link below to share this hybrid.',
-                'copy' => 'Copy',
+                'share_subtext' => 'Scan the QR Code or choose a share option below.',
+                'copy' => 'Copy link',
                 'copied' => 'Copied !',
+                'about' => 'About',
+                'about_title' => 'Hybrids Gallery',
+                'about_subtitle' => 'Exhibition Project at the Swiss Museum of Games',
+                'about_description' => 'Hybrids is an interactive installation and digital gallery allowing visitors to generate and explore unique playing cards by combining historical visual elements.',
+                'authors_title' => 'Project Authors',
+                'authors' => $authors,
+                'exhibition_section_title' => 'Exhibition',
+                'exhibition_name' => 'Cartes à jouer — Des origines aux cartes à collectionner',
+                'exhibition_url' => $exhibitionUrl,
+                'partners_section_title' => 'Partners',
+                'museum_name' => 'Musée suisse du jeu (Tour-de-Peilz)',
+                'museum_short_name' => 'Musée suisse du jeu',
+                'museum_url' => $museumUrl,
+                'head_name' => 'HEAD – Genève (Master Media Design, HES-SO)',
+                'head_short_name' => 'HEAD – Genève',
+                'head_url' => $headUrl,
+                'share_via_app' => 'Share via app...',
+                'share_whatsapp' => 'Share on WhatsApp',
+                'share_telegram' => 'Share on Telegram',
+                'share_message_prefix' => 'Check out this hybrid playing card created at the Swiss Museum of Games exhibition (Hybrids x HEAD Genève):',
+                'exhibition_context_title' => 'Exhibition Context',
+                'exhibition_context_text' => 'Generated during the exhibition « Cartes à jouer — Des origines aux cartes à collectionner » at the Swiss Museum of Games (Tour-de-Peilz) in collaboration with the Master Media Design program at HEAD – Genève.',
             ];
         }
 
         return [
             'hybrids' => 'Hybrids',
             'gallery' => 'Galerie',
+            'project_name' => 'Hybrids Galerie',
             'explore' => 'Explorez toutes les cartes hybrides générées',
             'cards_used' => 'CARTES UTILISÉES :',
             'of' => 'sur',
@@ -69,9 +108,31 @@ if (!function_exists('getTranslations')) {
             'source_cards' => 'Cartes sources',
             'base_card' => '★ CARTE DE BASE',
             'share_title' => 'Partager cet Hybrid',
-            'share_subtext' => 'Scannez le QR Code ou copiez le lien ci-dessous pour partager cet hybrid.',
-            'copy' => 'Copier',
+            'share_subtext' => 'Scannez le QR Code ou choisissez une option de partage ci-dessous.',
+            'copy' => 'Copier le lien',
             'copied' => 'Copié !',
+            'about' => 'À propos',
+            'about_title' => 'Hybrids Galerie',
+            'about_subtitle' => 'Projet d\'exposition au Musée suisse du jeu',
+            'about_description' => 'Hybrids est une installation et galerie interactive permettant aux visiteurs de générer et d\'explorer des cartes à jouer uniques en combinant leurs éléments visuels historiques.',
+            'authors_title' => 'Auteurs du projet',
+            'authors' => $authors,
+            'exhibition_section_title' => 'Exposition',
+            'exhibition_name' => 'Cartes à jouer — Des origines aux cartes à collectionner',
+            'exhibition_url' => $exhibitionUrl,
+            'partners_section_title' => 'Partenaires',
+            'museum_name' => 'Musée suisse du jeu (Tour-de-Peilz)',
+            'museum_short_name' => 'Musée suisse du jeu',
+            'museum_url' => $museumUrl,
+            'head_name' => 'HEAD – Genève (Master Media Design, HES-SO)',
+            'head_short_name' => 'HEAD – Genève',
+            'head_url' => $headUrl,
+            'share_via_app' => 'Partager via une application...',
+            'share_whatsapp' => 'Partager sur WhatsApp',
+            'share_telegram' => 'Partager sur Telegram',
+            'share_message_prefix' => 'Regarde cette carte hybride créée lors de l\'exposition au Musée suisse du jeu (Hybrids x HEAD Genève) :',
+            'exhibition_context_title' => 'Contexte d\'exposition',
+            'exhibition_context_text' => 'Généré lors de l\'exposition « Cartes à jouer — Des origines aux cartes à collectionner » au Musée suisse du jeu (Tour-de-Peilz) en collaboration avec le Master Media Design de la HEAD – Genève.',
         ];
     }
 }
