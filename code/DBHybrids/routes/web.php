@@ -23,7 +23,7 @@ if (!function_exists('getTranslations')) {
             ],
             [
                 'name' => 'Vincent Paley',
-                'url'  => 'https://noctoplasma.com/', // Modify link here
+                'url'  => 'https://www.instagram.com/noctoplasma/', // Modify link here
             ],
         ];
 
