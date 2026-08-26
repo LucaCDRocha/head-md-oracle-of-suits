@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ 'Hybrid #' . $hybrid->id }} - Oracle of Suits</title>
+    <title>{{ 'Hybrid #' . $hybrid->id }} — {{ $t['project_name'] }}</title>
 
     @php
         $hybridImgUrl = preg_match('/^https?:\/\//', $hybrid->img_src)
@@ -14,17 +14,17 @@
     @endphp
 
     <!-- SEO & Open Graph Meta Tags for WhatsApp, Instagram, Telegram, Twitter -->
-    <meta name="description" content="{{ $t['exhibition_context_text'] }}">
+    <meta name="description" content="{!! str_replace('&#039;', "'", e($t['exhibition_context_text'])) !!}">
     <meta property="og:type" content="website">
-    <meta property="og:title" content="Hybrid #{{ $hybrid->id }} - Oracle of Suits">
-    <meta property="og:description" content="{{ $t['exhibition_context_text'] }}">
+    <meta property="og:title" content="Hybrid #{{ $hybrid->id }} — {{ $t['project_name'] }}">
+    <meta property="og:description" content="{!! str_replace('&#039;', "'", e($t['exhibition_context_text'])) !!}">
     <meta property="og:image" content="{{ $hybridImgUrl }}">
     <meta property="og:url" content="{{ request()->url() }}">
-    <meta property="og:site_name" content="Oracle of Suits - Musée suisse du jeu x HEAD – Genève">
+    <meta property="og:site_name" content="Hybrids Galerie — Musée suisse du jeu × HEAD – Genève">
 
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Hybrid #{{ $hybrid->id }} - Oracle of Suits">
-    <meta name="twitter:description" content="{{ $t['exhibition_context_text'] }}">
+    <meta name="twitter:title" content="Hybrid #{{ $hybrid->id }} — {{ $t['project_name'] }}">
+    <meta name="twitter:description" content="{!! str_replace('&#039;', "'", e($t['exhibition_context_text'])) !!}">
     <meta name="twitter:image" content="{{ $hybridImgUrl }}">
 
     <!-- Favicon -->
@@ -496,9 +496,10 @@
         if (shareSocialsBtn) {
             shareSocialsBtn.addEventListener('click', function() {
                 const currentUrl = window.location.href;
+                const shareMessageText = {!! json_encode($t['share_message_prefix']) !!};
                 const shareData = {
-                    title: "Hybrid #{{ $hybrid->id }}",
-                    text: "{{ $t['share_message_prefix'] }}",
+                    title: "Hybrid #{{ $hybrid->id }} — {{ $t['project_name'] }}",
+                    text: shareMessageText,
                     url: currentUrl
                 };
 

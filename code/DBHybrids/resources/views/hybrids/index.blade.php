@@ -4,20 +4,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ $t['hybrids'] }} {{ $t['gallery'] }} - Oracle of Suits</title>
+    <title>{{ $t['project_name'] }}</title>
 
     <!-- SEO & Open Graph Meta Tags for WhatsApp, Instagram, Telegram, Twitter -->
-    <meta name="description" content="{{ $t['about_description'] }}">
+    <meta name="description" content="{!! str_replace('&#039;', "'", e($t['about_description'])) !!}">
     <meta property="og:type" content="website">
-    <meta property="og:title" content="Oracle of Suits - Galerie Hybrids">
-    <meta property="og:description" content="{{ $t['about_description'] }}">
+    <meta property="og:title" content="{{ $t['project_name'] }}">
+    <meta property="og:description" content="{!! str_replace('&#039;', "'", e($t['about_description'])) !!}">
     <meta property="og:image" content="{{ asset('img/logos/SF-Hybrids-Galerie.png') }}">
     <meta property="og:url" content="{{ request()->url() }}">
-    <meta property="og:site_name" content="Oracle of Suits - Musée suisse du jeu x HEAD – Genève">
+    <meta property="og:site_name" content="Hybrids Galerie — Musée suisse du jeu × HEAD – Genève">
 
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Oracle of Suits - Galerie Hybrids">
-    <meta name="twitter:description" content="{{ $t['about_description'] }}">
+    <meta name="twitter:title" content="{{ $t['project_name'] }}">
+    <meta name="twitter:description" content="{!! str_replace('&#039;', "'", e($t['about_description'])) !!}">
     <meta name="twitter:image" content="{{ asset('img/logos/SF-Hybrids-Galerie.png') }}">
 
     <!-- Favicon -->

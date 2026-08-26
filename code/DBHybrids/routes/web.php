@@ -83,7 +83,7 @@ if (!function_exists('getTranslations')) {
                 'share_via_app' => 'Share via app...',
                 'share_whatsapp' => 'Share on WhatsApp',
                 'share_telegram' => 'Share on Telegram',
-                'share_message_prefix' => 'Check out this hybrid playing card created at the Swiss Museum of Games exhibition (Hybrids x HEAD Genève):',
+                'share_message_prefix' => 'Check out this hybrid playing card created for the "Cartes à jouer" exhibition at the Swiss Museum of Games (MSJ × HEAD – Genève):',
                 'exhibition_context_title' => 'Exhibition Context',
                 'exhibition_context_text' => 'Generated during the exhibition « Cartes à jouer — Des origines aux cartes à collectionner » at the Swiss Museum of Games (Tour-de-Peilz) in collaboration with the Master Media Design program at HEAD – Genève.',
             ];
@@ -140,7 +140,7 @@ if (!function_exists('getTranslations')) {
             'share_via_app' => 'Partager via une application...',
             'share_whatsapp' => 'Partager sur WhatsApp',
             'share_telegram' => 'Partager sur Telegram',
-            'share_message_prefix' => 'Regarde cette carte hybride créée lors de l\'exposition au Musée suisse du jeu (Hybrids x HEAD Genève) :',
+            'share_message_prefix' => 'Regarde cette carte hybride créée lors de l\'exposition « Cartes à jouer » au Musée suisse du jeu (MSJ × HEAD – Genève) :',
             'exhibition_context_title' => 'Contexte d\'exposition',
             'exhibition_context_text' => 'Généré lors de l\'exposition « Cartes à jouer — Des origines aux cartes à collectionner » au Musée suisse du jeu (Tour-de-Peilz) en collaboration avec le Master Media Design de la HEAD – Genève.',
         ];
