@@ -2,6 +2,8 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Models\Hybrid;
+use App\Models\Card;
+use App\Models\Game;
 
 if (!function_exists('getAppLocale')) {
     function getAppLocale() {
@@ -86,6 +88,34 @@ if (!function_exists('getTranslations')) {
                 'share_message_prefix' => 'Check out this hybrid playing card created for the "Cartes à jouer" exhibition at the Swiss Museum of Games (MSJ × HEAD – Genève):',
                 'exhibition_context_title' => 'Exhibition Context',
                 'exhibition_context_text' => 'Generated during the exhibition « Cartes à jouer — Des origines aux cartes à collectionner » at the Swiss Museum of Games (Tour-de-Peilz) in collaboration with the Master Media Design program at HEAD – Genève.',
+                'stats' => 'Statistics',
+                'stats_title' => 'Hybrids Statistics',
+                'stats_subtitle' => 'Explore generation metrics and popular playing cards',
+                'total_hybrids' => 'Total Hybrids',
+                'daily_avg' => 'Daily Average',
+                'daily_max' => 'Peak Single Day',
+                'total_likes' => 'Total Likes',
+                'chart_title' => 'Generations Over Time',
+                'by_day' => 'By Day',
+                'by_week' => 'By Week',
+                'by_month' => 'By Month',
+                'line_chart' => 'Line',
+                'bar_chart' => 'Bars',
+                'all_time' => 'All time',
+                'last_7_days' => 'Last 7 days',
+                'last_30_days' => 'Last 30 days',
+                'last_90_days' => 'Last 90 days',
+                'from' => 'From',
+                'to' => 'to',
+                'custom_range' => 'Custom range',
+                'top_base_cards' => 'Most Popular Base Cards',
+                'top_games' => 'Most Used Historical Decks',
+                'top_liked_hybrids' => 'Top Liked Hybrids',
+                'times_used' => 'time(s) used',
+                'hybrids_generated' => 'hybrids generated',
+                'selected_period' => 'Selected Period Details',
+                'click_tap_hint' => 'Hover or tap a bar to view details',
+                'view_hybrid' => 'View hybrid',
             ];
         }
 
@@ -140,9 +170,37 @@ if (!function_exists('getTranslations')) {
             'share_via_app' => 'Partager via une application...',
             'share_whatsapp' => 'Partager sur WhatsApp',
             'share_telegram' => 'Partager sur Telegram',
-            'share_message_prefix' => 'Regarde cette carte hybride créée lors de l\'exposition « Cartes à jouer » au Musée suisse du jeu (MSJ × HEAD – Genève) :',
+            'share_message_prefix' => 'Regarde cette carte hybrid créée lors de l\'exposition « Cartes à jouer » au Musée suisse du jeu (MSJ × HEAD – Genève) :',
             'exhibition_context_title' => 'Contexte d\'exposition',
             'exhibition_context_text' => 'Généré lors de l\'exposition « Cartes à jouer — Des origines aux cartes à collectionner » au Musée suisse du jeu (Tour-de-Peilz) en collaboration avec le Master Media Design de la HEAD – Genève.',
+            'stats' => 'Statistiques',
+            'stats_title' => 'Statistiques des Hybrids',
+            'stats_subtitle' => 'Explorez les données de génération et les cartes populaires',
+            'total_hybrids' => 'Total Hybrids',
+            'daily_avg' => 'Moyenne par jour',
+            'daily_max' => 'Maximum sur 1 jour',
+            'total_likes' => 'Total J\'aime',
+            'chart_title' => 'Générations au fil du temps',
+            'by_day' => 'Par jour',
+            'by_week' => 'Par semaine',
+            'by_month' => 'Par mois',
+            'line_chart' => 'Courbe',
+            'bar_chart' => 'Barres',
+            'all_time' => 'Tout',
+            'last_7_days' => '7 derniers jours',
+            'last_30_days' => '30 derniers jours',
+            'last_90_days' => '90 derniers jours',
+            'from' => 'Du',
+            'to' => 'au',
+            'custom_range' => 'Période sur-mesure',
+            'top_base_cards' => 'Cartes de base les plus populaires',
+            'top_games' => 'Decks historiques les plus utilisés',
+            'top_liked_hybrids' => 'Hybrids les plus aimés',
+            'times_used' => 'fois utilisée(s)',
+            'hybrids_generated' => 'hybrids générés',
+            'selected_period' => 'Détails de la période sélectionnée',
+            'click_tap_hint' => 'Survolez ou touchez un point pour voir les détails',
+            'view_hybrid' => 'Voir l\'hybrid',
         ];
     }
 }
@@ -329,6 +387,173 @@ Route::get('/', function () {
 
     return view('hybrids.index', compact('hybrids', 'sortBy', 'filterDate', 'totalHybrids', 'totalLikes', 'lang', 't'));
 })->name('hybrids.index');
+
+Route::get('/stats', function () {
+    if (request()->has('lang')) {
+        $lang = in_array(request('lang'), ['fr', 'en']) ? request('lang') : 'fr';
+        session(['locale' => $lang]);
+    } else {
+        $lang = session('locale', 'fr');
+    }
+
+    $t = getTranslations($lang);
+
+    $totalHybrids = Hybrid::count();
+    $totalLikes = Hybrid::sum('nb_like');
+
+    // Daily counts (raw DB records)
+    $dailyCountsRaw = Hybrid::selectRaw("DATE(created_at) as date, COUNT(*) as count")
+        ->groupBy('date')
+        ->orderBy('date', 'asc')
+        ->get()
+        ->keyBy('date');
+
+    $activeDays = $dailyCountsRaw->count();
+    $dailyAvg = $activeDays > 0 ? round($totalHybrids / $activeDays, 1) : 0;
+
+    $maxDailyItem = $dailyCountsRaw->sortByDesc('count')->first();
+    $maxDailyCount = $maxDailyItem ? $maxDailyItem->count : 0;
+    $maxDailyDate = $maxDailyItem ? $maxDailyItem->date : null;
+
+    $monthsFr = [
+        1 => 'Janv.', 2 => 'Févr.', 3 => 'Mars', 4 => 'Avril',
+        5 => 'Mai', 6 => 'Juin', 7 => 'Juil.', 8 => 'Août',
+        9 => 'Sept.', 10 => 'Oct.', 11 => 'Nov.', 12 => 'Déc.'
+    ];
+
+    // Build continuous daily timeline filling 0 for inactive days
+    $dailyChartData = collect();
+    if ($dailyCountsRaw->isNotEmpty()) {
+        $startDate = \Carbon\Carbon::parse($dailyCountsRaw->min('date'));
+        $endDate = \Carbon\Carbon::parse($dailyCountsRaw->max('date'));
+
+        for ($date = $startDate->copy(); $date->lte($endDate); $date->addDay()) {
+            $dateStr = $date->format('Y-m-d');
+            $count = isset($dailyCountsRaw[$dateStr]) ? $dailyCountsRaw[$dateStr]->count : 0;
+
+            $labelFormatted = ($lang === 'en')
+                ? $date->format('M d, Y')
+                : $date->format('j') . ' ' . ($monthsFr[(int)$date->format('n')] ?? $date->format('F')) . ' ' . $date->format('Y');
+
+            $dailyChartData->push([
+                'date' => $dateStr,
+                'start_date' => $dateStr,
+                'end_date' => $dateStr,
+                'label' => $labelFormatted,
+                'count' => $count,
+            ]);
+        }
+    }
+
+    // Weekly chart data
+    $weeklyCounts = Hybrid::selectRaw("strftime('%Y-%W', created_at) as week_key, COUNT(*) as count, MIN(DATE(created_at)) as week_start, MAX(DATE(created_at)) as week_end")
+        ->groupBy('week_key')
+        ->orderBy('week_start', 'asc')
+        ->get();
+
+    $weeklyChartData = $weeklyCounts->map(function ($item) use ($lang, $monthsFr) {
+        $startObj = \Carbon\Carbon::parse($item->week_start);
+        $endObj = \Carbon\Carbon::parse($item->week_end);
+
+        $startLabel = ($lang === 'en')
+            ? $startObj->format('M d')
+            : $startObj->format('j') . ' ' . ($monthsFr[(int)$startObj->format('n')] ?? '');
+            
+        $endLabel = ($lang === 'en')
+            ? $endObj->format('M d, Y')
+            : $endObj->format('j') . ' ' . ($monthsFr[(int)$endObj->format('n')] ?? '') . ' ' . $endObj->format('Y');
+
+        return [
+            'date' => $item->week_key,
+            'start_date' => $item->week_start,
+            'end_date' => $item->week_end,
+            'label' => ($lang === 'en') ? 'Week ' . substr($item->week_key, -2) : 'Semaine ' . substr($item->week_key, -2),
+            'range' => $startLabel . ' – ' . $endLabel,
+            'count' => $item->count,
+        ];
+    })->values();
+
+    // Monthly chart data
+    $monthlyCounts = Hybrid::selectRaw("strftime('%Y-%m', created_at) as month_key, COUNT(*) as count, MIN(DATE(created_at)) as month_start")
+        ->groupBy('month_key')
+        ->orderBy('month_start', 'asc')
+        ->get();
+
+    $monthlyChartData = $monthlyCounts->map(function ($item) use ($lang, $monthsFr) {
+        $dateObj = \Carbon\Carbon::parse($item->month_start);
+        $labelFormatted = ($lang === 'en')
+            ? $dateObj->format('M Y')
+            : ($monthsFr[(int)$dateObj->format('n')] ?? $dateObj->format('F')) . ' ' . $dateObj->format('Y');
+
+        return [
+            'date' => $item->month_key,
+            'start_date' => $dateObj->copy()->startOfMonth()->format('Y-m-d'),
+            'end_date' => $dateObj->copy()->endOfMonth()->format('Y-m-d'),
+            'label' => $labelFormatted,
+            'range' => $labelFormatted,
+            'count' => $item->count,
+        ];
+    })->values();
+
+    // Top 5 Base Cards
+    $topBaseCards = Card::with('game')
+        ->whereHas('hybrids', function($q) {
+            $q->where('based_on.is_base', true);
+        })
+        ->withCount(['hybrids as base_count' => function($q) {
+            $q->where('based_on.is_base', true);
+        }])
+        ->orderByDesc('base_count')
+        ->take(5)
+        ->get();
+
+    // Top 5 Historical Decks / Games
+    $topGames = Game::select('games.*')
+        ->selectRaw('COUNT(based_on.id) as usage_count')
+        ->join('cards', 'cards.game_id', '=', 'games.id')
+        ->join('based_on', 'based_on.card_id', '=', 'cards.id')
+        ->groupBy('games.id')
+        ->orderByDesc('usage_count')
+        ->take(5)
+        ->get();
+
+    // Top Liked Hybrids
+    $topLikedHybrids = Hybrid::with('cards.game')
+        ->orderByDesc('nb_like')
+        ->orderByDesc('created_at')
+        ->take(3)
+        ->get();
+
+    // Min & Max dataset bounds and exhibition date list for custom date pickers
+    $minDate = $dailyCountsRaw->isNotEmpty() ? $dailyCountsRaw->min('date') : now()->format('Y-m-d');
+    $maxDate = $dailyCountsRaw->isNotEmpty() ? $dailyCountsRaw->max('date') : now()->format('Y-m-d');
+    $exhibitionDates = $dailyChartData->map(function($item) {
+        return [
+            'date' => $item['date'],
+            'label' => $item['label'],
+        ];
+    });
+
+    return view('hybrids.stats', compact(
+        'totalHybrids',
+        'totalLikes',
+        'activeDays',
+        'dailyAvg',
+        'maxDailyCount',
+        'maxDailyDate',
+        'dailyChartData',
+        'weeklyChartData',
+        'monthlyChartData',
+        'topBaseCards',
+        'topGames',
+        'topLikedHybrids',
+        'minDate',
+        'maxDate',
+        'exhibitionDates',
+        'lang',
+        't'
+    ));
+})->name('hybrids.stats');
 
 Route::get('/{id}', function ($id) {
     if (request()->has('lang')) {
