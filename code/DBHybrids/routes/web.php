@@ -445,53 +445,58 @@ Route::get('/stats', function () {
         }
     }
 
-    // Weekly chart data
-    $weeklyCounts = Hybrid::selectRaw("strftime('%Y-%W', created_at) as week_key, COUNT(*) as count, MIN(DATE(created_at)) as week_start, MAX(DATE(created_at)) as week_end")
-        ->groupBy('week_key')
-        ->orderBy('week_start', 'asc')
-        ->get();
+    // Weekly chart data (Database-agnostic via Carbon collection grouping)
+    $weeklyGroups = $dailyChartData->groupBy(function ($item) {
+        return \Carbon\Carbon::parse($item['date'])->format('o-W');
+    });
 
-    $weeklyChartData = $weeklyCounts->map(function ($item) use ($lang, $monthsFr) {
-        $startObj = \Carbon\Carbon::parse($item->week_start);
-        $endObj = \Carbon\Carbon::parse($item->week_end);
+    $weeklyChartData = $weeklyGroups->map(function ($items, $weekKey) use ($lang, $monthsFr) {
+        $first = $items->first();
+        $last = $items->last();
+
+        $startObj = \Carbon\Carbon::parse($first['date']);
+        $endObj = \Carbon\Carbon::parse($last['date']);
 
         $startLabel = ($lang === 'en')
             ? $startObj->format('M d')
             : $startObj->format('j') . ' ' . ($monthsFr[(int)$startObj->format('n')] ?? '');
-            
+
         $endLabel = ($lang === 'en')
             ? $endObj->format('M d, Y')
             : $endObj->format('j') . ' ' . ($monthsFr[(int)$endObj->format('n')] ?? '') . ' ' . $endObj->format('Y');
 
+        $weekNum = substr($weekKey, -2);
+
         return [
-            'date' => $item->week_key,
-            'start_date' => $item->week_start,
-            'end_date' => $item->week_end,
-            'label' => ($lang === 'en') ? 'Week ' . substr($item->week_key, -2) : 'Semaine ' . substr($item->week_key, -2),
+            'date' => $weekKey,
+            'start_date' => $first['date'],
+            'end_date' => $last['date'],
+            'label' => ($lang === 'en') ? 'Week ' . $weekNum : 'Semaine ' . $weekNum,
             'range' => $startLabel . ' – ' . $endLabel,
-            'count' => $item->count,
+            'count' => $items->sum('count'),
         ];
     })->values();
 
-    // Monthly chart data
-    $monthlyCounts = Hybrid::selectRaw("strftime('%Y-%m', created_at) as month_key, COUNT(*) as count, MIN(DATE(created_at)) as month_start")
-        ->groupBy('month_key')
-        ->orderBy('month_start', 'asc')
-        ->get();
+    // Monthly chart data (Database-agnostic via Carbon collection grouping)
+    $monthlyGroups = $dailyChartData->groupBy(function ($item) {
+        return \Carbon\Carbon::parse($item['date'])->format('Y-m');
+    });
 
-    $monthlyChartData = $monthlyCounts->map(function ($item) use ($lang, $monthsFr) {
-        $dateObj = \Carbon\Carbon::parse($item->month_start);
+    $monthlyChartData = $monthlyGroups->map(function ($items, $monthKey) use ($lang, $monthsFr) {
+        $first = $items->first();
+        $dateObj = \Carbon\Carbon::parse($first['date']);
+
         $labelFormatted = ($lang === 'en')
             ? $dateObj->format('M Y')
             : ($monthsFr[(int)$dateObj->format('n')] ?? $dateObj->format('F')) . ' ' . $dateObj->format('Y');
 
         return [
-            'date' => $item->month_key,
+            'date' => $monthKey,
             'start_date' => $dateObj->copy()->startOfMonth()->format('Y-m-d'),
             'end_date' => $dateObj->copy()->endOfMonth()->format('Y-m-d'),
             'label' => $labelFormatted,
             'range' => $labelFormatted,
-            'count' => $item->count,
+            'count' => $items->sum('count'),
         ];
     })->values();
 
@@ -507,12 +512,12 @@ Route::get('/stats', function () {
         ->take(5)
         ->get();
 
-    // Top 5 Historical Decks / Games
-    $topGames = Game::select('games.*')
+    // Top 5 Historical Decks / Games (Fully MySQL / PostgreSQL / SQLite compliant)
+    $topGames = Game::select('games.id', 'games.name', 'games.name_en')
         ->selectRaw('COUNT(based_on.id) as usage_count')
         ->join('cards', 'cards.game_id', '=', 'games.id')
         ->join('based_on', 'based_on.card_id', '=', 'cards.id')
-        ->groupBy('games.id')
+        ->groupBy('games.id', 'games.name', 'games.name_en')
         ->orderByDesc('usage_count')
         ->take(5)
         ->get();
