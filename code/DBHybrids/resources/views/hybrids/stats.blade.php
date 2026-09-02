@@ -996,7 +996,7 @@
                                     <span class="progress-item-val">{{ $game->usage_count }} {{ $t['times_used'] }}</span>
                                 </div>
                                 <div class="progress-track">
-                                    <div class="progress-fill" style="width: {{ $percent }}%;"></div>
+                                    <div class="progress-fill" style="--w: {{ $percent }}%; width: var(--w);"></div>
                                 </div>
                             </div>
                         @empty
@@ -1089,8 +1089,21 @@
         </div>
     </main>
 
+    <!-- Server-rendered JSON Data for Charts and Filters -->
+    <script id="stats-data" type="application/json">
+    {
+        "dailyRawData": @json($dailyChartData),
+        "weeklyRawData": @json($weeklyChartData),
+        "monthlyRawData": @json($monthlyChartData),
+        "minDateStr": @json($minDate),
+        "maxDateStr": @json($maxDate),
+        "appLang": @json($lang)
+    }
+    </script>
+
     <!-- Interactive Logic & Chart Script -->
     <script>
+        const statsData = JSON.parse(document.getElementById('stats-data').textContent);
         // Helper to get or generate an anonymous device UUID
         function getDeviceId() {
             let deviceId = localStorage.getItem('hybrids_device_id');
@@ -1175,9 +1188,9 @@
         });
 
         // Chart Logic
-        const dailyRawData = @json($dailyChartData);
-        const weeklyRawData = @json($weeklyChartData);
-        const monthlyRawData = @json($monthlyChartData);
+        const dailyRawData = statsData.dailyRawData;
+        const weeklyRawData = statsData.weeklyRawData;
+        const monthlyRawData = statsData.monthlyRawData;
 
         let currentMode = 'day'; // 'day', 'week', or 'month'
         let currentRange = 'all'; // 'all', '90', '30', '7'
@@ -1202,9 +1215,9 @@
         }
 
         // Custom Mini-Calendar Component State & Logic
-        const minDateStr = @json($minDate);
-        const maxDateStr = @json($maxDate);
-        const appLang = @json($lang);
+        const minDateStr = statsData.minDateStr;
+        const maxDateStr = statsData.maxDateStr;
+        const appLang = statsData.appLang;
 
         let calViewDate = new Date(minDateStr);
         let selectedStartDate = minDateStr;

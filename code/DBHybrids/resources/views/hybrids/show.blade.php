@@ -496,7 +496,7 @@
         if (shareSocialsBtn) {
             shareSocialsBtn.addEventListener('click', function() {
                 const currentUrl = window.location.href;
-                const shareMessageText = {!! json_encode($t['share_message_prefix']) !!};
+                const shareMessageText = "{!! addslashes($t['share_message_prefix']) !!}";
                 const shareData = {
                     title: "Hybrid #{{ $hybrid->id }} — {{ $t['project_name'] }}",
                     text: shareMessageText,
