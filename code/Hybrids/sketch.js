@@ -33,6 +33,8 @@ let loadingAnimation = null;
 let isGenerating = false;
 let isBatchGenerating = false;
 let lastGenerateTime = 0;
+let resultStartTime = 0;
+const RESULT_MIN_DISPLAY_MS = 15000; // 15 seconds guaranteed minimum display for RESULT (Option B)
 const DEBOUNCE_DURATION = 5000; // 5 seconds minimum between generations
 const HOLD_DURATION = 2000; // 2 seconds hold required to start generation
 
@@ -89,6 +91,7 @@ window.setup = function () {
 
   wsClient.on("STATE_CHANGE", (data) => {
     if (data.state === "RESULT") {
+      resultStartTime = Date.now();
       currentApp1State = "RESULT";
       updateApp1State("RESULT");
       resetInactivityTimer();
@@ -105,8 +108,11 @@ window.setup = function () {
   // Set callback for knob changes
   setKnobChangeCallback((knobValues) => {
     if (isCacheLoading() || isGenerating || currentApp1State === "GENERATING") return;
+    // Option B: During RESULT state, completely ignore knob fluctuations for at least 15 seconds
+    if (currentApp1State === "RESULT" && Date.now() - resultStartTime < RESULT_MIN_DISPLAY_MS) return;
+
     const { anyFilterChanged, hasPhysicalMovement } = handleKnobChange(knobValues) || {};
-    // Only react if there is genuine physical movement (>= 15 raw units) or a filter change
+    // Only react if there is genuine physical movement (>= 35 raw units) or a filter change
     if (hasPhysicalMovement || (anyFilterChanged && currentApp1State !== "IDLE")) {
       markUserInteracted(hasPhysicalMovement || anyFilterChanged);
       syncBrainState();
@@ -461,6 +467,10 @@ async function onGenerate(bypassDebounce = false) {
   }
 
   isGenerating = true;
+  if (inactivityTimer) {
+    clearTimeout(inactivityTimer);
+    inactivityTimer = null;
+  }
   wsClient.sendStateChange("GENERATING");
   updateApp1State("GENERATING");
 
@@ -735,9 +745,9 @@ export function markUserInteracted(isFilterChanged = false) {
   if (isGenerating) return;
 
   if (currentApp1State === "RESULT") {
-    const timeInResult = Date.now() - lastGenerateTime;
-    // Don't leave RESULT state unless a knob filter actually changed AND at least 3s passed
-    if (timeInResult < 3000 || !isFilterChanged) {
+    const timeInResult = Date.now() - resultStartTime;
+    // Option B: Don't leave RESULT state unless at least 15s passed AND a real knob turn occurred
+    if (timeInResult < RESULT_MIN_DISPLAY_MS || !isFilterChanged) {
       return;
     }
   }
@@ -769,6 +779,10 @@ export function syncBrainState(forcedState = null) {
     } else {
       state = "EXPLORE";
     }
+  }
+
+  if (state === "RESULT" && currentApp1State !== "RESULT") {
+    resultStartTime = Date.now();
   }
 
   // Freeze displayed cards & slots while in GENERATING or RESULT state

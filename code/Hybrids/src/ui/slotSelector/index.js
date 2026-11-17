@@ -66,7 +66,7 @@ export function drawPreview(p5Instance) {
 }
 
 let lastKnownRawKnobs = Array(12).fill(-1);
-const RAW_NOISE_THRESHOLD = 15; // Ignore electrical noise fluctuations below 15 units (out of 1023)
+const RAW_NOISE_THRESHOLD = 35; // Ignore electrical noise fluctuations below 35 units (out of 1023)
 let isSlotSelectionLocked = false;
 
 export function setSlotSelectionLock(isLocked) {

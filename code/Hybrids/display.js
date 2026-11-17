@@ -202,6 +202,7 @@ function initWebSocket() {
 }
 
 function setViewState(nextState, extraData = {}) {
+  if (nextState === currentState) return;
   console.log(`[App2 Display] Transitioning: ${currentState} -> ${nextState}`);
   currentState = nextState;
 
