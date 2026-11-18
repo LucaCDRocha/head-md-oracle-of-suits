@@ -19,14 +19,14 @@ if %ERRORLEVEL% NEQ 0 (
 )
 
 echo [*] Verification des mises a jour GitHub...
-"%GIT_CMD%" pull origin main
-if %ERRORLEVEL% EQU 0 (
-    echo [*] Code a jour avec GitHub.
-) else (
-    echo [!] Mise a jour GitHub ignoree (hors-ligne ou git absent).
-)
+call "%GIT_CMD%" pull origin main
 
 echo.
 echo [*] Lancement de la borne...
-node launch_borne.js %*
+call node launch_borne.js %*
+
+if %ERRORLEVEL% NEQ 0 (
+    echo.
+    echo [!] Erreur lors du lancement de launch_borne.js.
+)
 pause
